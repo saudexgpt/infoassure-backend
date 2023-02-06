@@ -141,6 +141,7 @@ class ProjectsController extends Controller
         $field = $request->field;
         $value = $request->date;
         $project->$field = date('Y-m-d', strtotime($value));
+        $project->save();
         return response()->json(['message' => 'Successful'], 200);
     }
 
