@@ -322,7 +322,7 @@
                                 </p>
 
                                 <p>
-                                  <strong>This will expire in 5 minutes</strong>
+                                  <strong>This will expire an hour</strong>
                                 </p>
                               </div>
 
