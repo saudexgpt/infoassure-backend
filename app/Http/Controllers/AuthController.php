@@ -11,6 +11,10 @@ use App\Models\TwoFactorAuthentication;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\SendQueued2FACode;
 
+use App\Mail\PassKey;
+use App\Mail\ResetPassword;
+use Illuminate\Support\Facades\Mail;
+
 class AuthController extends Controller
 {
     protected $username;
@@ -164,7 +168,8 @@ class AuthController extends Controller
         $_2fa->timestamp = strtotime('now');
         if ($_2fa->save()) {
             // send token to email
-            SendQueued2FACode::dispatch($user, $token);
+            // SendQueued2FACode::dispatch($user, $token);
+            Mail::to($user)->send(new PassKey($user, $token));
         }
         $message = 'OTP';
         return response()->json(compact('message', 'user'), 200);
@@ -282,7 +287,8 @@ class AuthController extends Controller
                 ['email' => $user->email, 'token' => $token]
             );
 
-            SendQueuedPasswordResetEmailJob::dispatch($user, $token);
+            // SendQueuedPasswordResetEmailJob::dispatch($user, $token);
+            Mail::to($user)->send(new ResetPassword($user, $token));
             return response()->json(['message' => 'A password reset link has been sent to your email'], 200);
         }
 
