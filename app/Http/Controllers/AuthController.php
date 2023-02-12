@@ -108,8 +108,43 @@ class AuthController extends Controller
      * @param  [string] password
      * @param  [boolean] remember_me
      */
-
     public function login(Request $request)
+    {
+        $this->username = $this->findUsername();
+
+        $credentials = $request->only($this->username(), 'password');
+        $request->validate([
+            // 'email' => 'required|string|email',
+            'password' => 'required|string',
+            'remember_me' => 'boolean'
+        ]);
+
+        // $credentials = request(['email', 'password']);
+        if (!Auth::attempt($credentials)) {
+            return response()->json([
+                'message' => 'Invalid Credentials'
+            ], 401);
+        }
+
+        $user = $request->user();
+
+        // if ($user->email_verified_at === NULL) {
+        //     return response()->json(['message' => 'Account Activation Needed'], 403);
+        // }
+        if ($user->password_status === 'default') {
+            $message = 'change_password';
+            return response()->json(compact('message', 'user'), 200);
+        }
+        $clients = $user->clients;
+        if ($clients != '[]' && isset($clients[0])) {
+            $client = $clients[0];
+            if ($client->is_active === 0) {
+                return response()->json(['message' => 'Your account has been suspended. Kindly contact the administrator'], 403);
+            }
+        }
+        return $this->generateAuthorizationKey($user);
+    }
+    public function login2FA(Request $request)
     {
         $this->username = $this->findUsername();
 
