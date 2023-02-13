@@ -10,7 +10,7 @@ class Clause extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
-        'name', 'standard_id'
+        'name', 'standard_id', 'will_have_audit_questions', 'requires_document_upload'
     ];
     public function standard()
     {

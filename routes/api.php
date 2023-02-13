@@ -129,6 +129,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'questions'], function () {
         Route::get('/', [QuestionsController::class, 'index']);
         Route::post('save', [QuestionsController::class, 'store']);
+        Route::post('upload-bulk', [QuestionsController::class, 'uploadBulk']);
+
         Route::put('update/{question}', [QuestionsController::class, 'update']);
         Route::delete('destroy/{question}', [QuestionsController::class, 'destroy']);
     });

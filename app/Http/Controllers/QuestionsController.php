@@ -12,9 +12,16 @@ class QuestionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $questions = Question::with('standard', 'clause')->orderBy('id', 'DESC')->paginate(10);
+
+
+        if (isset($request->clause_id) && $request->clause_id !== '') {
+            $questions = Question::with('standard', 'clause')->where('clause_id', $request->clause_id)->paginate(10);
+        } else {
+
+            $questions = Question::with('standard', 'clause')->orderBy('id', 'DESC')->paginate(10);
+        }
         return response()->json(compact('questions'), 200);
     }
 
@@ -26,20 +33,35 @@ class QuestionsController extends Controller
      */
     public function store(Request $request)
     {
-        $questions_string = $request->questions;
-        $questions_array = explode('|', $questions_string);
-        foreach ($questions_array as $question) {
-            Question::firstOrCreate([
-                'standard_id' => $request->standard_id,
-                'clause_id' => $request->clause_id,
-                'question' => $question,
-                // 'question_type' => $request->question_type,
-                'answer_type' => $request->answer_type
-            ]);
-        }
+        Question::firstOrCreate([
+            'standard_id' => $request->standard_id,
+            'clause_id' => $request->clause_id,
+            'question' => $request->question,
+            // 'question_type' => $request->question_type,
+            'answer_type' => $request->answer_type
+        ]);
         return response()->json(['message' => 'Successful'], 200);
     }
-
+    public function uploadBulk(Request $request)
+    {
+        set_time_limit(0);
+        $bulk_data = json_decode(json_encode($request->bulk_data));
+        $unsaved_data = [];
+        $error = [];
+        foreach ($bulk_data as $csvRow) {
+            try {
+                $request->question = trim($csvRow->QUESTION);
+                $request->answer_type = trim($csvRow->ANSWER_TYPE);
+                //store the entry for this student
+                $this->store($request);
+            } catch (\Throwable $th) {
+                $unsaved_data[] = $csvRow;
+                $error[] = $th;
+                // return response()->json($th);
+            }
+        }
+        return response()->json(compact('unsaved_data', 'error'), 200);
+    }
     /**
      * Display the specified resource.
      *

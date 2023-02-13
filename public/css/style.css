@@ -1,0 +1,56 @@
+.line{
+  text-align: center;
+}
+.span {
+  width: 100%
+}
+.padded {
+  padding: 10px;
+}
+
+.edit-input {
+  padding-right: 100px;
+}
+.cancel-btn {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+}
+.el-submenu [class^="el-icon-"] {
+  vertical-align: middle;
+  margin-left: 10px !important;
+  width: 24px;
+  text-align: center;
+  font-size: 18px;
+}
+.el-menu-item [class^="el-icon-"] {
+    margin-left: 10px !important;
+    width: 24px;
+    text-align: center;
+    font-size: 18px;
+    vertical-align: middle;
+}
+.el-dialog {
+    width: 80% !important;
+    border: solid 5px #a1501af8 !important;
+    border-radius: 20px !important;
+}
+.el-form-item {
+    margin-bottom: 0px !important;
+}
+.VueTables__child-row-toggler {
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    display: block;
+    margin: auto;
+    text-align: center;
+}
+
+.VueTables__child-row-toggler--closed::before {
+    content: "+" !important;
+}
+
+.VueTables__child-row-toggler--open::before {
+    content: "-" !important;
+}
