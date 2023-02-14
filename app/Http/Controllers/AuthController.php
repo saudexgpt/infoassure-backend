@@ -133,8 +133,17 @@ class AuthController extends Controller
         // }
         if ($user->password_status === 'default') {
             $message = 'change_password';
-            return response()->json(compact('message', 'user'), 200);
+            $title = 'You need to change your password from the default';
+            return response()->json(compact('title', 'message', 'user'), 200);
         }
+
+        $password_expires_at = date('Y-m-d', strtotime($user->password_expires_at));
+        if ($this->todayDate >= $password_expires_at || $password_expires_at === NULL) {
+            $message = 'password_due_for_change';
+            $title = 'Your password is due for a change.';
+            return response()->json(compact('title', 'message', 'user'), 200);
+        }
+
         $clients = $user->clients;
         if ($clients != '[]' && isset($clients[0])) {
             $client = $clients[0];
@@ -345,7 +354,7 @@ class AuthController extends Controller
             $credentials = $request->only('email', 'password');
             if (!Auth::attempt($credentials)) {
                 return response()->json([
-                    'message' => 'You have to remember your old password'
+                    'message' => 'You need to remember your old password'
                 ], 401);
             }
         }
@@ -354,6 +363,7 @@ class AuthController extends Controller
         if ($user) {
             $user->password = $request->new_password;
             $user->password_status = 'custom';
+            $user->password_expires_at = date('Y-m-d H:i:s', strtotime($this->todayDate . ' +90 days'));
             if ($user->save()) {
                 DB::table('password_resets')->where('email', $request->email)->delete();
             }

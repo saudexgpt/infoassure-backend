@@ -17,10 +17,10 @@ class QuestionsController extends Controller
 
 
         if (isset($request->clause_id) && $request->clause_id !== '') {
-            $questions = Question::with('standard', 'clause')->where('clause_id', $request->clause_id)->paginate(10);
+            $questions = Question::with('standard', 'clause')->where('clause_id', $request->clause_id)->paginate($request->limit);
         } else {
 
-            $questions = Question::with('standard', 'clause')->orderBy('id', 'DESC')->paginate(10);
+            $questions = Question::with('standard', 'clause')->orderBy('id', 'DESC')->paginate($request->limit);
         }
         return response()->json(compact('questions'), 200);
     }

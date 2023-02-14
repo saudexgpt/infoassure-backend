@@ -23,10 +23,10 @@ class ClausesController extends Controller
     public function index(Request $request)
     {
         if (isset($request->standard_id) && $request->standard_id !== '') {
-            $clauses = Clause::with('standard', 'templates')->where('standard_id', $request->standard_id)->orderBy('id', 'DESC')->paginate('10');
+            $clauses = Clause::with('standard', 'templates')->where('standard_id', $request->standard_id)->orderBy('id', 'DESC')->paginate($request->limit);
         } else {
 
-            $clauses = Clause::with('standard', 'templates')->orderBy('id', 'DESC')->paginate('10');
+            $clauses = Clause::with('standard', 'templates')->orderBy('id', 'DESC')->paginate($request->limit);
         }
         return response()->json(compact('clauses'), 200);
     }

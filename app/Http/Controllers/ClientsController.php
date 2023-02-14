@@ -23,7 +23,7 @@ class ClientsController extends Controller
             $clients = Client::orderBy('name')->get();
         } else {
 
-            $clients = Client::with('users')->orderBy('name')->paginate(10);
+            $clients = Client::with('users')->orderBy('name')->paginate($request->limit);
         }
         return response()->json(compact('clients'), 200);
     }
