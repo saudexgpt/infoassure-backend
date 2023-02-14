@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Jobs\SendQueuedConfirmationEmailJob;
 use App\Mail\ConfirmNewRegistration;
+use App\Models\Role;
 use Illuminate\Support\Facades\Mail;
 
 class ClientsController extends Controller
@@ -66,7 +67,8 @@ class ClientsController extends Controller
                 $user = $user_obj->createUser($request);
                 // sync user to client
                 $client->users()->sync($user->id);
-                $user->roles()->sync(2); // role id 2 is client
+                $role = Role::where('name', 'client')->first();
+                $user->roles()->sync($role->id); // role id 3 is client
 
                 // send confirmation email to user
                 //email will be sent later containing login credentials

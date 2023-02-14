@@ -15,8 +15,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-.env
-.env.backup
 docker-compose.override.yml
 supervisord.log
 supervisord.pid

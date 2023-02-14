@@ -20,9 +20,14 @@ class ClausesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $clauses = Clause::with('standard', 'templates')->orderBy('id', 'DESC')->paginate('10');
+        if (isset($request->standard_id) && $request->standard_id !== '') {
+            $clauses = Clause::with('standard', 'templates')->where('standard_id', $request->standard_id)->orderBy('id', 'DESC')->paginate('10');
+        } else {
+
+            $clauses = Clause::with('standard', 'templates')->orderBy('id', 'DESC')->paginate('10');
+        }
         return response()->json(compact('clauses'), 200);
     }
     public function fetchClausesWithQuestions(Request $request)

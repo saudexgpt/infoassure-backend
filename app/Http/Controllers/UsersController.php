@@ -87,7 +87,7 @@ class UsersController extends Controller
         $request->role = 'staff';
         $user_obj = new User();
         $user = $user_obj->createUser($request);
-        $user->roles()->sync($request->role_id); // role id 2 is client
+        $user->roles()->sync($request->role_id); // role id 2 is admin
 
         // send confirmation email to user
         //email will be sent later containing login credentials
