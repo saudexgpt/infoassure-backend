@@ -104,7 +104,16 @@ class User extends Authenticatable
         $user->designation = $data->designation;
         $user->confirm_hash = hash('sha256', time() . $data->email);
         $user->save();
+        $this->setUserPasswordRecord($user, $data->password);
         return $user;
+    }
+
+    private function setUserPasswordRecord($user, $password)
+    {
+        $user_password = new UserPassword();
+        $user_password->email = $user->email;
+        $user_password->password = hash('sha256', $password);
+        $user_password->save();
     }
 
     public function isAdmin(): bool
