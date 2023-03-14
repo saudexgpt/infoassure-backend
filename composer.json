@@ -15,7 +15,9 @@
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
         "pusher/pusher-php-server": "^7.2",
-        "santigarcor/laratrust": "*"
+        "santigarcor/laratrust": "*",
+        "symfony/http-client": "^6.2",
+        "symfony/mailgun-mailer": "^6.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
