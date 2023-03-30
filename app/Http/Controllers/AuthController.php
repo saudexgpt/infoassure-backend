@@ -32,7 +32,7 @@ class AuthController extends Controller
      */
     public function __construct()
     {
-        $this->macAddr = exec('getmac');
+        $this->macAddr = request()->ip();
         $this->todayDate = date('Y-m-d', strtotime('now'));
         // $this->middleware('guest')->except('logout');
         // $this->username = $this->findUsername();
