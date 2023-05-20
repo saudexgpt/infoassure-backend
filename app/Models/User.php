@@ -104,14 +104,14 @@ class User extends Authenticatable
         $user->designation = $data->designation;
         $user->confirm_hash = hash('sha256', time() . $data->email);
         $user->save();
-        $this->setUserPasswordRecord($user, $data->password);
+        $this->setUserPasswordRecord($user->id, $data->password);
         return $user;
     }
 
-    private function setUserPasswordRecord($user, $password)
+    private function setUserPasswordRecord($user_id, $password)
     {
         $user_password = new UserPassword();
-        $user_password->email = $user->email;
+        $user_password->user_id = $user_id;
         $user_password->password = hash('sha256', $password);
         $user_password->save();
     }
