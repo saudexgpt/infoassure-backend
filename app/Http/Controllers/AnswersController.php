@@ -87,9 +87,10 @@ class AnswersController extends Controller
         Answer::whereIn('id', $answer_ids)->update(['is_submitted' => $value]);
 
         //send notification
-        $answer = Answer::with('clause')->find($answer_ids[0]);
+        $answer = Answer::with('clause', 'client.users')->find($answer_ids[0]);
         $clause = $answer->clause;
-        $name = $user->name . ' (' . $user->email . ')';
+        $name = $user->name;
+        $users = $answer->client->users;
         if ($value === 1) {
 
             $title = "Answers Submitted";
@@ -101,7 +102,7 @@ class AnswersController extends Controller
             //log this event
             $description = "$name enabled response modification on gap assessment for clause: $clause->name";
         }
-        $this->auditTrailEvent($title, $description, $user);
+        $this->auditTrailEvent($title, $description, $users);
     }
 
     /**
@@ -132,10 +133,10 @@ class AnswersController extends Controller
         $answer->save();
 
         $clause = Clause::find($answer->clause_id);
-        $client = Client::find($answer->client_id);
+        $client = Client::with('users')->find($answer->client_id);
         $title = "Remark on gap assessment";
         //log this event
-        $description = "$user->name made a remark on gap assessment for clause: $clause->name by $client->name";
-        $this->auditTrailEvent($title, $description);
+        $description = "$user->name made a remark on gap assessment for clause: $clause->name";
+        $this->auditTrailEvent($title, $description, $client->users);
     }
 }

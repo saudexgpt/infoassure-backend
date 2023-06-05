@@ -23,10 +23,10 @@ class ClausesController extends Controller
     public function index(Request $request)
     {
         if (isset($request->standard_id) && $request->standard_id !== '') {
-            $clauses = Clause::with('standard', 'templates')->where('standard_id', $request->standard_id)->orderBy('id', 'DESC')->paginate($request->limit);
+            $clauses = Clause::with('standard', 'templates')->where('standard_id', $request->standard_id)->orderBy('sort_by')->paginate($request->limit);
         } else {
 
-            $clauses = Clause::with('standard', 'templates')->orderBy('id', 'DESC')->paginate($request->limit);
+            $clauses = Clause::with('standard', 'templates')->orderBy('sort_by')->paginate($request->limit);
         }
         return response()->json(compact('clauses'), 200);
     }
@@ -36,7 +36,7 @@ class ClausesController extends Controller
         $standard_id = $request->standard_id;
         $clauses = Clause::with(['questions.answer' => function ($q) use ($client_id, $standard_id) {
             $q->where(['standard_id' => $standard_id, 'client_id' => $client_id]);
-        }])->where(['standard_id' => $standard_id])->where('will_have_audit_questions', 1)->get();
+        }])->where(['standard_id' => $standard_id])->where('will_have_audit_questions', 1)->orderBy('sort_by')->get();
         return response()->json(compact('clauses'), 200);
     }
     public function fetchClausesWithDocuments(Request $request)
@@ -45,7 +45,7 @@ class ClausesController extends Controller
         $standard_id = $request->standard_id;
         $clauses = Clause::with(['uploads' => function ($q) use ($client_id, $standard_id) {
             $q->where(['standard_id' => $standard_id, 'client_id' => $client_id]);
-        }])->where(['standard_id' => $standard_id])->where('requires_document_upload', 1)->orderBy('name')->get();
+        }])->where(['standard_id' => $standard_id])->where('requires_document_upload', 1)->orderBy('sort_by')->get();
         return response()->json(compact('clauses'), 200);
     }
 
@@ -226,6 +226,14 @@ class ClausesController extends Controller
         // $clause->description = $request->description;
         $clause->will_have_audit_questions = $request->will_have_audit_questions;
         $clause->requires_document_upload = $request->requires_document_upload;
+        $clause->save();
+        return response()->json(['message' => 'Successful'], 200);
+    }
+
+    public function setSortValue(Request $request, Clause $clause)
+    {
+        //
+        $clause->sort_by = $request->value;
         $clause->save();
         return response()->json(['message' => 'Successful'], 200);
     }

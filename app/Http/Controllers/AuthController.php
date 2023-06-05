@@ -8,12 +8,13 @@ use App\Models\User;
 use App\Http\Resources\UserResource;
 use App\Jobs\SendQueuedPasswordResetEmailJob;
 use App\Models\TwoFactorAuthentication;
-use Illuminate\Support\Facades\DB;
 use App\Jobs\SendQueued2FACode;
 
 use App\Mail\PassKey;
 use App\Mail\ResetPassword;
 use App\Models\UserPassword;
+
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller

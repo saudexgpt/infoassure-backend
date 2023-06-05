@@ -41,7 +41,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
+use Notification;
 
 class Controller extends BaseController
 {
@@ -185,7 +185,7 @@ class Controller extends BaseController
 
         return $folder . '/' . $file_name;
     }
-    public function auditTrailEvent($title, $action, $user = null)
+    public function auditTrailEvent($title, $action, $clients = null)
     {
 
         // $user = $this->getUser();
@@ -193,16 +193,10 @@ class Controller extends BaseController
             $query->where('name', '=', 'super')
                 ->orWhere('name', '=', 'admin'); // this is the role id inside of this callback
         })->get();
-        if ($user != null) {
-            $users = $users->push($user);
+        if ($clients != null) {
+            $users = $users->merge($clients);
         }
         $notification = new AuditTrail($title, $action);
-        // if ($class_teacher_id !== null) {
-        //     $class = [ClassTeacher::find($class_teacher_id)];
-
-        //     Notification::send($class, $notification);
-        // }
-        // broadcast(new AuditTrailEvent($title, $action));
         return Notification::send($users->unique(), $notification);
     }
 }

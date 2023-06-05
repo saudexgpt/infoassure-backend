@@ -21,20 +21,20 @@ class UsersController extends Controller
         $staff = User::with('roles', 'permissions')->where('role', 'staff')->get();
         return response()->json(compact('staff'), 200);
     }
-    public function userNotifications()
+    public function userNotifications(Request $request)
     {
         $user = $this->getUser();
         // $school = $this->getSchool();
         // $sess_id = $this->getSession()->id;
-        $notifications = $user->notifications()->orderBy('created_at', 'DESC')->take(20)->get();
+        $notifications = $user->notifications()->orderBy('created_at', 'DESC')->paginate($request->limit);
         $unread_notifications = $user->unreadNotifications()->count();
         return response()->json(compact('notifications', 'unread_notifications'), 200);
     }
-    public function markNotificationAsRead()
+    public function markNotificationAsRead(Request $request)
     {
         $user = $this->getUser();
         $user->unreadNotifications->markAsRead();
-        return $this->userNotifications();
+        return $this->userNotifications($request);
     }
     public function changePassword()
     {

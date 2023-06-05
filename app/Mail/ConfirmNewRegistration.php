@@ -8,7 +8,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 
-class ConfirmNewRegistration extends Mailable
+class ConfirmNewRegistration extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

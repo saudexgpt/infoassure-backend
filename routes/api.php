@@ -118,7 +118,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::get('fetch-clauses-with-documents', [ClausesController::class, 'fetchClausesWithDocuments']);
         Route::post('save', [ClausesController::class, 'store']);
+
         Route::put('update/{clause}', [ClausesController::class, 'update']);
+        Route::put('set-sort-value/{clause}', [ClausesController::class, 'setSortValue']);
         Route::delete('destroy/{clause}', [ClausesController::class, 'destroy']);
         Route::post('uploads/save', [ClausesController::class, 'createUploads']);
         Route::post('upload-file', [ClausesController::class, 'uploadClauseFile']);
