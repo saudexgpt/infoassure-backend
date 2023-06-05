@@ -9,7 +9,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 
-class AuditTrail extends Notification implements ShouldQueue
+class AuditTrail extends Notification // implements ShouldQueue
 {
     use Queueable;
     public $title;
