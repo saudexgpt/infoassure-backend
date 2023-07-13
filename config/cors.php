@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['*', 'https://app.infoassureltd.com', 'https://app.infoassureltd.com/*'],
 
     'allowed_origins_patterns' => [],
 
