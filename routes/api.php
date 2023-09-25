@@ -30,7 +30,9 @@ use App\Http\Controllers\UsersController;
 
 
 Route::get('set-admin-role', [Controller::class, 'setAdminRole']);
-
+// Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
+// Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
+// Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::get('confirm-registration/{hash}', [AuthController::class, 'confirmRegistration']);
@@ -150,6 +152,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('client-data-analysis-dashboard', [ReportsController::class, 'clientDataAnalysisDashbord']);
         Route::get('client-project-data-analysis', [ReportsController::class, 'clientProjectDataAnalysis']);
         Route::get('admin-data-analysis-dashboard', [ReportsController::class, 'adminDataAnalysisDashbord']);
+
+
+        Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
+        Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
+        Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
     });
 
     Route::group(['prefix' => 'exceptions'], function () {
