@@ -140,7 +140,7 @@ class ClientsController extends Controller
         //log this event
         $description = "$user->name was deleted by $actor->name";
         $this->auditTrailEvent($title, $description);
-        $user->delete();
+        $user->forceDelete();
         return response()->json([], 204);
         // $client->users()->sync($user->id);
         // $role = Role::where('name', 'client')->first();
