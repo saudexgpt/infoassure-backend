@@ -303,23 +303,38 @@ class AuthController extends Controller
         ]);
     }
 
-    public function confirmRegistration($hash)
+    public function confirmRegistration(Request $request)
     {
-
-
-        $confirm_hash = User::where(['confirm_hash' => $hash])->first();
-        $message = 'Invalid Activation Link';
-        if ($confirm_hash) {        //hash is confirmed and valid
-            if ($confirm_hash->email_verified_at === NULL) {
-                $confirm_hash->email_verified_at = date('Y-m-d H:i:s', strtotime('now'));
-                $confirm_hash->save();
-                $message = 'Account Activated Successfully';
-            } else {
-                $message = 'Account Already Activated';
+        $hash = $request->code;
+        if (isset($request->user_id) && $hash === 'admin_confirmation') {
+            $user = User::find($request->user_id);
+            $message = 'Cannot Activate User';
+            if ($user) {        //hash is confirmed and valid
+                if ($user->email_verified_at === NULL) {
+                    $user->email_verified_at = date('Y-m-d H:i:s', strtotime('now'));
+                    $user->save();
+                    $message = 'Account Activated Successfully';
+                } else {
+                    $message = 'Account Already Activated';
+                }
             }
-            //return view('auth.registration_confirmed', compact('message'));
+        } else {
+            $confirm_hash = User::where(['confirm_hash' => $hash])->first();
+            $message = 'Invalid Activation Link';
+            if ($confirm_hash) {        //hash is confirmed and valid
+                if ($confirm_hash->email_verified_at === NULL) {
+                    $confirm_hash->email_verified_at = date('Y-m-d H:i:s', strtotime('now'));
+                    $confirm_hash->save();
+                    $message = 'Account Activated Successfully';
+                } else {
+                    $message = 'Account Already Activated';
+                }
+                //return view('auth.registration_confirmed', compact('message'));
 
+            }
         }
+
+
 
         return $message;
     }

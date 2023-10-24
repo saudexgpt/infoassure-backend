@@ -56,23 +56,6 @@ class ClientsController extends Controller
             $client->contact_phone = $request->contact_phone;
             $client->contact_address = $request->contact_address;
             if ($client->save()) {
-
-                // we have to save the user info for this client
-                $request->name = $request->admin_first_name . ' ' . $request->admin_last_name;
-                $request->email = $request->admin_email;
-                $request->password = $request->admin_email;
-                $request->phone = $request->admin_phone;
-                $request->role = 'client';
-                $user_obj = new User();
-                $user = $user_obj->createUser($request);
-                // sync user to client
-                $client->users()->sync($user->id);
-                $role = Role::where('name', 'client')->first();
-                $user->roles()->sync($role->id); // role id 3 is client
-
-                // send confirmation email to user
-                //email will be sent later containing login credentials
-                // SendQueuedConfirmationEmailJob::dispatch($user);
                 $actor = $this->getUser();
                 $title = "New Client Registered";
                 //log this event
@@ -80,13 +63,29 @@ class ClientsController extends Controller
                 $this->auditTrailEvent($title, $description);
 
 
-                return response()->json('success', 200);
+                return response()->json(compact('client'), 200);
             }
             return response()->json(['message' => 'Unable to register'], 500);
         }
         return response()->json(['message' => 'Company already exists'], 401);
     }
+    public function registerClientUser(Request $request)
+    {
+        $client = Client::find($request->client_id);
+        $request->name = $request->admin_first_name . ' ' . $request->admin_last_name;
+        $request->email = $request->admin_email;
+        $request->password = $request->admin_email;
+        $request->phone = $request->admin_phone;
+        $request->role = 'client';
+        $user_obj = new User();
+        $user = $user_obj->createUser($request);
+        // sync user to client
+        $client->users()->syncWithoutDetaching($user->id);
+        $role = Role::where('name', 'client')->first();
+        $user->roles()->sync($role->id); // role id 3 is client
 
+        return response()->json('success', 200);
+    }
     /**
      * Display the specified resource.
      *
@@ -95,7 +94,7 @@ class ClientsController extends Controller
      */
     public function sendLoginCredentials(User $user)
     {
-        $password = randomPassword();
+        $password = $user->email; // randomPassword();
         $user->password = $password;
         $user->save();
         //email will be sent later containing login credentials
@@ -114,29 +113,39 @@ class ClientsController extends Controller
     public function update(Request $request, Client $client)
     {
         //
-        $client->name = $request->organization_name;
+        $client->name = $request->name;
         $client->contact_email = $request->contact_email;
         $client->contact_phone = $request->contact_phone;
         $client->contact_address = $request->contact_address;
-        if ($client->save()) {
-            $user = User::find($request->admin_id);
-            if (!$user) {
-                $user = new User();
-                $user->password = $request->admin_email;
-                $user->role = 'client';
-                $user->confirm_hash = hash('sha256', time() . $request->admin_email);
-            }
+        $client->save();
+    }
+    public function updateClientUser(Request $request, User $user)
+    {
 
-            $user->name = $request->admin_name;
-            $user->email = $request->admin_email;
-            $user->phone = $request->admin_phone;
-            $user->designation = $request->designation;
-            $user->save();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->designation = $request->designation;
+        $user->save();
 
-            $client->users()->sync($user->id);
-            $role = Role::where('name', 'client')->first();
-            $user->roles()->sync($role->id); // role id 3 is client
-        }
+        // $client->users()->sync($user->id);
+        // $role = Role::where('name', 'client')->first();
+        // $user->roles()->sync($role->id); // role id 3 is client
+
+    }
+    public function deleteClientUser(Request $request, User $user)
+    {
+        $actor = $this->getUser();
+        $title = "Client User Deletion";
+        //log this event
+        $description = "$user->name was deleted by $actor->name";
+        $this->auditTrailEvent($title, $description);
+        $user->delete();
+        return response()->json([], 204);
+        // $client->users()->sync($user->id);
+        // $role = Role::where('name', 'client')->first();
+        // $user->roles()->sync($role->id); // role id 3 is client
+
     }
 
     /**

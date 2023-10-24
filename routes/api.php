@@ -35,7 +35,7 @@ Route::get('set-admin-role', [Controller::class, 'setAdminRole']);
 // Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
-    Route::get('confirm-registration/{hash}', [AuthController::class, 'confirmRegistration']);
+    Route::get('confirm-registration', [AuthController::class, 'confirmRegistration']);
     Route::post('recover-password', [AuthController::class, 'recoverPassword']);
     Route::get('confirm-password-reset-token/{token}', [AuthController::class, 'confirmPasswordResetToken']);
 
@@ -77,7 +77,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/', [ClientsController::class, 'index']);
 
         Route::post('register', [ClientsController::class, 'store']);
+        Route::post('register-client-user', [ClientsController::class, 'registerClientUser']);
+
         Route::put('update/{client}', [ClientsController::class, 'update']);
+        Route::put('update-client-user/{user}', [ClientsController::class, 'updateClientUser']);
+        Route::delete('delete-client-user/{user}', [ClientsController::class, 'deleteClientUser']);
+
         Route::put('send-login-credentials/{user}', [ClientsController::class, 'sendLoginCredentials']);
         Route::put('toggle-client-suspension/{client}', [ClientsController::class, 'toggleClientSuspension']);
     });
