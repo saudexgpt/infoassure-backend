@@ -49,6 +49,7 @@ class Controller extends BaseController
 
     protected $user;
     protected $client;
+    protected $myProjects;
     protected $role;
     protected $roles = [];
     protected $data = [];
@@ -133,6 +134,17 @@ class Controller extends BaseController
         $this->setUser();
 
         return $this->user;
+    }
+    public function setMyProjects()
+    {
+        $this->myProjects  = $this->getUser()->projects()->with('certificate', 'standard')->where(['year' => $this->getYear()])->get();
+    }
+
+    public function getMyProjects()
+    {
+        $this->setMyProjects();
+
+        return $this->myProjects;
     }
     public function setClient()
     {

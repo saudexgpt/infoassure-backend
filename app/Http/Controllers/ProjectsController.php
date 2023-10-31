@@ -27,9 +27,11 @@ class ProjectsController extends Controller
     public function clientProjects(Request $request)
     {
         $client_id = $request->client_id;
+        $client = Client::with('users')->find($client_id);
+        $users = $client->users;
         // $consulting_id = $request->consulting_id;
-        $projects = Project::with('certificate', 'standard')->where(['client_id' => $client_id, 'year' => $this->getYear()])->orderBy('id', 'DESC')->get(); //->paginate(10);
-        return response()->json(compact('projects'), 200);
+        $projects = Project::with('certificate', 'standard', 'users')->where(['client_id' => $client_id, 'year' => $this->getYear()])->orderBy('id', 'DESC')->get(); //->paginate(10);
+        return response()->json(compact('projects', 'users'), 200);
     }
     public function clientProjectCertificates(Request $request)
     {
@@ -93,7 +95,12 @@ class ProjectsController extends Controller
         $this->auditTrailEvent($title, $description);
         return response()->json(['message' => 'Successful'], 200);
     }
-
+    public function assignProjectToClientStaff(Request $request, Project $project)
+    {
+        $user_ids = $request->user_ids;
+        $project->users()->sync($user_ids); //->paginate(10);
+        return response()->json([], 204);
+    }
     public function saveClientFeedback(Request $request)
     {
         $client_id = $request->client_id;

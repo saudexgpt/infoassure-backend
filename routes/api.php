@@ -94,6 +94,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('show/{project}', [ProjectsController::class, 'show']);
 
         Route::post('save', [ProjectsController::class, 'store']);
+        Route::put('assign-to-user/{project}', [ProjectsController::class, 'assignProjectToClientStaff']);
+
         Route::put('set-dates/{project}', [ProjectsController::class, 'setDates']);
         Route::put('toggle-completion/{project}', [ProjectsController::class, 'toggleCompletion']);
 

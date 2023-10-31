@@ -24,6 +24,10 @@ class Project extends Model
     {
         return $this->belongsTo(Consulting::class);
     }
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
+    }
     public function certificate()
     {
         return $this->hasOne(ProjectCertificate::class, 'project_id', 'id');

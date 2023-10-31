@@ -73,6 +73,10 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Client::class);
     }
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class);
+    }
     public function isSuperAdmin(): bool
     {
         foreach ($this->roles as $role) {
