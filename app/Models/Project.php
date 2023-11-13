@@ -32,23 +32,27 @@ class Project extends Model
     {
         return $this->hasOne(ProjectCertificate::class, 'project_id', 'id');
     }
+    public function clientProjectPlans()
+    {
+        return $this->hasMany(ClientProjectPlan::class, 'project_id', 'id');
+    }
 
     public function watchProjectProgress(Project $project)
     {
-        $project_id  = $project->id;
-        $uploaded_documents = Upload::where(['project_id' => $project_id, 'is_exception' => 0])->where('link', '!=', NULL)->count();
-        $expected_documents = Upload::where(['project_id' => $project_id])->count();
-        $answered_questions = Answer::where(['project_id' => $project_id, 'is_exception' => 0])->where('is_submitted', 1)->count();
-        $all_questions = Answer::where(['project_id' => $project_id])->count();
+        // $project_id  = $project->id;
+        // $uploaded_documents = Upload::where(['project_id' => $project_id, 'is_exception' => 0])->where('link', '!=', NULL)->count();
+        // $expected_documents = Upload::where(['project_id' => $project_id])->count();
+        // $answered_questions = Answer::where(['project_id' => $project_id, 'is_exception' => 0])->where('is_submitted', 1)->count();
+        // $all_questions = Answer::where(['project_id' => $project_id])->count();
 
-        $total_task = $expected_documents + $all_questions;
-        $total_response = $uploaded_documents + $answered_questions;
-        $percentage_progress = 0;
-        if ($total_task > 0) {
-            $percentage_progress = $total_response / $total_task * 100;
-        }
+        // $total_task = $expected_documents + $all_questions;
+        // $total_response = $uploaded_documents + $answered_questions;
+        // $percentage_progress = 0;
+        // if ($total_task > 0) {
+        //     $percentage_progress = $total_response / $total_task * 100;
+        // }
 
-        $project->progress = $percentage_progress;
-        $project->save();
+        // $project->progress = $percentage_progress;
+        // $project->save();
     }
 }

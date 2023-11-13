@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Answer;
 use App\Models\Clause;
 use App\Models\Client;
+use App\Models\GapAssessmentEvidence;
 use App\Models\Project;
 use App\Models\Question;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AnswersController extends Controller
 {
@@ -138,5 +140,32 @@ class AnswersController extends Controller
         //log this event
         $description = "$user->name made a remark on gap assessment for clause: $clause->name";
         $this->auditTrailEvent($title, $description, $client->users);
+    }
+    public function uploadGapAssessmentEvidence(Request $request)
+    {
+        $client = $this->getClient();
+        $gap_assessment_evidence = new GapAssessmentEvidence();
+        $title = $request->title;
+        $answer_id = $request->answer_id;
+        $client_id = $client->id;
+        $folder_key =  $client_id;
+        if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
+
+            $name = $request->file('file_uploaded')->hashName();
+            // $file_name = $name . "." . $request->file('file_uploaded')->extension();
+            $link = $request->file('file_uploaded')->storeAs('clients/' . $folder_key . '/gap-assessment-evidence', $name, 'public');
+
+            $gap_assessment_evidence->client_id = $client_id;
+            $gap_assessment_evidence->answer_id = $answer_id;
+            $gap_assessment_evidence->link = $link;
+            $gap_assessment_evidence->evidence_title = $title;
+            $gap_assessment_evidence->save();
+        }
+    }
+    public function destroyGapAssessmentEvidenceEvidence(GapAssessmentEvidence $gap_assessment_evidence)
+    {
+        Storage::disk('public')->delete($gap_assessment_evidence->link);
+        $gap_assessment_evidence->delete();
+        return response()->json([], 204);
     }
 }

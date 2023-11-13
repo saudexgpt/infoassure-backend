@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\ClientProjectPlan;
 use App\Models\FeedBack;
+use App\Models\GeneralProjectPlan;
 use App\Models\Project;
 use App\Models\ProjectCertificate;
+use App\Models\Standard;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class ProjectsController extends Controller
@@ -30,7 +34,9 @@ class ProjectsController extends Controller
         $client = Client::with('users')->find($client_id);
         $users = $client->users;
         // $consulting_id = $request->consulting_id;
-        $projects = Project::with('certificate', 'standard', 'users')->where(['client_id' => $client_id, 'year' => $this->getYear()])->orderBy('id', 'DESC')->get(); //->paginate(10);
+        $projects = Project::with([
+            'client', 'certificate', 'standard', 'users'
+        ])->where(['client_id' => $client_id, 'year' => $this->getYear()])->orderBy('id', 'DESC')->get(); //->paginate(10);
         return response()->json(compact('projects', 'users'), 200);
     }
     public function clientProjectCertificates(Request $request)
@@ -84,9 +90,9 @@ class ProjectsController extends Controller
                 'year' => $this->getYear(),
             ]);
 
-            $cert_obj = new ProjectCertificate();
+            // $this->storeClientProjectPlan($client_id, $project->id, $standard_id);
 
-            $cert_obj->create($project);
+            $this->createProjectCertificate($client_id, $project->id);
         }
         $actor = $this->getUser();
         $title = "New Project Created for Client";
@@ -95,6 +101,26 @@ class ProjectsController extends Controller
         $this->auditTrailEvent($title, $description);
         return response()->json(['message' => 'Successful'], 200);
     }
+    private function createProjectCertificate($client_id, $project_id)
+    {
+        ProjectCertificate::firstOrCreate([
+            'client_id' => $client_id,
+            'project_id' => $project_id,
+        ]);
+    }
+    // public function storeClientProjectPlan($client_id, $project_id, $standard_id)
+    // {
+    //     $standard = Standard::with('generalProjectPlans')->find($standard_id);
+    //     $general_project_plans = $standard->generalProjectPlans;
+
+    //     foreach ($general_project_plans as $general_project_plan) {
+    //         ClientProjectPlan::firstOrCreate([
+    //             'client_id' => $client_id,
+    //             'project_id' => $project_id,
+    //             'general_project_plan_id' => $general_project_plan->id,
+    //         ]);
+    //     }
+    // }
     public function assignProjectToClientStaff(Request $request, Project $project)
     {
         $user_ids = $request->user_ids;

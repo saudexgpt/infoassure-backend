@@ -137,7 +137,7 @@ class Controller extends BaseController
     }
     public function setMyProjects()
     {
-        $this->myProjects  = $this->getUser()->projects()->with('certificate', 'standard')->where(['year' => $this->getYear()])->get();
+        $this->myProjects  = $this->getUser()->projects()->with('client', 'certificate', 'standard')->where(['year' => $this->getYear()])->get();
     }
 
     public function getMyProjects()

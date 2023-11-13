@@ -29,9 +29,9 @@ class ReportsController extends Controller
 
         $in_progress = $all_projects_count - $completed_projects;
         $all_projects = $my_projects;
-        foreach ($all_projects as $project) {
-            $project->watchProjectProgress($project);
-        }
+        // foreach ($all_projects as $project) {
+        //     $project->watchProjectProgress($project);
+        // }
         return response()->json(compact('all_projects', 'all_projects_count', 'completed_projects', 'in_progress'), 200);
     }
 

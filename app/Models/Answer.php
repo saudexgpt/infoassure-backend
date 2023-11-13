@@ -34,6 +34,10 @@ class Answer extends Model
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
+    public function evidences()
+    {
+        return $this->hasMany(GapAssessmentEvidence::class, 'answer_id', 'id');
+    }
     /**
      * Store a newly created resource in storage.
      *

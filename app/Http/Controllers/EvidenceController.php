@@ -108,8 +108,9 @@ class EvidenceController extends Controller
             $client_evidence->standard_id = $standard_id;
             if ($client_evidence->save()) {
 
-                $document_name = 'Client_evidence_' . $evidence_id . '_document_' . $client_evidence->id;
-                $file_name = $document_name . "." . $request->file('file_uploaded')->guessClientExtension();
+                $document_name = $request->file('file_uploaded')->getClientOriginalName();
+                $name = $request->file('file_uploaded')->hashName();
+                $file_name = $name . "." . $request->file('file_uploaded')->extension();
                 $link = $request->file('file_uploaded')->storeAs('clients/' . $folder_key . '/evidence', $file_name, 'public');
                 $client_evidence->link = $link;
                 $client_evidence->document_name = $document_name;

@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\FormFieldsController;
 use App\Http\Controllers\PermissionsController;
+use App\Http\Controllers\ProjectPlanController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\QuestionsController;
 use App\Http\Controllers\ReportsController;
@@ -105,6 +106,25 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('client-project-feedback', [ProjectsController::class, 'clientProjectFeedback']);
         Route::post('save-client-feedback', [ProjectsController::class, 'saveClientFeedback']);
     });
+    Route::group(['prefix' => 'project-plans'], function () {
+        Route::get('/fetch-project-phases', [ProjectPlanController::class, 'fetchProjectPhases']);
+        Route::get('/fetch-client-project-plan', [ProjectPlanController::class, 'fetchClientProjectPlan']);
+
+        Route::post('/store-project-phases', [ProjectPlanController::class, 'storeProjectPhases']);
+        Route::put('/update-project-phases/{project_phase}', [ProjectPlanController::class, 'updateProjectPhases']);
+        Route::delete('/destroy-project-phases/{project_phase}', [ProjectPlanController::class, 'destroyProjectPhases']);
+
+        Route::get('/fetch-gen-project-plans', [ProjectPlanController::class, 'fetchGeneralProjectPlan']);
+        Route::post('/store-gen-project-plans', [ProjectPlanController::class, 'storeGeneralProjectPlans']);
+        Route::put('/update-project-plan/{project_plan}', [ProjectPlanController::class, 'updateProjectPlan']);
+        Route::delete('/destroy-project-plans/{project_plan}', [ProjectPlanController::class, 'destroyProjectPlan']);
+        Route::put('/unlink-standard-from-project-plan/{project_plan}', [ProjectPlanController::class, 'unlinkStandardFromProjectPlan']);
+        Route::put('/link-standards-to-project-plan/{project_plan}', [ProjectPlanController::class, 'linkStandardtoProjectPlan']);
+
+
+        Route::post('/store-client-project-plan', [ProjectPlanController::class, 'storeClientProjectPlan']);
+        Route::put('/update-client-project-plan-fields/{client_project_plan}', [ProjectPlanController::class, 'updateClientProjectPlanFields']);
+    });
     Route::group(['prefix' => 'consultings'], function () {
         Route::get('/', [ConsultingsController::class, 'index']);
         Route::get('with-clauses', [ConsultingsController::class, 'fetchWithClauses']);
@@ -153,6 +173,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::post('submit', [AnswersController::class, 'submitAnswers']);
         Route::put('remark-on-answer/{answer}', [AnswersController::class, 'remarkOnAnswer']);
+        Route::post('upload-gap-assessment-evidence', [AnswersController::class, 'uploadGapAssessmentEvidence']);
+        Route::delete('destroy-gap-assessment-evidence/{gap_assessment_evidence}', [AnswersController::class, 'destroyGapAssessmentEvidenceEvidence']);
     });
 
     Route::group(['prefix' => 'reports'], function () {

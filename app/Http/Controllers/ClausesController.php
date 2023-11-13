@@ -36,7 +36,7 @@ class ClausesController extends Controller
         $standard_id = $request->standard_id;
         $clauses = Clause::with(['questions.answer' => function ($q) use ($client_id, $standard_id) {
             $q->where(['standard_id' => $standard_id, 'client_id' => $client_id]);
-        }])->where(['standard_id' => $standard_id])->where('will_have_audit_questions', 1)->orderBy('sort_by')->get();
+        }, 'questions.answer.evidences'])->where(['standard_id' => $standard_id])->where('will_have_audit_questions', 1)->orderBy('sort_by')->get();
         return response()->json(compact('clauses'), 200);
     }
     public function fetchClausesWithDocuments(Request $request)

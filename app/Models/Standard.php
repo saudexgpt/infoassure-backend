@@ -25,4 +25,8 @@ class Standard extends Model
     {
         return $this->hasMany(Question::class);
     }
+    public function generalProjectPlans()
+    {
+        return $this->belongsToMany(GeneralProjectPlan::class);
+    }
 }

@@ -37,7 +37,8 @@ class QuestionsController extends Controller
             'standard_id' => $request->standard_id,
             'clause_id' => $request->clause_id,
             'question' => $request->question,
-            // 'question_type' => $request->question_type,
+            'upload_evidence' => $request->upload_evidence,
+            'can_have_exception' => $request->can_have_exception,
             'answer_type' => $request->answer_type
         ]);
         return response()->json(['message' => 'Successful'], 200);
@@ -89,6 +90,8 @@ class QuestionsController extends Controller
         $question->clause_id = $request->clause_id;
         $question->question = $request->question;
         $question->question_type = $request->question_type;
+        $question->upload_evidence = $request->upload_evidence;
+        $question->can_have_exception = $request->can_have_exception;
         $question->answer_type = $request->answer_type;
         $question->save();
         return response()->json(['message' => 'Successful'], 200);

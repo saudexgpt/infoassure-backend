@@ -32,18 +32,18 @@ class WatchProjectProgress extends Command
         parent::__construct();
     }
 
-    public function watchProgress()
-    {
-        $projects = Project::where(['year' => date('Y', strtotime('now'))])->get();
+    // public function watchProgress()
+    // {
+    //     $projects = Project::where(['year' => date('Y', strtotime('now'))])->get();
 
-        foreach ($projects as $project) {
-            $project->watchProjectProgress($project);
+    //     foreach ($projects as $project) {
+    //         $project->watchProjectProgress($project);
 
-            //create certificate
-            $certificate_object = new ProjectCertificate();
-            $certificate_object->create($project);
-        }
-    }
+    //         //create certificate
+    //         $certificate_object = new ProjectCertificate();
+    //         $certificate_object->create($project);
+    //     }
+    // }
 
     /**
      * Execute the console command.
@@ -52,6 +52,6 @@ class WatchProjectProgress extends Command
      */
     public function handle()
     {
-        $this->watchProgress();
+        // $this->watchProgress();
     }
 }
