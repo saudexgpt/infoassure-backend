@@ -178,10 +178,11 @@ class ProjectsController extends Controller
         return response()->json(['message' => 'Successful'], 200);
     }
 
-    public function toggleCompletion(Request $request, Project $project)
+    public function updateRandomFields(Request $request, Project $project)
     {
-        $is_completed = $request->value;
-        $project->is_completed = $is_completed;
+        $field = $request->field;
+        $value = $request->value;
+        $project->$field = $value;
         $project->save();
         return response()->json(['message' => 'Successful'], 200);
     }

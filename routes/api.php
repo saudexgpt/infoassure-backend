@@ -98,7 +98,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('assign-to-user/{project}', [ProjectsController::class, 'assignProjectToClientStaff']);
 
         Route::put('set-dates/{project}', [ProjectsController::class, 'setDates']);
-        Route::put('toggle-completion/{project}', [ProjectsController::class, 'toggleCompletion']);
+        Route::put('update-random-fields/{project}', [ProjectsController::class, 'updateRandomFields']);
 
         Route::delete('destroy/{project}', [ProjectsController::class, 'destroy']);
         Route::post('upload-certificate', [ProjectsController::class, 'uploadProjectCertificate']);

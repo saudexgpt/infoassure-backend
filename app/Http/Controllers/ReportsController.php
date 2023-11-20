@@ -37,14 +37,40 @@ class ReportsController extends Controller
 
     public function clientProjectDataAnalysis(Request $request)
     {
-        $client_id = $request->client_id;
+        $client_id = $this->getClient()->id;
         $project_id = $request->project_id;
-        $uploaded_documents = Upload::where(['client_id' => $client_id, 'project_id' => $project_id, 'is_exception' => 0])->where('link', '!=', NULL)->count();
-        $expected_documents = Upload::where(['client_id' => $client_id, 'project_id' => $project_id])->count();
-        $answered_questions = Answer::where(['client_id' => $client_id, 'project_id' => $project_id, 'is_exception' => 0])->where('is_submitted', 1)->count();
-        $all_questions = Answer::where(['client_id' => $client_id, 'project_id' => $project_id])->count();
-        $exceptions = Exception::where(['client_id' => $client_id, 'project_id' => $project_id])->count();
-        return response()->json(compact('uploaded_documents', 'expected_documents', 'answered_questions', 'all_questions', 'exceptions'), 200);
+        if ($project_id === 'all') {
+            $projectIds = $this->getMyProjects()->pluck('id');
+            $condition = ['client_id' => $client_id];
+            $uploaded_documents = Upload::where($condition)->whereIn('project_id', $projectIds)->where('is_exception', 0)->where('link', '!=', NULL)->count();
+
+            $expected_documents = Upload::where($condition)->whereIn('project_id', $projectIds)->count();
+            $answered_questions = Answer::where($condition)
+                ->whereIn('project_id', $projectIds)
+                ->where('is_exception', 0)
+                ->where('status', 'Closed')
+                ->count();
+            $all_questions = Answer::where($condition)->whereIn('project_id', $projectIds)->count();
+            $exceptions = Exception::where($condition)->whereIn('project_id', $projectIds)->count();
+
+            $my_projects = $this->getUser()->projects()->groupBy('client_id')->select(\DB::raw('AVG(progress) as project_progress'))->first();
+            $project_progress = $my_projects->project_progress;
+        } else {
+            $project_progress = Project::find($project_id)->progress;
+            $condition = ['project_id' => $project_id];
+            $uploaded_documents = Upload::where($condition)->where('is_exception', 0)->where('link', '!=', NULL)->count();
+
+            $expected_documents = Upload::where($condition)->count();
+            $answered_questions = Answer::where($condition)
+                ->where('is_exception', 0)
+                ->where('status', 'Closed')
+                ->count();
+            $all_questions = Answer::where($condition)->count();
+            $exceptions = Exception::where($condition)->count();
+        }
+
+
+        return response()->json(compact('uploaded_documents', 'expected_documents', 'answered_questions', 'all_questions', 'exceptions', 'project_progress'), 200);
     }
 
     public function clientProjectAssessmentSummaryReport(Request $request)
