@@ -330,8 +330,9 @@ class ClausesController extends Controller
     }
     public function remarkOnUpload(Request $request, Upload $upload)
     {
-        $remark = $request->remark;
-        $upload->remark = $remark;
+        $value = $request->value;
+        $field = $request->field;
+        $upload->$field = $value;
         $upload->save();
 
         $clause = Clause::find($upload->clause_id);
