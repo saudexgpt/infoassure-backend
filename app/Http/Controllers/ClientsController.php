@@ -53,7 +53,7 @@ class ClientsController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
-        if ($user->role !== 'partner') {
+        if (!$user->haRole('partner')) {
             return response()->json(['message' => 'Clients registration is restricted to Partners only'], 500);
         }
         $partner_id = $this->getPartner()->id;
@@ -148,7 +148,7 @@ class ClientsController extends Controller
     public function deleteClientUser(Request $request, User $user)
     {
         $actor = $this->getUser();
-        if ($actor->role !== 'partner') {
+        if (!$user->haRole('partner')) {
             return response()->json(['message' => 'Clients are managed by Partners only'], 500);
         }
         $title = "Client User Deletion";
