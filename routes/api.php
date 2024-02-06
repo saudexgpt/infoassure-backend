@@ -9,12 +9,15 @@ use App\Http\Controllers\ConsultingsController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\FormFieldsController;
+use App\Http\Controllers\PartnersController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\ProjectPlanController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\QuestionsController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\RiskAssessmentsController;
 use App\Http\Controllers\RolesController;
+use App\Http\Controllers\SOAController;
 use App\Http\Controllers\StandardsController;
 use App\Http\Controllers\UsersController;
 
@@ -87,6 +90,19 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('send-login-credentials/{user}', [ClientsController::class, 'sendLoginCredentials']);
         Route::put('toggle-client-suspension/{client}', [ClientsController::class, 'toggleClientSuspension']);
     });
+    Route::group(['prefix' => 'partners'], function () {
+        Route::get('/', [PartnersController::class, 'index']);
+
+        Route::post('register', [PartnersController::class, 'store']);
+        Route::post('register-partner-user', [PartnersController::class, 'registerPartnerUser']);
+
+        Route::put('update/{partner}', [PartnersController::class, 'update']);
+        Route::put('update-partner-user/{user}', [PartnersController::class, 'updatePartnerUser']);
+        Route::delete('delete-partner-user/{user}', [PartnersController::class, 'deletePartnerUser']);
+
+        Route::put('send-login-credentials/{user}', [PartnersController::class, 'sendLoginCredentials']);
+        Route::put('toggle-partner-suspension/{partner}', [PartnersController::class, 'togglePartnerSuspension']);
+    });
 
     Route::group(['prefix' => 'projects'], function () {
         Route::get('/', [ProjectsController::class, 'index']);
@@ -105,6 +121,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('client-project-certificates', [ProjectsController::class, 'clientProjectCertificates']);
         Route::get('client-project-feedback', [ProjectsController::class, 'clientProjectFeedback']);
         Route::post('save-client-feedback', [ProjectsController::class, 'saveClientFeedback']);
+
+        Route::post('assign-projects-to-consultant', [ProjectsController::class, 'assignProjectsToConsultant']);
+        Route::post('unassign-project-from-consultant', [ProjectsController::class, 'unassignProjectFromConsultant']);
     });
     Route::group(['prefix' => 'project-plans'], function () {
         Route::get('/fetch-project-phases', [ProjectPlanController::class, 'fetchProjectPhases']);
@@ -181,11 +200,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('client-data-analysis-dashboard', [ReportsController::class, 'clientDataAnalysisDashbord']);
         Route::get('client-project-data-analysis', [ReportsController::class, 'clientProjectDataAnalysis']);
         Route::get('admin-data-analysis-dashboard', [ReportsController::class, 'adminDataAnalysisDashbord']);
-
+        Route::get('partner-data-analysis-dashboard', [ReportsController::class, 'partnerDataAnalysisDashbord']);
 
         Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
         Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
         Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
+        Route::get('soa-summary', [ReportsController::class, 'soaSummary']);
+        Route::get('risk-assessment-summary', [ReportsController::class, 'riskAssessmentSummary']);
     });
 
     Route::group(['prefix' => 'exceptions'], function () {
@@ -207,6 +228,49 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::delete('destroy-client-evidence/{client_evidence}', [EvidenceController::class, 'destroyClientEvidence']);
     });
 
+    ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
+    Route::group(['prefix' => 'risk-assessment'], function () {
+        Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
+        Route::get('fetch-impacts', [RiskAssessmentsController::class, 'fetchImpacts']);
+        Route::get('fetch-categories', [RiskAssessmentsController::class, 'fetchCategories']);
+        Route::get('fetch-likelihoods', [RiskAssessmentsController::class, 'fetchLikelihoods']);
+
+        Route::post('save-impacts', [RiskAssessmentsController::class, 'saveImpacts']);
+        Route::post('save-asset-types', [RiskAssessmentsController::class, 'saveAssetTypes']);
+        Route::post('save-categories', [RiskAssessmentsController::class, 'saveCategories']);
+        Route::post('save-likelihoods', [RiskAssessmentsController::class, 'saveLikelihoods']);
+
+        Route::delete('delete-impact/{value}', [RiskAssessmentsController::class, 'deleteImpact']);
+        Route::delete('delete-asset-type/{value}', [RiskAssessmentsController::class, 'deleteAssetType']);
+        Route::delete('delete-category{value}', [RiskAssessmentsController::class, 'deleteCategory']);
+        Route::delete('delete-likelihood/{value}', [RiskAssessmentsController::class, 'deleteLikelihood']);
+
+
+        Route::get('fetch-risk_assessments', [RiskAssessmentsController::class, 'fetchRiskAssessments']);
+        Route::post('store-risk-assessment', [RiskAssessmentsController::class, 'store']);
+
+        Route::put('update-fields/{riskAssessment}', [RiskAssessmentsController::class, 'updateFields']);
+    });
+    ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
+
+    ///////////////////////////////////STATEMENT OF AVAILABILITY//////////////////////////////////////
+    Route::group(['prefix' => 'soa'], function () {
+        Route::get('fetch-areas', [SOAController::class, 'fetchAreas']);
+        Route::get('fetch-controls', [SOAController::class, 'fetchControls']);
+
+        Route::post('save-areas', [SOAController::class, 'saveAreas']);
+        Route::post('save-controls', [SOAController::class, 'saveControl']);
+
+        Route::delete('delete-area/{value}', [SOAController::class, 'deleteArea']);
+        Route::delete('delete-control{value}', [SOAController::class, 'deleteControl']);
+
+
+        Route::get('fetch-soa', [SOAController::class, 'fetchSOA']);
+        Route::put('update-soa/{soa}', [SOAController::class, 'update']);
+
+        Route::put('update-fields/{riskAssessment}', [SOAController::class, 'updateFields']);
+    });
+    ///////////////////////////////////STATEMENT OF AVAILABILITY////////////////////////////////////////////////
 
     // Access Control Roles & Permission
     Route::group(['prefix' => 'acl'], function () {

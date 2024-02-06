@@ -19,11 +19,17 @@ class ClientsController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $this->getUser();
+        $condition = [];
+        if ($user->haRole('partner') && !$user->haRole('super')) {
+            $partner_id = $this->getPartner()->id;
+            $condition = ['partner_id' => $partner_id];
+        }
         if (isset($request->option) && $request->option === 'all') {
-            $clients = Client::orderBy('name')->get();
+            $clients = Client::where($condition)->orderBy('name')->get();
         } else {
 
-            $clients = Client::with('users')->orderBy('name')->paginate($request->limit);
+            $clients = Client::with('users')->where($condition)->orderBy('name')->paginate($request->limit);
         }
         return response()->json(compact('clients'), 200);
     }
@@ -46,11 +52,17 @@ class ClientsController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $this->getUser();
+        if ($user->role !== 'partner') {
+            return response()->json(['message' => 'Clients registration is restricted to Partners only'], 500);
+        }
+        $partner_id = $this->getPartner()->id;
 
         $contact_email = $request->contact_email;
         $client = Client::where('contact_email', $contact_email)->first();
         if (!$client) {
             $client = new Client();
+            $client->partner_id = $partner_id;
             $client->name = $request->organization_name;
             $client->contact_email = $request->contact_email;
             $client->contact_phone = $request->contact_phone;
@@ -136,6 +148,9 @@ class ClientsController extends Controller
     public function deleteClientUser(Request $request, User $user)
     {
         $actor = $this->getUser();
+        if ($actor->role !== 'partner') {
+            return response()->json(['message' => 'Clients are managed by Partners only'], 500);
+        }
         $title = "Client User Deletion";
         //log this event
         $description = "$user->name was deleted by $actor->name";

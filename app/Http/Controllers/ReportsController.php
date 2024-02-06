@@ -7,7 +7,10 @@ use App\Models\Client;
 use App\Models\Upload;
 use App\Models\Exception;
 use App\Models\Project;
+use App\Models\RiskAssessment;
+use App\Models\SOAArea;
 use App\Models\Standard;
+use App\Models\StatementOfApplicability;
 use Illuminate\Http\Request;
 
 class ReportsController extends Controller
@@ -180,6 +183,15 @@ class ReportsController extends Controller
         $subtitle = $project->standard->name;
         return response()->json(compact('data', 'subtitle'), 200);
     }
+
+    public function partnerDataAnalysisDashbord()
+    {
+        $partner_id = $this->getPartner()->id;
+        $clients = Client::where('partner_id', $partner_id)->count();
+        $projects = Project::where('partner_id', $partner_id)->count();
+        // $uploads = Upload::where('is_exception', 0)->where('link', '!=', NULL)->count();
+        return response()->json(compact('clients', 'projects'), 200);
+    }
     public function adminDataAnalysisDashbord()
     {
         // $uploaded_documents = Upload::where('is_exception', 0)->where('link', '!=', NULL)->count();
@@ -193,5 +205,79 @@ class ReportsController extends Controller
         $standards = Standard::count();
         $uploads = Upload::where('is_exception', 0)->where('link', '!=', NULL)->count();
         return response()->json(compact('clients', 'projects', 'standards', 'uploads'), 200);
+    }
+
+    public function soaSummary(Request $request)
+    {
+        $client_id = $request->client_id;
+        $reports = SOAArea::with('controls')->orderBy('name')->get();
+        $controls = [];
+        $categories = [];
+        $applicable = [];
+        $implemented = [];
+        $tabular_presentations = [];
+        foreach ($reports as $report) {
+            $iso_controls = count($report->controls);
+            $categories[] = $report->name;
+            $applicable_control = StatementOfApplicability::where([
+                'client_id' => $client_id,
+                's_o_a_area_id' => $report->id
+            ])->where('applicable', 'Yes')->count();
+            $implemented_control = StatementOfApplicability::where([
+                'client_id' => $client_id,
+                's_o_a_area_id' => $report->id
+            ])->where('applicable', 'Yes')->where('implemented', 'Yes')->count();
+
+            $controls[] = [
+                'name' => $report->name,
+                'y' => $iso_controls,
+            ];
+            $applicable[] = [
+                'name' => $report->name,
+                'y' => $applicable_control,
+            ];
+            $implemented[] = [
+                'name' => $report->name,
+                'y' => $implemented_control,
+            ];
+            $percent_control_applicable = ($iso_controls > 0) ? $applicable_control / $iso_controls * 100 : 0;
+            $percent_control_implemented = ($applicable_control > 0) ? $implemented_control / $applicable_control * 100 : 0;
+            $report->no_of_controls = $iso_controls;
+            $report->applicable_controls = $applicable_control;
+            $report->implemented_controls = $implemented_control;
+            $report->percent_control_applicable = $percent_control_applicable;
+            $report->percent_control_implemented = $percent_control_implemented;
+            $tabular_presentations[] = $report;
+        }
+        $series = [
+            [
+                'name' => 'Number of ISO/IEC 27001 Controls',
+                'data' => $controls, //array format
+                // 'color' => '#00a65a',
+            ],
+            [
+                'name' => 'Number of Applicable Controls',
+                'data' => $applicable, //array format
+                // 'color' => '#00a65a',
+            ],
+            [
+                'name' => 'Number of Applicable Controls Implemented',
+                'data' => $implemented, //array format
+                // 'color' => '#f00c12',
+            ],
+        ];
+        $subtitle = '';
+        return response()->json(compact('categories', 'series', 'subtitle', 'tabular_presentations'), 200);
+    }
+
+    public function riskAssessmentSummary(Request $request)
+    {
+        $client_id = $request->client_id;
+        $summary = RiskAssessment::join('asset_types', 'asset_types.id', '=', 'risk_assessments.asset_type_id')
+            ->groupBy('asset')
+            ->where('client_id', $client_id)
+            ->select('asset_types.name as asset_type', 'risk_owner', 'asset',  \DB::raw('COUNT(*) as no_of_threats'), \DB::raw('COUNT(CASE WHEN risk_category = "Low" THEN risk_assessments.id END ) as lows'), \DB::raw('COUNT(CASE WHEN risk_category = "Medium" THEN risk_assessments.id END ) as mediums'), \DB::raw('COUNT(CASE WHEN risk_category = "High" THEN risk_assessments.id END ) as highs'))
+            ->get();
+        return response()->json(compact('summary'), 200);
     }
 }

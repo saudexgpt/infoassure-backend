@@ -77,15 +77,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Project::class);
     }
-    public function isSuperAdmin(): bool
+    public function consultantProjects()
     {
-        foreach ($this->roles as $role) {
-            if ($role->isSuperAdmin()) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->belongsToMany(ConsultantProject::class);
     }
     public function uploadFile($request, $file_name, $folder)
     {
@@ -120,10 +114,31 @@ class User extends Authenticatable
         $user_password->save();
     }
 
-    public function isAdmin(): bool
+
+    public function isSuperAdmin()
+    {
+        foreach ($this->roles as $role) {
+            if ($role->isSuperAdmin()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    public function isAdmin()
     {
         foreach ($this->roles as $role) {
             if ($role->isAdmin()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    public function haRole($userRole)
+    {
+        foreach ($this->roles as $role) {
+            if ($role->hasRole($userRole)) {
                 return true;
             }
         }

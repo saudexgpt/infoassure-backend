@@ -10,7 +10,7 @@ class Project extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
-        'client_id', 'consulting_id', 'standard_id', 'year'
+        'partner_id', 'client_id', 'consulting_id', 'standard_id', 'year'
     ];
     public function client()
     {
@@ -27,6 +27,10 @@ class Project extends Model
     public function users()
     {
         return $this->belongsToMany(User::class);
+    }
+    public function consultants()
+    {
+        return $this->belongsToMany(User::class, 'project_consultant', 'project_id', 'user_id');
     }
     public function certificate()
     {

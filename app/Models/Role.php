@@ -15,4 +15,8 @@ class Role extends LaratrustRole
     {
         return $this->name === 'admin';
     }
+    public function hasRole($role): bool
+    {
+        return $this->name === $role;
+    }
 }

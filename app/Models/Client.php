@@ -19,4 +19,8 @@ class Client extends Model
     {
         return $this->belongsToMany(User::class);
     }
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
 }

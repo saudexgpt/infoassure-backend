@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\ClientProjectPlan;
+use App\Models\ConsultantProject;
 use App\Models\FeedBack;
 use App\Models\GeneralProjectPlan;
 use App\Models\Project;
@@ -24,19 +25,26 @@ class ProjectsController extends Controller
     {
         $client = $this->getClient();
         // $consulting_id = $request->consulting_id;
-        $projects = Project::with('certificate', 'standard')->where(['client_id' => $client->id, 'year' => $this->getYear()])->orderBy('id', 'DESC')->get(); //->paginate(10);
+        $projects = Project::with('certificate', 'standard')->where(['client_id' => $client->id/*, 'year' => $this->getYear()*/])->orderBy('id', 'DESC')->get(); //->paginate(10);
         return response()->json(compact('projects'), 200);
     }
 
     public function clientProjects(Request $request)
     {
+        $user = $this->getUser();
+        $condition = [];
+        if ($user->haRole('partner') && !$user->haRole('super')) {
+            $partner_id = $this->getPartner()->id;
+            $condition = ['partner_id' => $partner_id];
+        }
         $client_id = $request->client_id;
         $client = Client::with('users')->find($client_id);
         $users = $client->users;
         // $consulting_id = $request->consulting_id;
         $projects = Project::with([
-            'client', 'certificate', 'standard', 'users'
-        ])->where(['client_id' => $client_id, 'year' => $this->getYear()])->orderBy('id', 'DESC')->get(); //->paginate(10);
+            'client', 'certificate', 'standard',
+            'users', 'consultants'
+        ])->where($condition)->where(['client_id' => $client_id/*, 'year' => $this->getYear()*/])->orderBy('id', 'DESC')->get(); //->paginate(10);
         return response()->json(compact('projects', 'users'), 200);
     }
     public function clientProjectCertificates(Request $request)
@@ -77,6 +85,7 @@ class ProjectsController extends Controller
      */
     public function store(Request $request)
     {
+        $partner_id = $this->getPartner()->id;
         $client_id = $request->client_id;
         $client = Client::find($client_id);
         // $user = $this->getUser();
@@ -84,6 +93,7 @@ class ProjectsController extends Controller
         $standards = json_decode(json_encode($request->standards));
         foreach ($standards as $standard_id) {
             $project = Project::firstOrCreate([
+                'partner_id' => $partner_id,
                 'client_id' => $client_id,
                 'consulting_id' => $consulting_id,
                 'standard_id' => $standard_id,
@@ -127,6 +137,25 @@ class ProjectsController extends Controller
         $project->users()->sync($user_ids); //->paginate(10);
         return response()->json([], 204);
     }
+
+    public function assignProjectsToConsultant(Request $request)
+    {
+        $user_id = $request->user_id;
+        $project_ids = $request->project_ids;
+        foreach ($project_ids as $project_id) {
+            $project = Project::find($project_id);
+            $project->consultants()->sync($user_id);
+        }
+        return response()->json([], 204);
+    }
+    public function unassignProjectFromConsultant(Request $request)
+    {
+        $user_id = $request->user_id;
+        $project_id = $request->project_id;
+        ConsultantProject::where(['project_id' => $project_id, 'user_id' => $user_id])->delete();
+        return response()->json([], 204);
+    }
+
     public function saveClientFeedback(Request $request)
     {
         $client_id = $request->client_id;
