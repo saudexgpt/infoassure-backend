@@ -20,7 +20,7 @@ class UsersController extends Controller
     {
         $user = $this->getUser();
         $staff = [];
-        if ($user->role === 'partner') {
+        if ($user->haRole('partner')) {
             $partner = $this->getPartner();
             $staff = $partner->users()->with('roles', 'permissions')->get();
         }
