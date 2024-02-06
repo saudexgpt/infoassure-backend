@@ -10,7 +10,7 @@ class ClientProjectPlan extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
-        'client_id', 'project_id', 'general_project_plan_id', 'project_phase_id'
+        'partner_id', 'client_id', 'project_id', 'general_project_plan_id', 'project_phase_id'
     ];
     public function projectPhase()
     {
@@ -19,6 +19,10 @@ class ClientProjectPlan extends Model
     public function generalProjectPlan()
     {
         return $this->belongsTo(GeneralProjectPlan::class);
+    }
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
     }
     public function client()
     {

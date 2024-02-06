@@ -14,16 +14,18 @@ class ProjectPlanController extends Controller
     //
     public function fetchProjectPhases(Request $request)
     {
-        $project_phases =  ProjectPhase::get();
+        $partner_id = $this->getPartner()->id;
+        $project_phases =  ProjectPhase::where('partner_id', $partner_id)->get();
         return response()->json(compact('project_phases'), 200);
     }
     public function fetchClientProjectPlan(Request $request)
     {
         $client_id = $request->client_id;
         $project_id = $request->project_id;
+        $partner_id = $this->getPartner()->id;
         $project_phases =  ClientProjectPlan::with('generalProjectPlan')
             ->join('project_phases', 'project_phases.id', 'client_project_plans.project_phase_id')
-            ->where(['client_id' => $client_id, 'project_id' => $project_id])
+            ->where(['client_project_plans.partner_id' => $partner_id, 'client_id' => $client_id, 'project_id' => $project_id])
             ->select('*', 'client_project_plans.id as id')
             ->get()
             ->groupBy('title');
@@ -31,10 +33,12 @@ class ProjectPlanController extends Controller
     }
     public function storeProjectPhases(Request $request)
     {
+        $partner_id = $this->getPartner()->id;
         $titles = $request->titles;
         $titles_array = explode('|', $titles);
         foreach ($titles_array as $title) {
             ProjectPhase::firstOrCreate([
+                'partner_id' => $partner_id,
                 'title' => trim($title)
             ]);
         }
@@ -112,6 +116,7 @@ class ProjectPlanController extends Controller
 
     public function storeClientProjectPlan(Request $request)
     {
+        $partner_id = $this->getPartner()->id;
         $client_id = $request->client_id;
         $project_id = $request->project_id;
         $standard_id = $request->standard_id;
@@ -120,6 +125,7 @@ class ProjectPlanController extends Controller
 
         foreach ($general_project_plans as $general_project_plan) {
             ClientProjectPlan::firstOrCreate([
+                'partner_id' => $partner_id,
                 'client_id' => $client_id,
                 'project_id' => $project_id,
                 'project_phase_id' => $general_project_plan->project_phase_id,

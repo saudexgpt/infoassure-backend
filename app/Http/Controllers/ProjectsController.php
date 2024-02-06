@@ -140,11 +140,11 @@ class ProjectsController extends Controller
 
     public function assignProjectsToConsultant(Request $request)
     {
-        $user_id = $request->user_id;
+        $user_ids = $request->user_ids;
         $project_ids = $request->project_ids;
         foreach ($project_ids as $project_id) {
             $project = Project::find($project_id);
-            $project->consultants()->sync($user_id);
+            $project->consultants()->sync($user_ids);
         }
         return response()->json([], 204);
     }

@@ -10,10 +10,14 @@ class ProjectPhase extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
-        'title'
+        'title', 'partner_id'
     ];
     public function generalProjectPlans()
     {
         return $this->hasMany(GeneralProjectPlan::class);
+    }
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
     }
 }
