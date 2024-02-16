@@ -116,10 +116,10 @@ class RiskAssessmentsController extends Controller
     public function fetchRiskAssessments(Request $request)
     {
         $client_id = $request->client_id;
-        // $consulting_id = $request->consulting_id;
+        $standard_id = $request->standard_id;
         $risk_assessments = RiskAssessment::with([
             'assetType'
-        ])->where(['client_id' => $client_id])->orderBy('id', 'DESC')->get(); //->paginate(10);
+        ])->where(['client_id' => $client_id, 'standard_id' => $standard_id])->orderBy('id', 'DESC')->get(); //->paginate(10);
         return response()->json(compact('risk_assessments'), 200);
     }
     /**
@@ -132,9 +132,10 @@ class RiskAssessmentsController extends Controller
     {
         //
         $client_id = $request->client_id; // $this->getClient()->id;
+        $standard_id = $request->standard_id;
         // return $request;
         $assessments = json_decode(json_encode($request->assessments));
-        $count = RiskAssessment::where('client_id', $client_id)->orderBy('ra_id', 'DESC')->select('ra_id')->first();
+        $count = RiskAssessment::where(['client_id' => $client_id, 'standard_id' => $standard_id])->orderBy('ra_id', 'DESC')->select('ra_id')->first();
         if ($count) {
 
             $ra_id = $count->ra_id + 1;
@@ -149,6 +150,8 @@ class RiskAssessmentsController extends Controller
             $new_entry = new RiskAssessment();
 
             $check_for_same_entry = RiskAssessment::where([
+                'client_id' => $client_id,
+                'standard_id' => $standard_id,
                 'asset_type_id' => $asset_type_id,
                 'asset' => $asset,
                 'risk_owner' => $risk_owner,
@@ -160,6 +163,7 @@ class RiskAssessmentsController extends Controller
                 $ra_id++;
             }
             $new_entry->client_id = $client_id;
+            $new_entry->standard_id = $standard_id;
             $new_entry->asset_type_id = $asset_type_id;
             $new_entry->asset = $asset;
             $new_entry->risk_owner = $risk_owner;

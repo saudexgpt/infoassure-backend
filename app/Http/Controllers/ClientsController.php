@@ -21,6 +21,10 @@ class ClientsController extends Controller
     {
         $user = $this->getUser();
         $condition = [];
+        if ($user->role === 'client') {
+            $id = $this->getClient()->id;
+            $condition = ['id' => $id];
+        }
         if ($user->haRole('partner') && !$user->haRole('super')) {
             $partner_id = $this->getPartner()->id;
             $condition = ['partner_id' => $partner_id];

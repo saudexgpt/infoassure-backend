@@ -207,6 +207,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
         Route::get('soa-summary', [ReportsController::class, 'soaSummary']);
         Route::get('risk-assessment-summary', [ReportsController::class, 'riskAssessmentSummary']);
+        Route::get('fetch-project-answers', [ReportsController::class, 'fetchProjectAnswers']);
     });
 
     Route::group(['prefix' => 'exceptions'], function () {

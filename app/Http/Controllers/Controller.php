@@ -2,35 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\ClassEvent;
-use App\Events\AuditTrailEvent;
-use App\Events\SubjectEvent;
-use App\Http\Resources\UserResource;
-use App\Models\ActivatedModule;
 use App\Notifications\AuditTrail;
-use App\Models\ClassTeacher;
 use App\Models\Client;
-use App\Models\CurriculumLevelGroup;
-use App\Models\Gallery;
-use App\Models\Grade;
-use App\Models\Guardian;
-use App\Models\Level;
-use App\Models\LocalGovernmentArea;
-use App\Models\News;
 use App\Models\Partner;
 use App\Models\Permission;
-use App\Models\Project;
-use App\Models\ResultDisplaySetting;
 use App\Models\Role;
-use App\Models\School;
-use App\Models\SSession;
-use App\Models\Staff;
-use App\Models\StaffRole;
-use App\Models\Student;
-use App\Models\StudentsInClass;
-use App\Models\Subject;
-use App\Models\Term;
-use App\Models\UniqNumGen;
 use App\Models\User;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Routing\Controller as BaseController;
@@ -178,29 +154,6 @@ class Controller extends BaseController
     public function getCurrency()
     {
         return $this->currency;
-    }
-
-    public function setColorCode(Request $request)
-    {
-        //return $request->color_code;
-        if ($request->option == 'grade') {
-            $grade = Grade::find($request->id);
-            $grade->color_code = '#' . $request->color_code;
-
-            if ($grade->save()) {
-                return 'success';
-            }
-        } else {
-            if ($request->option == 'subject') {
-                $subject = Subject::find($request->id);
-                $subject->color_code = '#' . $request->color_code;
-
-                if ($subject->save()) {
-                    return 'success';
-                }
-            }
-        }
-        return 'failed';
     }
 
 

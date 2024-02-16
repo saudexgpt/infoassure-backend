@@ -11,7 +11,8 @@ class Standard extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'name',
-        'consulting_id'
+        'consulting_id',
+        'assessment_activities'
     ];
     public function consulting()
     {

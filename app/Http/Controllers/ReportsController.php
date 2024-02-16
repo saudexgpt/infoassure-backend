@@ -82,7 +82,7 @@ class ReportsController extends Controller
         $project_id = $request->project_id;
         $reports = Answer::where(['client_id' => $client_id, 'project_id' => $project_id])
             ->where('is_submitted', 1)
-            ->select(\DB::raw('COUNT(CASE WHEN yes_or_no = "YES" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN yes_or_no = "NO" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN is_exception = 1 OR yes_or_no IS NULL THEN answers.id END ) as not_applicable'))
+            ->select(\DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->first();
         $project = Project::with('standard')->find($project_id);
         $subtitle = $project->standard->name;
@@ -96,12 +96,13 @@ class ReportsController extends Controller
             ->groupBy('clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
             ->where('is_submitted', 1)
-            ->select('clauses.name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN yes_or_no = "YES" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN yes_or_no = "NO" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN is_exception = 1 OR yes_or_no IS NULL THEN answers.id END ) as not_applicable'))
+            ->select('clauses.name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->get();
         $categories = [];
         $conformity = [];
         $non_conformity = [];
         $not_applicable = [];
+        $open_for_imporvement = [];
         foreach ($reports as $report) {
             $total = $report->total;
             $categories[] = $report->name;
@@ -118,6 +119,11 @@ class ReportsController extends Controller
                 'name' => $report->name,
                 'y' => (float) (($report->not_applicable > 0) ? sprintf('%0.1f', $report->not_applicable * 100 / $total) : 0),
             ];
+
+            $open_for_imporvement[] = [
+                'name' => $report->name,
+                'y' => (float) (($report->open_for_imporvement > 0) ? sprintf('%0.1f', $report->open_for_imporvement * 100 / $total) : 0),
+            ];
         }
         $series = [
             [
@@ -130,6 +136,12 @@ class ReportsController extends Controller
                 'name' => 'Non Conformity',
                 'data' => $non_conformity, //array format
                 'color' => '#f00c12',
+                'stack' => 'Management Clause'
+            ],
+            [
+                'name' => 'Opportunity For Improvement',
+                'data' => $open_for_imporvement, //array format
+                'color' => '#f0ff00',
                 'stack' => 'Management Clause'
             ],
             [
@@ -210,6 +222,7 @@ class ReportsController extends Controller
     public function soaSummary(Request $request)
     {
         $client_id = $request->client_id;
+        $standard_id = $request->standard_id;
         $reports = SOAArea::with('controls')->orderBy('name')->get();
         $controls = [];
         $categories = [];
@@ -221,10 +234,12 @@ class ReportsController extends Controller
             $categories[] = $report->name;
             $applicable_control = StatementOfApplicability::where([
                 'client_id' => $client_id,
+                'standard_id' => $standard_id,
                 's_o_a_area_id' => $report->id
             ])->where('applicable', 'Yes')->count();
             $implemented_control = StatementOfApplicability::where([
                 'client_id' => $client_id,
+                'standard_id' => $standard_id,
                 's_o_a_area_id' => $report->id
             ])->where('applicable', 'Yes')->where('implemented', 'Yes')->count();
 
@@ -273,11 +288,22 @@ class ReportsController extends Controller
     public function riskAssessmentSummary(Request $request)
     {
         $client_id = $request->client_id;
+        $standard_id = $request->standard_id;
         $summary = RiskAssessment::join('asset_types', 'asset_types.id', '=', 'risk_assessments.asset_type_id')
             ->groupBy('asset')
-            ->where('client_id', $client_id)
+            ->where(['client_id' => $client_id, 'standard_id' => $standard_id])
             ->select('asset_types.name as asset_type', 'risk_owner', 'asset',  \DB::raw('COUNT(*) as no_of_threats'), \DB::raw('COUNT(CASE WHEN risk_category = "Low" THEN risk_assessments.id END ) as lows'), \DB::raw('COUNT(CASE WHEN risk_category = "Medium" THEN risk_assessments.id END ) as mediums'), \DB::raw('COUNT(CASE WHEN risk_category = "High" THEN risk_assessments.id END ) as highs'))
             ->get();
         return response()->json(compact('summary'), 200);
+    }
+    public function fetchProjectAnswers(Request $request)
+    {
+        $project_id = $request->project_id;
+        $standard_id = $request->standard_id;
+        $assessment_answers = Answer::with('client', 'clause', 'standard', 'question')
+            ->where(['project_id' => $project_id])
+            ->orderBy('clause_id')
+            ->get();
+        return response()->json(compact('assessment_answers'), 200);
     }
 }

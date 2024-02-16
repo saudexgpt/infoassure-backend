@@ -226,9 +226,9 @@ class AuthController extends Controller
         $token = hash('sha256', $request->token);
         $_2fa = TwoFactorAuthentication::where(['user_id' => $user->id, 'token' => $token])->first();
         if ($_2fa) {
-            if ($login_time - $_2fa->timestamp <= 3600) {
+            if ($login_time - $_2fa->timestamp <= 300) {
                 $_2fa->delete();
-                // this means the time of applying the passcode is within 3600seconds (1hr)
+                // this means the time of applying the passcode is within 300seconds (5mins)
 
 
                 return $this->generateAuthorizationKey($user);

@@ -15,7 +15,8 @@ class ProjectPlanController extends Controller
     public function fetchProjectPhases(Request $request)
     {
         $partner_id = $this->getPartner()->id;
-        $project_phases =  ProjectPhase::where('partner_id', $partner_id)->get();
+        $standard_id = $request->standard_id;
+        $project_phases =  ProjectPhase::with('standard')->where(['partner_id' => $partner_id, 'standard_id' => $standard_id])->get();
         return response()->json(compact('project_phases'), 200);
     }
     public function fetchClientProjectPlan(Request $request)
@@ -35,12 +36,17 @@ class ProjectPlanController extends Controller
     {
         $partner_id = $this->getPartner()->id;
         $titles = $request->titles;
+        $standard_ids = $request->standard_ids;
         $titles_array = explode('|', $titles);
-        foreach ($titles_array as $title) {
-            ProjectPhase::firstOrCreate([
-                'partner_id' => $partner_id,
-                'title' => trim($title)
-            ]);
+        foreach ($standard_ids as $standard_id) {
+
+            foreach ($titles_array as $title) {
+                ProjectPhase::firstOrCreate([
+                    'standard_id' => $standard_id,
+                    'partner_id' => $partner_id,
+                    'title' => trim($title)
+                ]);
+            }
         }
         return response()->json(['message' => 'Successful'], 200);
     }
@@ -62,14 +68,15 @@ class ProjectPlanController extends Controller
     public function fetchGeneralProjectPlan(Request $request)
     {
         $standard_id = $request->standard_id;
-        $project_phase_id = $request->project_phase_id;
-        $general_project_plans =  GeneralProjectPlan::with('standards', 'projectPhase')->where(['project_phase_id' => $project_phase_id])->get();
+        $standard = Standard::with('generalProjectPlans.projectPhase')->find($standard_id);
+        // $project_phase_id = $request->project_phase_id;
+        $general_project_plans =  $standard->generalProjectPlans;
         return response()->json(compact('general_project_plans'), 200);
     }
     public function storeGeneralProjectPlans(Request $request)
     {
         $project_phase_id = $request->project_phase_id;
-        $standard_ids = $request->standard_ids;
+        $standard_id = $request->standard_id;
 
 
         $details = json_decode(json_encode($request->details));
@@ -80,7 +87,7 @@ class ProjectPlanController extends Controller
                 'resource' => $detail->resource,
                 'project_phase_id' => $project_phase_id,
             ]);
-            $plan->standards()->sync($standard_ids);
+            $plan->standards()->sync($standard_id);
         }
         return response()->json(['message' => 'Successful'], 200);
     }

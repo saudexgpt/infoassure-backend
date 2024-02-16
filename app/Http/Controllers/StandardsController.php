@@ -35,10 +35,12 @@ class StandardsController extends Controller
     {
         $names_string = $request->names;
         $names_array = explode('|', $names_string);
+        $assessment_activities = implode('|', $request->assessment_activities);
         foreach ($names_array as $name) {
             Standard::firstOrCreate([
                 'name' => trim($name),
-                'consulting_id' => $request->consulting_id
+                'consulting_id' => $request->consulting_id,
+                'assessment_activities' => $assessment_activities
             ]);
         }
         return response()->json(['message' => 'Successful'], 200);
@@ -67,9 +69,11 @@ class StandardsController extends Controller
     public function update(Request $request, Standard $standard)
     {
         //
+        $assessment_activities = implode('|', $request->assessment_activities);
         $standard->name = $request->name;
         $standard->consulting_id = $request->consulting_id;
         $standard->description = $request->description;
+        $standard->assessment_activities = $assessment_activities;
         $standard->save();
         return response()->json(['message' => 'Successful'], 200);
     }
