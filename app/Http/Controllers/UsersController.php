@@ -16,6 +16,13 @@ use Laracasts\Flash\Flash;
 
 class UsersController extends Controller
 {
+    public function fetchPartnerUsers()
+    {
+        $users = User::whereHas('roles', function ($query) {
+            $query->where('name', '=', 'partner');
+        })->orWhere('role', 'partner')->get();
+        return response()->json(compact('users'), 200);
+    }
     public function fetchStaff()
     {
         $user = $this->getUser();

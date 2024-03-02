@@ -14,6 +14,10 @@ class Partner extends Model
     {
         return $this->hasMany(Client::class);
     }
+    public function activatedModules()
+    {
+        return $this->hasMany(ActivatedModule::class, 'partner_id', 'id');
+    }
     public function users()
     {
         return $this->belongsToMany(User::class);

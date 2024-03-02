@@ -110,14 +110,29 @@ class PartnersController extends Controller
      * @param  \App\Models\Partner  $partner
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Partner $partner)
+    public function update(Request $request)
     {
         //
+        $partner = Partner::find($request->id);
         $partner->name = $request->name;
         $partner->contact_email = $request->contact_email;
         $partner->contact_phone = $request->contact_phone;
         $partner->contact_address = $request->contact_address;
+        $partner->navbar_bg = $request->navbar_bg;
+        $partner->sidebar_bg = $request->sidebar_bg;
         $partner->save();
+        $this->changePartnerLogo($request, $partner);
+    }
+    private function changePartnerLogo($data, $partner)
+    {
+        if ($data->file('logo') != null && $data->file('logo')->isValid()) {
+
+            $name = time() . '_' . $data->file('logo')->hashName();
+            // $file_name = $name . "." . $request->file('file_uploaded')->extension();
+            $link = $data->file('logo')->storeAs('partner-logos', $name, 'public');
+            $partner->logo = $link;
+            $partner->save();
+        }
     }
     public function updatePartnerUser(Request $request, User $user)
     {
@@ -133,16 +148,34 @@ class PartnersController extends Controller
         // $partner->roles()->sync($role->id); // role id 3 is partner
 
     }
-    public function deletePartnerUser(Request $request, User $user)
+    public function attachPartnerUser(Request $request, Partner $partner)
     {
         $actor = $this->getUser();
+        $user = User::find($request->user_id);
+        $title = "Partner User Attached";
+        //log this event
+        $description = "$user->name was attached to $partner->name by $actor->name";
+        $this->auditTrailEvent($title, $description);
+
+        $partner->users()->syncWithoutDetaching($user->id);
+        // $user->delete();
+        return response()->json([], 204);
+        // $role = Role::where('name', 'partner')->first();
+        // $partner->roles()->sync($role->id); // role id 3 is partner
+
+    }
+    public function removePartnerUser(Request $request, Partner $partner)
+    {
+        $actor = $this->getUser();
+        $user = User::find($request->user_id);
         $title = "Partner User Deletion";
         //log this event
-        $description = "$user->name was deleted by $actor->name";
+        $description = "$user->name was deleted from $partner->name by $actor->name";
         $this->auditTrailEvent($title, $description);
-        $user->forceDelete();
+
+        $partner->users()->detach($user->id);
+        // $user->delete();
         return response()->json([], 204);
-        // $partner->partners()->sync($partner->id);
         // $role = Role::where('name', 'partner')->first();
         // $partner->roles()->sync($role->id); // role id 3 is partner
 

@@ -3,12 +3,16 @@
 use App\Http\Controllers\AnswersController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BIAController;
 use App\Http\Controllers\ClausesController;
 use App\Http\Controllers\ClientsController;
 use App\Http\Controllers\ConsultingsController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\DueDiligenceQuestionsController;
+use App\Http\Controllers\DueDiligenceResponsesController;
 use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\FormFieldsController;
+use App\Http\Controllers\PackagesController;
 use App\Http\Controllers\PartnersController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\ProjectPlanController;
@@ -55,6 +59,22 @@ Route::group(['prefix' => 'auth'], function () {
     });
 });
 
+Route::group(['prefix' => 'bia'], function () {
+    Route::get('fetch-business-units', [BIAController::class, 'fetchBusinessUnits']);
+    Route::get('fetch-business-processes', [BIAController::class, 'fetchBusinessProcesses']);
+
+    Route::post('save-business-units', [BIAController::class, 'saveBusinessUnits']);
+    Route::post('save-business-processes', [BIAController::class, 'saveBusinessProcesses']);
+
+    Route::put('update-business-unit/{unit}', [BIAController::class, 'updateBusinessUnit']);
+    Route::put('update-business-process{process}', [BIAController::class, 'updateBusinessProcess']);
+
+
+    Route::get('fetch-bia', [BIAController::class, 'fetchBIA']);
+    Route::put('update-bia/{bia}', [BIAController::class, 'update']);
+
+    Route::put('update-fields/{bia}', [BIAController::class, 'updateFields']);
+});
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
@@ -64,6 +84,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('notification/mark-as-read', [UsersController::class, 'markNotificationAsRead']);
 
     Route::group(['prefix' => 'users'], function () {
+
+        Route::get('fetch-partner-users', [UsersController::class, 'fetchPartnerUsers']);
         Route::get('fetch-staff', [UsersController::class, 'fetchStaff']);
         Route::post('register', [UsersController::class, 'store']);
         Route::put('update-profile/{user}', [UsersController::class, 'updateProfile']);
@@ -96,9 +118,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('register', [PartnersController::class, 'store']);
         Route::post('register-partner-user', [PartnersController::class, 'registerPartnerUser']);
 
-        Route::put('update/{partner}', [PartnersController::class, 'update']);
+        Route::post('update', [PartnersController::class, 'update']);
         Route::put('update-partner-user/{user}', [PartnersController::class, 'updatePartnerUser']);
-        Route::delete('delete-partner-user/{user}', [PartnersController::class, 'deletePartnerUser']);
+
+        Route::put('attach-partner-user/{partner}', [PartnersController::class, 'attachPartnerUser']);
+        Route::put('delete-partner-user/{partner}', [PartnersController::class, 'removePartnerUser']);
 
         Route::put('send-login-credentials/{user}', [PartnersController::class, 'sendLoginCredentials']);
         Route::put('toggle-partner-suspension/{partner}', [PartnersController::class, 'togglePartnerSuspension']);
@@ -271,8 +295,41 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::put('update-fields/{riskAssessment}', [SOAController::class, 'updateFields']);
     });
-    ///////////////////////////////////STATEMENT OF AVAILABILITY////////////////////////////////////////////////
+    ///////////////////////////STATEMENT OF AVAILABILITY/////////////////////////////////////
+    Route::group(['prefix' => 'due-diligence'], function () {
+        Route::group(['prefix' => 'questions'], function () {
+            Route::get('/', [DueDiligenceQuestionsController::class, 'index']);
+            // Route::get('/fetch-questions', [DueDiligenceQuestionsController::class, 'fetchQuestions']);
 
+            Route::post('save', [DueDiligenceQuestionsController::class, 'store']);
+            Route::post('upload-bulk', [DueDiligenceQuestionsController::class, 'uploadBulk']);
+
+            Route::put('update/{question}', [DueDiligenceQuestionsController::class, 'update']);
+            Route::delete('destroy/{question}', [DueDiligenceQuestionsController::class, 'destroy']);
+        });
+        Route::group(['prefix' => 'answers'], function () {
+            Route::get('/fetch-responses', [DueDiligenceResponsesController::class, 'fetchResponses']);
+            Route::post('save', [DueDiligenceResponsesController::class, 'store']);
+            Route::put('update/{answer}', [DueDiligenceResponsesController::class, 'update']);
+            // Route::delete('destroy/{answer}', [DueDiligenceResponsesController::class, 'destroy']);
+
+            Route::post('submit', [DueDiligenceResponsesController::class, 'submitDueDiligenceResponses']);
+
+            Route::post('upload-due-diligence-evidence', [DueDiligenceResponsesController::class, 'uploadDueDiligenceEvidence']);
+
+            Route::delete('destroy-evidence/{evidence}', [DueDiligenceResponsesController::class, 'destroyDueDiligenceEvidence']);
+        });
+    });
+    Route::group(['prefix' => 'packages'], function () {
+
+        Route::get('fetch-modules', [PackagesController::class, 'fetchModules']);
+        Route::get('fetch-activated-modules', [PackagesController::class, 'fetchActivatedModules']);
+
+        Route::post('activate-partners-module', [PackagesController::class, 'activatePartnersModule']);
+        Route::delete('deactivate-partners-module/{activated_module}', [PackagesController::class, 'deactivatePartnersModule']);
+        Route::put('activate-clients-module/{activated_module}', [PackagesController::class, 'activateClientsModule']);
+        Route::put('deactivate-client-module/{activated_module}', [PackagesController::class, 'deactivateClientModule']);
+    });
     // Access Control Roles & Permission
     Route::group(['prefix' => 'acl'], function () {
         Route::get('roles/index', [RolesController::class, 'index']);

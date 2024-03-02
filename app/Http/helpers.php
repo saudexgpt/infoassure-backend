@@ -144,7 +144,7 @@ function deleteSingleElementFromString($parent_string, $child_string)
             unset($string_array[$i]);
         }
     }
-    return $new_parent_str = implode('~', array_unique($string_array));
+    return implode('~', array_unique($string_array));
 }
 function addSingleElementToString($parent_string, $child_string)
 {
@@ -157,7 +157,7 @@ function addSingleElementToString($parent_string, $child_string)
 
     $string_array = array_unique(explode('~', $str));
 
-    return $new_parent_str = implode('~', $string_array);
+    return implode('~', $string_array);
 }
 
 /**
