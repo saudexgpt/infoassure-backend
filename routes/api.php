@@ -299,7 +299,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'due-diligence'], function () {
         Route::group(['prefix' => 'questions'], function () {
             Route::get('/', [DueDiligenceQuestionsController::class, 'index']);
-            // Route::get('/fetch-questions', [DueDiligenceQuestionsController::class, 'fetchQuestions']);
+            Route::get('/fetch-questions-with-response', [DueDiligenceQuestionsController::class, 'fetchQuestionWithResponse']);
 
             Route::post('save', [DueDiligenceQuestionsController::class, 'store']);
             Route::post('upload-bulk', [DueDiligenceQuestionsController::class, 'uploadBulk']);

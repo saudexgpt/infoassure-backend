@@ -12,7 +12,14 @@ class DueDiligenceQuestionsController extends Controller
         $questions = DueDiligenceQuestion::paginate($request->limit);
         return response()->json(compact('questions'), 200);
     }
-
+    public function fetchQuestionWithResponse(Request $request)
+    {
+        $client_id = $request->client_id;
+        $domains = DueDiligenceQuestion::with(['response' => function ($q) use ($client_id) {
+            $q->where('client_id', $client_id);
+        }, 'response.evidences'])->get()->groupBy('domain');
+        return response()->json(compact('domains'), 200);
+    }
 
 
     /**
@@ -25,7 +32,8 @@ class DueDiligenceQuestionsController extends Controller
     {
         DueDiligenceQuestion::firstOrCreate([
             'question' => $request->question,
-            'key' => $request->key
+            'key' => $request->key,
+            'domain' => $request->domain,
         ]);
         return response()->json(['message' => 'Successful'], 200);
     }
@@ -38,7 +46,8 @@ class DueDiligenceQuestionsController extends Controller
         foreach ($bulk_data as $csvRow) {
             try {
                 $request->question = trim($csvRow->QUESTION);
-                $request->key = trim($csvRow->KEY);
+                $request->key = (isset($csvRow->KEY)) ? trim($csvRow->KEY) : NULL;
+                $request->domain = (isset($csvRow->DOMAIN)) ? trim($csvRow->DOMAIN) : NULL;
                 //store the entry for this student
                 $this->store($request);
             } catch (\Throwable $th) {
@@ -74,6 +83,7 @@ class DueDiligenceQuestionsController extends Controller
         //
         $question->question = $request->question;
         $question->key = $request->key;
+        $question->domain = $request->domain;
         $question->save();
         return response()->json(['message' => 'Successful'], 200);
     }

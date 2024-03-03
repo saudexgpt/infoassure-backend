@@ -17,6 +17,7 @@ class DueDiligenceResponsesController extends Controller
         $answers = DueDiligenceResponse::with('question', 'evidences')->where('client_id', $client_id)->get();
         return response()->json(compact('answers'), 200);
     }
+
     /**
      * Store a newly created resource in storage.
      *
