@@ -65,9 +65,11 @@ class DueDiligenceResponsesController extends Controller
         DueDiligenceResponse::whereIn('id', $answer_ids)->update(['is_submitted' => $value]);
 
         //send notification
-        $answer = DueDiligenceResponse::with('client.users')->find($answer_ids[0]);
+        $answer = DueDiligenceResponse::with('client.users', 'client.partner.users')->find($answer_ids[0]);
         $name = $user->name;
         $users = $answer->client->users;
+        $partner = $answer->client->partner;
+        $users = $users->merge($partner->users);
         if ($value === 1) {
 
             $title = "Answers Submitted";
@@ -94,12 +96,16 @@ class DueDiligenceResponsesController extends Controller
         $user = $this->getUser();
         $field = $request->field;
         $answer->$field = $request->answer;
-        $client = Client::with('users')->find($answer->client_id);
+        $client = Client::with('users', 'partner.users')->find($answer->client_id);
+        $partner = $client->partner;
+        $users = $partner->users;
+        $users = $users->merge($client->users);
         $answer->save();
         $title = "Response to Due Diligence Assessment made";
+        $details = "<br> <strong>Details:</strong> <br> Domain: " . $answer->question->domain . " <br> Question: " . $answer->question->question;
         //log this event
-        $description = "$user->name gave a response on due diligence assessment";
-        $this->auditTrailEvent($title, $description, $client->users);
+        $description = "$user->name gave a response on due diligence assessment.  $details";
+        $this->auditTrailEvent($title, $description, $users);
     }
 
     public function uploadDueDiligenceEvidence(Request $request)
