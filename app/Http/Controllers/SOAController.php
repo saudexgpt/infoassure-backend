@@ -70,16 +70,25 @@ class SOAController extends Controller
     }
     private function setupSOAForClient($client_id, $standard_id)
     {
-        SOAControl::chunkById(50, function (Collection $soa_controls) use ($client_id, $standard_id) {
-            foreach ($soa_controls as $soa_control) {
-                StatementOfApplicability::firstOrCreate([
-                    'client_id' => $client_id,
-                    'standard_id' => $standard_id,
-                    's_o_a_area_id' => $soa_control->s_o_a_area_id,
-                    's_o_a_control_id' => $soa_control->id,
-                ]);
-            }
-        });
+        // SOAControl::chunkById(50, function (Collection $soa_controls) use ($client_id, $standard_id) {
+        //     foreach ($soa_controls as $soa_control) {
+        //         StatementOfApplicability::firstOrCreate([
+        //             'client_id' => $client_id,
+        //             'standard_id' => $standard_id,
+        //             's_o_a_area_id' => $soa_control->s_o_a_area_id,
+        //             's_o_a_control_id' => $soa_control->id,
+        //         ]);
+        //     }
+        // });
+        $soa_controls = SOAControl::get();
+        foreach ($soa_controls as $soa_control) {
+            StatementOfApplicability::firstOrCreate([
+                'client_id' => $client_id,
+                'standard_id' => $standard_id,
+                's_o_a_area_id' => $soa_control->s_o_a_area_id,
+                's_o_a_control_id' => $soa_control->id,
+            ]);
+        }
     }
     public function update(Request $request, StatementOfApplicability $soa)
     {
