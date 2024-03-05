@@ -40,7 +40,13 @@ class ReportsController extends Controller
 
     public function clientProjectDataAnalysis(Request $request)
     {
-        $client_id = $this->getClient()->id;
+        if (isset($request->client_id) && $request->client_id != '') {
+
+            $client_id = $request->client_id;
+        } else {
+
+            $client_id = $this->getClient()->id;
+        }
         $project_id = $request->project_id;
         if ($project_id === 'all') {
             $projectIds = $this->getMyProjects()->pluck('id');
