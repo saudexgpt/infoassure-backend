@@ -139,7 +139,7 @@
 </head>
 
 <body class="clean-body u_body"
-  style="margin: 0;padding: 0;-webkit-text-size-adjust: 100%;background-color: #536068;color: #000000">
+  style="margin: 0;padding: 0;-webkit-text-size-adjust: 100%;background-color: #fcfcfc;color: #000000">
   <!--[if IE]><div class="ie-container"><![endif]-->
   <!--[if mso]><div class="mso-container"><![endif]-->
   <table id="u_body"
@@ -153,7 +153,7 @@
 
           <div class="u-row-container" style="padding: 0px;background-color: transparent">
             <div class="u-row"
-              style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #f1f2f6;">
+              style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: {{ $user->navbar_bg }};">
               <div
                 style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
                 <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #f1f2f6;"><![endif]-->
@@ -179,8 +179,8 @@
                                 <tr>
                                   <td style="padding-right: 0px;padding-left: 0px;" align="center">
 
-                                    <img align="center" border="0" src="{{ url('images/image-3.png') }}"
-                                      alt="Logo" title="Logo"
+                                    <img align="center" border="0" src="{{ url($user->logo) }}" alt="Logo"
+                                      title="Logo"
                                       style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 24%;max-width: 139.2px;"
                                       width="139.2" class="v-src-width v-src-max-width" />
 

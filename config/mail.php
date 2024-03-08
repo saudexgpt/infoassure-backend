@@ -56,8 +56,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'noreply@infoassureltd.com'),
-        'name' => env('MAIL_FROM_NAME', 'INFO ASSURE LTD'),
+        'address' => env('MAIL_FROM_ADDRESS', 'noreply@decompass.com'),
+        'name' => env('MAIL_FROM_NAME', 'Compass'),
     ],
 
     /*

@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Http\Resources\UserResource;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -33,7 +34,7 @@ class ConfirmNewRegistration extends Mailable //implements ShouldQueue
      */
     public function build()
     {
-        $user = $this->user;
+        $user = new UserResource($this->user);
         $password = $this->password;
         return $this->view('emails.confirm_new_registration', compact('user', 'password'));
     }

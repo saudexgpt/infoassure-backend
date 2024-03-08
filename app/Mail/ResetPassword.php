@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Http\Resources\UserResource;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -33,7 +34,7 @@ class ResetPassword extends Mailable // implements ShouldQueue
      */
     public function build()
     {
-        $user = $this->user;
+        $user = new UserResource($this->user);
         $token = $this->token;
         return $this->view('emails.reset_password', compact('user', 'token'));
     }
