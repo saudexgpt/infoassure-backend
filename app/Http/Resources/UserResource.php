@@ -25,8 +25,8 @@ class UserResource extends JsonResource
         $modules = [];
         $partner = '';
         $logo = 'partner-logos/default-logo.png';
-        $navbar_bg = 'rgb(46, 55, 180)';
-        $sidebar_bg = 'rgb(46, 55, 180)';
+        $navbar_bg = 'rgb(11, 23, 61)';
+        $sidebar_bg = 'rgb(210, 162, 4)';
         if ($this->role === 'client') {
             $client_user = DB::table('client_user')->where('user_id', $this->id)->first();
             $client_id = $client_user->client_id;
@@ -58,8 +58,8 @@ class UserResource extends JsonResource
         if ($this->haRole('super') || $this->haRole('admin')) {
             $modules = AvailableModule::pluck('slug');
             $logo = 'partner-logos/default-logo.png';
-            $navbar_bg = 'rgb(46, 55, 180)';
-            $sidebar_bg = 'rgb(46, 55, 180)';
+            $navbar_bg = 'rgb(11, 23, 61)';
+            $sidebar_bg = 'rgb(210, 162, 4)';
         }
         return [
             'id' => $this->id,
