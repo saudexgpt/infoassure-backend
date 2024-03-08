@@ -2,7 +2,6 @@
 
 namespace App\Mail;
 
-use App\Http\Resources\UserResource;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -34,7 +33,7 @@ class PassKey extends Mailable // implements ShouldQueue
      */
     public function build()
     {
-        $user = new UserResource($this->user);
+        $user = $this->user;
         $token = $this->token;
         return $this->view('emails.send_pass_key', compact('user', 'token'));
     }

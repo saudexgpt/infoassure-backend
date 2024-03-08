@@ -12,6 +12,8 @@ use App\Jobs\SendQueued2FACode;
 
 use App\Mail\PassKey;
 use App\Mail\ResetPassword;
+use App\Models\Client;
+use App\Models\Partner;
 use App\Models\UserPassword;
 
 use Illuminate\Support\Facades\DB;
@@ -175,7 +177,7 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-
+        $this->setupTheme($user);
         $lastLoginDate = date('Y-m-d', strtotime($user->last_login));
 
         // if ($user->email_verified_at === NULL) {
@@ -410,5 +412,33 @@ class AuthController extends Controller
         }
 
         return 'success';
+    }
+    private function setupTheme($user)
+    {
+        $logo = 'partner-logos/default-logo.png';
+        $navbar_bg = 'rgb(11, 23, 61)';
+        $sidebar_bg = 'rgb(210, 162, 4)';
+        if ($user->role === 'client') {
+            $client_user = DB::table('client_user')->where('user_id', $user->id)->first();
+            $client_id = $client_user->client_id;
+            $client = Client::find($client_id);
+            $partner_id = $client->partner_id;
+            $partner = Partner::find($partner_id);
+            $logo = $partner->logo;
+            $navbar_bg = $partner->navbar_bg;
+            $sidebar_bg = $partner->sidebar_bg;
+        }
+        if ($user->haRole('partner')) {
+            $partner_user = DB::table('partner_user')->where('user_id', $user->id)->first();
+            $partner_id = $partner_user->partner_id;
+            $partner = Partner::find($partner_id);
+            $logo = $partner->logo;
+            $navbar_bg = $partner->navbar_bg;
+            $sidebar_bg = $partner->sidebar_bg;
+        }
+        $user->logo = $logo;
+        $user->navbar_bg = $navbar_bg;
+        $user->sidebar_bg = $sidebar_bg;
+        $user->save();
     }
 }
