@@ -466,17 +466,17 @@ function formatUniqNo($no)
 }
 function mainDomainPublicPath($folder = null)
 {
-    return "https://infoassureltd.com/" . $folder;
+    return "https://decompass.com/" . $folder;
 }
 function subdomainPublicPath($folder = null)
 {
-    return "/home/edudrive/api.infoassureltd.com/storage/" . $folder;
+    return "/home/decompa1/api.decompass.com/storage/" . $folder;
 }
 
 function portalPulicPath($folder = null)
 {
     // return storage_path('app/public/' . $folder);
-    return "/home/infoassu/api.infoassureltd.com/storage/" . $folder;
+    return "/home/decompa1/api.decompass.com/storage/" . $folder;
 }
 
 function folderSize($dir)
