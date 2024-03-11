@@ -194,9 +194,9 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Your account has been suspended. Kindly contact the administrator'], 403);
             }
         }
-        if ($user->system_mac_address !== NULL && $user->system_mac_address === $this->macAddr && $this->todayDate === $lastLoginDate) {
-            return $this->generateAuthorizationKey($user);
-        }
+        // if ($user->system_mac_address !== NULL && $user->system_mac_address === $this->macAddr && $this->todayDate === $lastLoginDate) {
+        //     return $this->generateAuthorizationKey($user);
+        // }
 
 
 
