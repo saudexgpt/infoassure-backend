@@ -89,23 +89,7 @@ return [
     | applications. A default option is provided that is compatible with
     | the Mailgun mail service which will provide reliable deliveries.
     |
-    */
-
-    'host' => env('MAIL_HOST', 'live.smtp.mailtrap.io'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | SMTP Host Port
-    |--------------------------------------------------------------------------
-    |
-    | This is the SMTP port used by your application to deliver e-mails to
-    | users of the application. Like the host we have set this value to
-    | stay compatible with the Mailgun e-mail application by default.
-    |
-    */
-
-    'port' => env('MAIL_PORT', 587),
-
+    *
     /*
     |--------------------------------------------------------------------------
     | Global "From" Address
@@ -122,46 +106,8 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Compass'),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | E-Mail Encryption Protocol
-    |--------------------------------------------------------------------------
-    |
-    | Here you may specify the encryption protocol that should be used when
-    | the application send e-mail messages. A sensible default using the
-    | transport layer security protocol should provide great security.
-    |
-    */
 
-    'encryption' => env('MAIL_ENCRYPTION', 'tls'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | SMTP Server Username
-    |--------------------------------------------------------------------------
-    |
-    | If your SMTP server requires a username for authentication, you should
-    | set it here. This will get used to authenticate with your server on
-    | connection. You may also set the "password" value below this one.
-    |
-    */
-
-    'username' => env('MAIL_USERNAME'),
-
-    'password' => env('MAIL_PASSWORD'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Sendmail System Path
-    |--------------------------------------------------------------------------
-    |
-    | When using the "sendmail" driver to send e-mails, we will need to know
-    | the path to where Sendmail lives on this server. A default path has
-    | been provided here, which will work well on most of your systems.
-    |
-    */
-
-    'sendmail' => '/usr/sbin/sendmail -bs',
+    // 'sendmail' => '/usr/sbin/sendmail -bs',
 
     /*
     |--------------------------------------------------------------------------
@@ -182,25 +128,11 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Log Channel
-    |--------------------------------------------------------------------------
-    |
-    | If you are using the "log" driver, you may specify the logging channel
-    | if you prefer to keep mail messages separate from other log entries
-    | for simpler reading. Otherwise, the default channel will be used.
-    |
-    */
+    'markdown' => [
+        'theme' => 'default',
 
-    'log_channel' => env('MAIL_LOG_CHANNEL'),
-
-    'stream' => [
-        'ssl' => [
-            'allow_self_signed' => true,
-            'verify_peer' => false,
-            'verify_peer_name' => false,
+        'paths' => [
+            resource_path('views/vendor/mail'),
         ],
-    ]
-
+    ],
 ];
