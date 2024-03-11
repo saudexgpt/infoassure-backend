@@ -11,6 +11,12 @@
 </head>
 
 <body>
+  <div align="center">
+    <h1>Welcome To </h1><br>
+    <img align="center" border="0" src="{{ url('storage/partner-logos/default-logo.png') }}" alt="Logo"
+      width="400" /><br>
+    <h3><a href="https://app.decompass.com">Click here to visit the app</a></h3>
+  </div>
 </body>
 
 </html>

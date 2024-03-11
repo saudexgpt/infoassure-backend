@@ -15,5 +15,7 @@ use App\Http\Controllers\ApplicationController;
 */
 
 // Route::get('/{any}', [ApplicationController::class, 'index'])->where('any', '^(?!api).*$');
-
+Route::get('/', function () {
+    return view('application');
+});
 // Route::get('/admin/registration-confirmation/{hash}', 'Auth\LoginController@confirmRegistration')->name('confirm_admin_reg');
