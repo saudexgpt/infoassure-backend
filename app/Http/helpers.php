@@ -470,13 +470,13 @@ function mainDomainPublicPath($folder = null)
 }
 function subdomainPublicPath($folder = null)
 {
-    return "/home/decompa1/api.decompass.com/storage/" . $folder;
+    return "/home/decompa1/public_html/storage/" . $folder;
 }
 
 function portalPulicPath($folder = null)
 {
     // return storage_path('app/public/' . $folder);
-    return "/home/decompa1/api.decompass.com/storage/" . $folder;
+    return "/home/decompa1/public_html/storage/" . $folder;
 }
 
 function folderSize($dir)
