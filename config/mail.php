@@ -39,7 +39,7 @@ return [
             'transport' => 'smtp',
             'host' => env('MAIL_HOST', 'live.smtp.mailtrap.io'),
             'port' => env('MAIL_PORT', 587),
-            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+            // 'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
