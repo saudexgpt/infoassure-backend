@@ -2,9 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Answer;
 use App\Models\Project;
 use App\Models\ProjectCertificate;
+use App\Models\Question;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 
 class WatchProjectProgress extends Command
 {
@@ -45,6 +48,15 @@ class WatchProjectProgress extends Command
     //     }
     // }
 
+    public function deleteAnswersForDeletedQuestions()
+    {
+        Question::onlyTrashed()->chunk(100, function (Collection $questions) {
+            foreach ($questions as $question) {
+                Answer::where('question_id', $question->id)->delete();
+            }
+        });
+    }
+
     /**
      * Execute the console command.
      *
@@ -52,6 +64,6 @@ class WatchProjectProgress extends Command
      */
     public function handle()
     {
-        // $this->watchProgress();
+        $this->deleteAnswersForDeletedQuestions();
     }
 }

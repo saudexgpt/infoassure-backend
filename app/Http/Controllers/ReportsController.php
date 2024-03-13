@@ -306,7 +306,7 @@ class ReportsController extends Controller
     {
         $project_id = $request->project_id;
         $standard_id = $request->standard_id;
-        $assessment_answers = Answer::with('client', 'clause', 'standard', 'question')
+        $assessment_answers = Answer::with(['client', 'clause', 'standard', 'question'])
             ->where(['project_id' => $project_id])
             ->orderBy('clause_id')
             ->get();

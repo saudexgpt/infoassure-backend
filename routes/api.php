@@ -73,7 +73,7 @@ Route::group(['prefix' => 'bia'], function () {
     Route::get('fetch-bia', [BIAController::class, 'fetchBIA']);
     Route::put('update-bia/{bia}', [BIAController::class, 'update']);
 
-    Route::put('update-fields/{bia}', [BIAController::class, 'updateFields']);
+    Route::post('store', [BIAController::class, 'store']);
 });
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////

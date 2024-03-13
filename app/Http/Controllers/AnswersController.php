@@ -58,8 +58,11 @@ class AnswersController extends Controller
                 'clause_id' => $fetch_question->clause_id,
                 // 'created_by' => $user->id,
             ];
-            $answer_obj = new Answer();
-            $answer_obj->createProjectAnswer($data);
+            if ($fetch_question->question != NULL) {
+
+                $answer_obj = new Answer();
+                $answer_obj->createProjectAnswer($data);
+            }
         }
     }
 
