@@ -152,7 +152,7 @@
 
           <div class="u-row-container" style="padding: 0px;background-color: transparent">
             <div class="u-row"
-              style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: {{ $user->navbar_bg }};">
+              style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: rgb(11, 23, 61);">
               <div
                 style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
                 <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #f1f2f6;"><![endif]-->
@@ -177,8 +177,9 @@
                               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                   <td style="padding-right: 0px;padding-left: 0px;" align="center">
-                                    <img align="center" border="0" src="{{ url('storage/' . $user->logo) }}"
-                                      alt="Logo" title="Logo"
+                                    <img align="center" border="0"
+                                      src="{{ url('storage/partner-logos/default-logo.png') }}" alt="Logo"
+                                      title="Logo"
                                       style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 24%;max-width: 139.2px;"
                                       width="139.2" class="v-src-width v-src-max-width" />
 

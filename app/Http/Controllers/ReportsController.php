@@ -86,8 +86,10 @@ class ReportsController extends Controller
     {
         $client_id = $request->client_id;
         $project_id = $request->project_id;
-        $reports = Answer::where(['client_id' => $client_id, 'project_id' => $project_id])
+        $reports = Answer::join('clauses', 'clauses.id', '=', 'answers.clause_id')
+            ->where(['client_id' => $client_id, 'project_id' => $project_id])
             ->where('is_submitted', 1)
+            ->orderBy('clauses.sort_by')
             ->select(\DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->first();
         $project = Project::with('standard')->find($project_id);
@@ -102,6 +104,7 @@ class ReportsController extends Controller
             ->groupBy('clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
             ->where('is_submitted', 1)
+            ->orderBy('clauses.sort_by')
             ->select('clauses.name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->get();
         $categories = [];
@@ -168,6 +171,7 @@ class ReportsController extends Controller
         $clauses = Answer::groupBy('clause_id')
             ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
+            ->orderBy('clauses.sort_by')
             ->select('clauses.name', 'clauses.id')
             ->get();
 
@@ -307,8 +311,10 @@ class ReportsController extends Controller
         $project_id = $request->project_id;
         $standard_id = $request->standard_id;
         $assessment_answers = Answer::with(['client', 'clause', 'standard', 'question'])
+            ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->where(['project_id' => $project_id])
-            ->orderBy('clause_id')
+            ->orderBy('clauses.sort_by')
+            ->select('answers.*')
             ->get();
         return response()->json(compact('assessment_answers'), 200);
     }
