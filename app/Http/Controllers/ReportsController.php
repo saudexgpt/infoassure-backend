@@ -117,21 +117,21 @@ class ReportsController extends Controller
             $categories[] = $report->name;
             $conformity[] = [
                 'name' => $report->name,
-                'y' => (float) (($report->conformity > 0) ? sprintf('%0.1f', $report->conformity * 100 / $total) : 0),
+                'y' => ($report->conformity > 0) ? $report->conformity : 0
             ];
             $non_conformity[] = [
                 'name' => $report->name,
-                'y' => (float) (($report->non_conformity > 0) ? sprintf('%0.1f', $report->non_conformity * 100 / $total) : 0),
+                'y' => ($report->non_conformity > 0) ?  $report->non_conformity : 0
             ];
 
             $not_applicable[] = [
                 'name' => $report->name,
-                'y' => (float) (($report->not_applicable > 0) ? sprintf('%0.1f', $report->not_applicable * 100 / $total) : 0),
+                'y' => ($report->not_applicable > 0) ? $report->not_applicable : 0
             ];
 
             $open_for_imporvement[] = [
                 'name' => $report->name,
-                'y' => (float) (($report->open_for_imporvement > 0) ? sprintf('%0.1f', $report->open_for_imporvement * 100 / $total) : 0),
+                'y' => ($report->open_for_imporvement > 0) ? $report->open_for_imporvement : 0
             ];
         }
         $series = [
@@ -150,13 +150,13 @@ class ReportsController extends Controller
             [
                 'name' => 'Opportunity For Improvement',
                 'data' => $open_for_imporvement, //array format
-                'color' => '#f0ff00',
+                'color' => '#FFA500',
                 'stack' => 'Management Clause'
             ],
             [
                 'name' => 'N/A',
                 'data' => $not_applicable, //array format
-                'color' => '#666666',
+                'color' => '#cccccc',
                 'stack' => 'Management Clause'
             ],
         ];
