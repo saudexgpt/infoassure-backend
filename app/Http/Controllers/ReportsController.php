@@ -93,8 +93,9 @@ class ReportsController extends Controller
             ->select(\DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->first();
         $project = Project::with('standard')->find($project_id);
-        $subtitle = $project->standard->name;
-        return response()->json(compact('reports', 'subtitle'), 200);
+        $subtitle = ''; // $project->standard->name;
+        $title = $project->standard->name . ' Performance/Assessment Summary';
+        return response()->json(compact('reports', 'subtitle', 'title'), 200);
     }
     public function clientProjectManagementClauseReport(Request $request)
     {
@@ -139,25 +140,37 @@ class ReportsController extends Controller
                 'name' => 'Conformity',
                 'data' => $conformity, //array format
                 'color' => '#00a65a',
-                'stack' => 'Management Clause'
+                'stack' => 'Management Clause',
+                'dataLabels' => [
+                    'enabled' => true,
+                ],
             ],
             [
                 'name' => 'Non Conformity',
                 'data' => $non_conformity, //array format
                 'color' => '#f00c12',
-                'stack' => 'Management Clause'
+                'stack' => 'Management Clause',
+                'dataLabels' => [
+                    'enabled' => true,
+                ],
             ],
             [
                 'name' => 'Opportunity For Improvement',
                 'data' => $open_for_imporvement, //array format
                 'color' => '#FFA500',
-                'stack' => 'Management Clause'
+                'stack' => 'Management Clause',
+                'dataLabels' => [
+                    'enabled' => true,
+                ],
             ],
             [
                 'name' => 'N/A',
                 'data' => $not_applicable, //array format
                 'color' => '#cccccc',
-                'stack' => 'Management Clause'
+                'stack' => 'Management Clause',
+                'dataLabels' => [
+                    'enabled' => true,
+                ],
             ],
         ];
         $project = Project::with('standard')->find($project_id);
@@ -178,18 +191,18 @@ class ReportsController extends Controller
         $data = [];
         foreach ($clauses as $clause) {
             $clause_id = $clause->id;
-            $uploaded_documents = Upload::where(['client_id' => $client_id, 'project_id' => $project_id, 'clause_id' => $clause_id, 'is_exception' => 0])
-                ->where('link', '!=', NULL)
-                ->count();
-            $expected_documents = Upload::where(['client_id' => $client_id, 'project_id' => $project_id, 'clause_id' => $clause_id])->count();
+            // $uploaded_documents = Upload::where(['client_id' => $client_id, 'project_id' => $project_id, 'clause_id' => $clause_id, 'is_exception' => 0])
+            //     ->where('link', '!=', NULL)
+            //     ->count();
+            // $expected_documents = Upload::where(['client_id' => $client_id, 'project_id' => $project_id, 'clause_id' => $clause_id])->count();
 
             $answered_questions = Answer::where(['client_id' => $client_id, 'project_id' => $project_id, 'clause_id' => $clause_id, 'is_exception' => 0])
-                ->where('is_submitted', 1)
+                ->where('status', 'Closed')
                 ->count();
             $all_questions = Answer::where(['client_id' => $client_id, 'project_id' => $project_id, 'clause_id' => $clause_id])->count();
 
-            $total_task = $expected_documents + $all_questions;
-            $total_response = $uploaded_documents + $answered_questions;
+            $total_task = $all_questions;
+            $total_response = $answered_questions;
             $percentage_progress = 0;
             if ($total_task > 0) {
                 $percentage_progress = $total_response / $total_task * 100;
