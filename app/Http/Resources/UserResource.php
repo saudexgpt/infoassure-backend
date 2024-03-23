@@ -25,7 +25,7 @@ class UserResource extends JsonResource
         if ($this->login_as !== NULL) {
 
             $role = Role::with('permissions')->where('name', $this->login_as)->first();
-            $permissions = $role->permissions;
+            $permissions = $role->permissions()->pluck('name');
         }
         $modules = [];
         $partner = '';
@@ -76,7 +76,7 @@ class UserResource extends JsonResource
                 function ($permission) {
                     return $permission['name'];
                 },
-                $permissions->toArray()
+                $permissions
             ),
             // 'role' => 'admin',
             'all_permissions' => array_map(
