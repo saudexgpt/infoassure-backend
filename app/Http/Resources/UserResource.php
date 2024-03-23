@@ -72,12 +72,7 @@ class UserResource extends JsonResource
                 $this->roles->toArray()
             ),
             // 'role' => 'admin',
-            'permissions' =>  array_map(
-                function ($permission) {
-                    return $permission['name'];
-                },
-                $permissions
-            ),
+            'permissions' =>  $permissions,
             // 'role' => 'admin',
             'all_permissions' => array_map(
                 function ($permission) {
