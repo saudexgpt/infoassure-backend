@@ -23,10 +23,10 @@ class ProjectPlanController extends Controller
     {
         $client_id = $request->client_id;
         $project_id = $request->project_id;
-        $partner_id = $this->getPartner()->id;
+        // $partner_id = $this->getPartner()->id;
         $project_phases =  ClientProjectPlan::with('generalProjectPlan')
             ->join('project_phases', 'project_phases.id', 'client_project_plans.project_phase_id')
-            ->where(['client_project_plans.partner_id' => $partner_id, 'client_id' => $client_id, 'project_id' => $project_id])
+            ->where([/*'client_project_plans.partner_id' => $partner_id,*/'client_id' => $client_id, 'project_id' => $project_id])
             ->select('*', 'client_project_plans.id as id')
             ->get()
             ->groupBy('title');

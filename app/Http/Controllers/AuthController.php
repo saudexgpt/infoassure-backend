@@ -131,6 +131,7 @@ class AuthController extends Controller
         }
 
         $user = $request->user();
+        $this->setupTheme($user);
 
         // if ($user->email_verified_at === NULL) {
         //     return response()->json(['message' => 'Account Activation Needed'], 403);
@@ -268,12 +269,21 @@ class AuthController extends Controller
      *
      * @return [json] user object
      */
-    public function user()
+    public function fetchUser(Request $request)
     {
+        $this->setupTheme($request->user());
         return new UserResource(Auth::user());
         // return response()->json($request->user());
     }
-
+    public function loginAs(Request $request)
+    {
+        $user = $request->user();
+        $user->login_as = $request->role;
+        $user->client_id = $request->client_id;
+        $user->partner_id = $request->partner_id;
+        $user->save();
+        return $this->fetchUser($request);
+    }
     /**
      * Logout user (Revoke the token)
      *
@@ -418,27 +428,37 @@ class AuthController extends Controller
         $logo = 'partner-logos/default-logo.png';
         $navbar_bg = 'rgb(11, 23, 61)';
         $sidebar_bg = 'rgb(210, 162, 4)';
-        if ($user->role === 'client') {
-            $client_user = DB::table('client_user')->where('user_id', $user->id)->first();
-            $client_id = $client_user->client_id;
+        if ($user->hasRole('client')) {
+            $client_id = $user->client_id;
             $client = Client::find($client_id);
-            $partner_id = $client->partner_id;
-            $partner = Partner::find($partner_id);
-            $logo = $partner->logo;
-            $navbar_bg = $partner->navbar_bg;
-            $sidebar_bg = $partner->sidebar_bg;
+            if ($client) {
+                $logo = $client->logo;
+                $navbar_bg = $client->navbar_bg;
+                $sidebar_bg = $client->sidebar_bg;
+            }
         }
-        if ($user->haRole('partner')) {
-            $partner_user = DB::table('partner_user')->where('user_id', $user->id)->first();
-            $partner_id = $partner_user->partner_id;
+        if ($user->hasRole('partner')) {
+            $partner_id = $user->partner_id;
             $partner = Partner::find($partner_id);
-            $logo = $partner->logo;
-            $navbar_bg = $partner->navbar_bg;
-            $sidebar_bg = $partner->sidebar_bg;
+            if ($partner) {
+                $logo = $partner->logo;
+                $navbar_bg = $partner->navbar_bg;
+                $sidebar_bg = $partner->sidebar_bg;
+            }
         }
         $user->logo = $logo;
         $user->navbar_bg = $navbar_bg;
         $user->sidebar_bg = $sidebar_bg;
         $user->save();
+    }
+
+    private function fetchUserRoles($user)
+    {
+        return array_map(
+            function ($role) {
+                return $role['name'];
+            },
+            $user->roles->toArray()
+        );
     }
 }

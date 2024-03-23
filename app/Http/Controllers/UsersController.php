@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\School;
@@ -12,10 +13,22 @@ use App\Models\StudentsInClass;
 use Auth;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Laracasts\Flash\Flash;
 
 class UsersController extends Controller
 {
+
+    public function fetchClientUsers()
+    {
+        $users = new Collection();
+        $partner_id = $this->getPartner()->id;
+        $clients = Client::with('users')->where('partner_id', $partner_id)->get();
+        foreach ($clients as $client) {
+            $users = $users->merge($client->users);
+        }
+        return response()->json(compact('users'), 200);
+    }
     public function fetchPartnerUsers()
     {
         $users = User::whereHas('roles', function ($query) {

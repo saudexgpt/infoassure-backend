@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->integer('client_id');
             $table->integer('business_impact_analysis_id');
-            $table->string('time_elapse_from_disaster');
+            $table->string('disaster');
             $table->string('one_hr');
             $table->string('three_hrs');
             $table->string('one_day');

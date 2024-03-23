@@ -54,8 +54,8 @@ Route::group(['prefix' => 'auth'], function () {
 
     Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('logout', [AuthController::class, 'logout']);
-
-        Route::get('user', [AuthController::class, 'user']); //->middleware('permission:read-users');
+        Route::post('login-as', [AuthController::class, 'loginAs']);
+        Route::get('user', [AuthController::class, 'fetchUser']); //->middleware('permission:read-users');
     });
 });
 
@@ -86,6 +86,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'users'], function () {
 
         Route::get('fetch-partner-users', [UsersController::class, 'fetchPartnerUsers']);
+        Route::get('fetch-client-users', [UsersController::class, 'fetchClientUsers']);
         Route::get('fetch-staff', [UsersController::class, 'fetchStaff']);
         Route::post('register', [UsersController::class, 'store']);
         Route::put('update-profile/{user}', [UsersController::class, 'updateProfile']);
@@ -101,20 +102,22 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     Route::group(['prefix' => 'clients'], function () {
         Route::get('/', [ClientsController::class, 'index']);
-
+        Route::get('fetch-user-clients', [ClientsController::class, 'fetchUserClients']);
         Route::post('register', [ClientsController::class, 'store']);
         Route::post('register-client-user', [ClientsController::class, 'registerClientUser']);
 
-        Route::put('update/{client}', [ClientsController::class, 'update']);
+        Route::post('update', [ClientsController::class, 'update']);
         Route::put('update-client-user/{user}', [ClientsController::class, 'updateClientUser']);
-        Route::delete('delete-client-user/{user}', [ClientsController::class, 'deleteClientUser']);
+        Route::put('attach-client-user/{client}', [ClientsController::class, 'attachClientUser']);
+        Route::put('delete-client-user/{client}', [ClientsController::class, 'removeClientUser']);
+        // Route::delete('delete-client-user/{user}', [ClientsController::class, 'removeClientUser']);
 
         Route::put('send-login-credentials/{user}', [ClientsController::class, 'sendLoginCredentials']);
         Route::put('toggle-client-suspension/{client}', [ClientsController::class, 'toggleClientSuspension']);
     });
     Route::group(['prefix' => 'partners'], function () {
         Route::get('/', [PartnersController::class, 'index']);
-
+        Route::get('fetch-user-partners', [PartnersController::class, 'fetchUserPartners']);
         Route::post('register', [PartnersController::class, 'store']);
         Route::post('register-partner-user', [PartnersController::class, 'registerPartnerUser']);
 

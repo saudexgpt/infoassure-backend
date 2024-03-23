@@ -18,8 +18,12 @@ class BIAController extends Controller
     }
     public function fetchBusinessProcesses(Request $request)
     {
+        $condition2 = [];
+        if (isset($request->business_unit_id) && $request->business_unit_id != '') {
+            $condition2 = ['business_unit_id' => $request->business_unit_id];
+        }
         $client_id = $request->client_id;
-        $business_processes = BusinessProcess::where('client_id', $client_id)->get();
+        $business_processes = BusinessProcess::where('client_id', $client_id)->where($condition2)->get();
         return response()->json(compact('business_processes'), 200);
     }
     public function saveBusinessUnits(Request $request)
@@ -49,17 +53,26 @@ class BIAController extends Controller
                 'description' => $business_process->description,
                 'roles_responsible' => $business_process->roles_responsible,
                 'no_of_people_involved' => $business_process->no_of_people_involved,
+
                 'minimum_no_of_people_involved' => $business_process->minimum_no_of_people_involved,
+
                 'product_or_service_delivered' => $business_process->product_or_service_delivered,
                 'regulatory_obligations' => $business_process->regulatory_obligations,
                 'applications_used' => $business_process->applications_used,
-                'business_units_depended_on' => $business_process->business_units_depended_on,
+
+                'business_units_depended_on' => implode(',', $business_process->business_units_depended_on),
+
                 'processes_depended_on' => $business_process->processes_depended_on,
+
                 'key_vendors_or_external_dependencies' => $business_process->key_vendors_or_external_dependencies,
+
                 'vital_non_electronic_records' => $business_process->vital_non_electronic_records,
                 'vital_electronic_records' => $business_process->vital_electronic_records,
+
                 'alternative_workaround_during_system_failure' => $business_process->alternative_workaround_during_system_failure,
+
                 'key_individuals_process_depends_on' => $business_process->key_individuals_process_depends_on,
+
                 'peak_periods' => $business_process->peak_periods,
                 'remote_working' => $business_process->remote_working,
 
@@ -114,7 +127,7 @@ class BIAController extends Controller
             $new_entry = new BusinessImpactAnalysis();
         }
         $new_entry->client_id = $client_id;
-        $new_entry->standard_id = $standard_id;
+        // $new_entry->standard_id = $standard_id;
         $new_entry->business_unit_id = $business_unit_id;
         $new_entry->business_process_id = $business_process_id;
         $new_entry->save();

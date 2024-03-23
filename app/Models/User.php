@@ -73,6 +73,10 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Client::class);
     }
+    public function partners()
+    {
+        return $this->belongsToMany(Partner::class);
+    }
     public function projects()
     {
         return $this->belongsToMany(Project::class);
@@ -117,32 +121,38 @@ class User extends Authenticatable
 
     public function isSuperAdmin()
     {
-        foreach ($this->roles as $role) {
-            if ($role->isSuperAdmin()) {
-                return true;
-            }
+        // foreach ($this->roles as $role) {
+        //     if ($role->isSuperAdmin()) {
+        //         return true;
+        //     }
+        // }
+        if ($this->login_as === 'super') {
+            return true;
         }
-
         return false;
     }
     public function isAdmin()
     {
-        foreach ($this->roles as $role) {
-            if ($role->isAdmin()) {
-                return true;
-            }
+        // foreach ($this->roles as $role) {
+        //     if ($role->isAdmin()) {
+        //         return true;
+        //     }
+        // }
+        if ($this->login_as === 'admin') {
+            return true;
         }
-
         return false;
     }
     public function haRole($userRole)
     {
-        foreach ($this->roles as $role) {
-            if ($role->hasRole($userRole)) {
-                return true;
-            }
+        // foreach ($this->roles as $role) {
+        //     if ($role->hasRole($userRole)) {
+        //         return true;
+        //     }
+        // }
+        if ($this->login_as === $userRole) {
+            return true;
         }
-
         return false;
     }
 

@@ -62,11 +62,11 @@ class ReportsController extends Controller
             $all_questions = Answer::where($condition)->whereIn('project_id', $projectIds)->count();
             $exceptions = Exception::where($condition)->whereIn('project_id', $projectIds)->count();
 
-            $my_projects = $this->getUser()->projects()->groupBy('client_id')->select(\DB::raw('AVG(progress) as project_progress'))->first();
+            $my_projects = $this->getUser()->projects()->where($condition)->groupBy('client_id')->select(\DB::raw('AVG(progress) as project_progress'))->first();
             $project_progress = $my_projects->project_progress;
         } else {
             $project_progress = Project::find($project_id)->progress;
-            $condition = ['project_id' => $project_id];
+            $condition = ['project_id' => $project_id, 'client_id' => $client_id];
             $uploaded_documents = Upload::where($condition)->where('is_exception', 0)->where('link', '!=', NULL)->count();
 
             $expected_documents = Upload::where($condition)->count();
@@ -209,7 +209,8 @@ class ReportsController extends Controller
             }
             $data[] = [
                 $clause->name,
-                (float) sprintf('%0.1f', $percentage_progress)
+                // (float) sprintf('%0.1f', $percentage_progress)
+                (int) $percentage_progress
             ];
             // $clause->progress = (float) sprintf('%0.1f', $percentage_progress);
         }

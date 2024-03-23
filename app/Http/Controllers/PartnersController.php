@@ -33,9 +33,12 @@ class PartnersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function fetchUserPartners()
     {
-        //
+        $user_id = $this->getUser()->id;
+        $user = User::find($user_id);
+        $partners = $user->partners;
+        return response()->json(compact('partners'), 200);
     }
 
     /**
@@ -170,7 +173,7 @@ class PartnersController extends Controller
         $user = User::find($request->user_id);
         $title = "Partner User Deletion";
         //log this event
-        $description = "$user->name was deleted from $partner->name by $actor->name";
+        $description = "$user->name was removed from $partner->name by $actor->name";
         $this->auditTrailEvent($title, $description);
 
         $partner->users()->detach($user->id);
