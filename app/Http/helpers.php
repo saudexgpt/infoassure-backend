@@ -253,11 +253,11 @@ function randomcode()
 {
     $tokens = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789';
     $serial = '';
-    for ($i = 0; $i < 3; $i++) {
+    for ($i = 0; $i < 2; $i++) {
         for ($j = 0; $j < 4; $j++) {
             $serial .= $tokens[mt_rand(0, strlen($tokens) - 1)];
         }
-        if ($i < 2) {
+        if ($i < 1) {
             $serial .= '-';
         }
     }

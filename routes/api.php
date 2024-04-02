@@ -8,6 +8,7 @@ use App\Http\Controllers\ClausesController;
 use App\Http\Controllers\ClientsController;
 use App\Http\Controllers\ConsultingsController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\DocumentsController;
 use App\Http\Controllers\DueDiligenceQuestionsController;
 use App\Http\Controllers\DueDiligenceResponsesController;
 use App\Http\Controllers\EvidenceController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\UsersController;
 
 
 Route::get('set-admin-role', [Controller::class, 'setAdminRole']);
+
 // Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
 // Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
 // Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
@@ -48,8 +50,10 @@ Route::group(['prefix' => 'auth'], function () {
     Route::get('confirm-password-reset-token/{token}', [AuthController::class, 'confirmPasswordResetToken']);
 
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('other-user-login', [AuthController::class, 'otherUserLogin']);
     Route::put('sent-2fa-code/{user}', [AuthController::class, 'send2FACode']);
     Route::put('confirm-2fa-code/{user}', [AuthController::class, 'confirm2FACode']);
+
     // Route::post('register', [AuthController::class, 'register'])->middleware('permission:create-users');
 
     Route::group(['middleware' => 'auth:sanctum'], function () {
@@ -79,6 +83,8 @@ Route::group(['prefix' => 'bia'], function () {
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
 
+    Route::get('format-doc-to-sfdt', [DocumentsController::class, 'formatDocToSFDT']);
+    Route::post('save-blob-doc', [DocumentsController::class, 'saveBlobToDoc']);
 
     Route::get('user-notifications', [UsersController::class, 'userNotifications']);
     Route::get('notification/mark-as-read', [UsersController::class, 'markNotificationAsRead']);
@@ -103,6 +109,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'clients'], function () {
         Route::get('/', [ClientsController::class, 'index']);
         Route::get('fetch-user-clients', [ClientsController::class, 'fetchUserClients']);
+        Route::get('fetch-other-users', [ClientsController::class, 'fetchOtherUsers']);
+
+        Route::post('save-other-users', [ClientsController::class, 'saveOtherUser']);
         Route::post('register', [ClientsController::class, 'store']);
         Route::post('register-client-user', [ClientsController::class, 'registerClientUser']);
 
@@ -110,6 +119,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update-client-user/{user}', [ClientsController::class, 'updateClientUser']);
         Route::put('attach-client-user/{client}', [ClientsController::class, 'attachClientUser']);
         Route::put('delete-client-user/{client}', [ClientsController::class, 'removeClientUser']);
+        Route::put('refresh-access-code/{client}', [ClientsController::class, 'refreshAccessCode']);
+
         // Route::delete('delete-client-user/{user}', [ClientsController::class, 'removeClientUser']);
 
         Route::put('send-login-credentials/{user}', [ClientsController::class, 'sendLoginCredentials']);

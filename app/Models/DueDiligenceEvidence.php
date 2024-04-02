@@ -8,4 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class DueDiligenceEvidence extends Model
 {
     use HasFactory;
+    protected $table = 'due_diligence_evidence';
 }

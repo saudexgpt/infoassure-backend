@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Jobs\SendQueuedConfirmationEmailJob;
 use App\Mail\ConfirmNewRegistration;
+use App\Models\OtherUnitsUser;
 use App\Models\Role;
 use Illuminate\Support\Facades\Mail;
 
@@ -46,6 +47,11 @@ class ClientsController extends Controller
         $clients = $user->clients;
         return response()->json(compact('clients'), 200);
     }
+    public function fetchOtherUsers(Request $request)
+    {
+        $users = OtherUnitsUser::where('client_id', $request->client_id)->get();
+        return response()->json(compact('users'), 200);
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -83,6 +89,17 @@ class ClientsController extends Controller
             return response()->json(['message' => 'Unable to register'], 500);
         }
         return response()->json(['message' => 'Company already exists'], 401);
+    }
+
+    public function saveOtherUser(Request $request)
+    {
+        OtherUnitsUser::firstOrCreate([
+            'client_id' => $request->client_id,
+            'email' => $request->email,
+            'name' => $request->name,
+        ]);
+
+        return response()->json('success', 200);
     }
     public function registerClientUser(Request $request)
     {
@@ -174,6 +191,17 @@ class ClientsController extends Controller
         $client->users()->syncWithoutDetaching($user->id);
         // $user->delete();
         return response()->json([], 204);
+        // $role = Role::where('name', 'partner')->first();
+        // $partner->roles()->sync($role->id); // role id 3 is partner
+
+    }
+
+    public function refreshAccessCode(Request $request, Client $client)
+    {
+        $client->access_code = randomcode();
+        $client->save();
+        // $user->delete();
+        return response()->json(compact('client'), 200);
         // $role = Role::where('name', 'partner')->first();
         // $partner->roles()->sync($role->id); // role id 3 is partner
 

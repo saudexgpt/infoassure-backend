@@ -13,6 +13,7 @@ use App\Jobs\SendQueued2FACode;
 use App\Mail\PassKey;
 use App\Mail\ResetPassword;
 use App\Models\Client;
+use App\Models\OtherUnitsUser;
 use App\Models\Partner;
 use App\Models\UserPassword;
 
@@ -105,6 +106,22 @@ class AuthController extends Controller
             return response()->json(['error' => 'Provide proper details']);
         }
     }
+    public function otherUserLogin(Request $request)
+    {
+        $email = $request->email;
+        $access_code = $request->access_code;
+        $other_user = OtherUnitsUser::where('email', $email)->first();
+        if ($other_user) {
+
+            $client_id = $other_user->client_id;
+            $client = Client::find($client_id);
+            if ($client->access_code == $access_code) {
+                $token = randomNumber();
+                return response(compact('token'), 200);
+            }
+        }
+        return response(['message' => 'Invalid Credentials'], 500);
+    }
     /**
      * Login user and create token
      *
@@ -131,7 +148,7 @@ class AuthController extends Controller
         }
 
         $user = $request->user();
-        $this->setupTheme($user);
+        // $this->setupTheme($user);
 
         // if ($user->email_verified_at === NULL) {
         //     return response()->json(['message' => 'Account Activation Needed'], 403);
@@ -178,7 +195,7 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-        $this->setupTheme($user);
+        // $this->setupTheme($user);
         $lastLoginDate = date('Y-m-d', strtotime($user->last_login));
 
         // if ($user->email_verified_at === NULL) {
