@@ -1,10 +1,4 @@
-<?php
-
-// should do a check here to match $_SERVER['HTTP_ORIGIN'] to a
-// whitelist of safe domains
-header('Access-Control-Allow-Origin:  *');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Max-Age: 86400');    // cache for 1 day
+<?php  // cache for 1 day
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApplicationController;
 
