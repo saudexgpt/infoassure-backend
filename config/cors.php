@@ -16,14 +16,37 @@ return [
     */
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'allowed_methods' => [
 
-    'allowed_methods' => ['*'],
+        'POST',
+
+        'GET',
+
+        'OPTIONS',
+
+        'PUT',
+
+        'PATCH',
+
+        'DELETE',
+
+    ],
+
+    'allowed_headers' => [
+
+        'Content-Type',
+
+        'X-Requested-With',
+
+        'Authorization',
+
+        'Origin',
+
+    ],
 
     'allowed_origins' => ['https://app.decompass.com'],
 
     'allowed_origins_patterns' => [],
-
-    'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 
