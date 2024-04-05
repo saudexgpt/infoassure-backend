@@ -153,26 +153,6 @@ class AuthController extends Controller
         // if ($user->email_verified_at === NULL) {
         //     return response()->json(['message' => 'Account Activation Needed'], 403);
         // }
-        if ($user->password_status === 'default') {
-            $message = 'change_password';
-            $title = 'You need to change your password from the default';
-            return response()->json(compact('title', 'message', 'user'), 200);
-        }
-
-        $password_expires_at = date('Y-m-d', strtotime($user->password_expires_at));
-        if ($this->todayDate >= $password_expires_at || $password_expires_at === NULL) {
-            $message = 'password_due_for_change';
-            $title = 'Your password is due for a change.';
-            return response()->json(compact('title', 'message', 'user'), 200);
-        }
-
-        $clients = $user->clients;
-        if ($clients != '[]' && isset($clients[0])) {
-            $client = $clients[0];
-            if ($client->is_active === 0) {
-                return response()->json(['message' => 'Your account has been suspended. Kindly contact the administrator'], 403);
-            }
-        }
         return $this->generateAuthorizationKey($user);
     }
     public function login(Request $request)
