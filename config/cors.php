@@ -44,7 +44,7 @@ return [
 
     ],
 
-    'allowed_origins' => ['https://app.decompass.com'],
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
