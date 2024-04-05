@@ -60,7 +60,13 @@ class SOAController extends Controller
 
     public function fetchSOA(Request $request)
     {
-        $client_id = $request->client_id;
+
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+
+            $client_id = $this->getClient()->id;
+        }
         $standard_id = $request->standard_id;
         $this->setupSOAForClient($client_id, $standard_id);
         $soas = SOAArea::with(['controls.soa' => function ($q) use ($client_id, $standard_id) {
