@@ -19,11 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['https://app.decompass.com', 'http://localhost:8080'],
+    'allowed_origins' => ['https://app.decompass.com'],
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => [':authority:', ':method:', ':path:', ':scheme:'],
 
     'exposed_headers' => [],
 
