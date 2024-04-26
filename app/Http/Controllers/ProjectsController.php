@@ -42,8 +42,11 @@ class ProjectsController extends Controller
         $users = $client->users;
         // $consulting_id = $request->consulting_id;
         $projects = Project::with([
-            'client', 'certificate', 'standard',
-            'users', 'consultants'
+            'client',
+            'certificate',
+            'standard',
+            'users',
+            'consultants'
         ])->where($condition)->where(['client_id' => $client_id/*, 'year' => $this->getYear()*/])->orderBy('id', 'DESC')->get(); //->paginate(10);
         return response()->json(compact('projects', 'users'), 200);
     }
@@ -163,8 +166,8 @@ class ProjectsController extends Controller
         if (isset($request->extra_details)) {
             $extra_details = json_decode(json_encode($request->extra_details));
             foreach ($extra_details as $detail) {
-                $label =  $detail->label;
-                $value =  $detail->value;
+                $label = $detail->label;
+                $value = $detail->value;
                 $feedback = FeedBack::where(['client_id' => $client_id, 'project_id' => $project_id, 'label' => $label])->first();
                 if (!$feedback) {
 

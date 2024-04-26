@@ -8,5 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class OtherUnitsUser extends Model
 {
     use HasFactory;
-    protected $fillable = ['client_id', 'email', 'name'];
+    protected $fillable = ['client_id', 'business_unit_id', 'email', 'name'];
+
+    public function businessUnit()
+    {
+        return $this->belongsTo(BusinessUnit::class);
+    }
 }

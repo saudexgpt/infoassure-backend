@@ -4,6 +4,7 @@ use App\Http\Controllers\AnswersController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BIAController;
+use App\Http\Controllers\BusinessUnitsController;
 use App\Http\Controllers\ClausesController;
 use App\Http\Controllers\ClientsController;
 use App\Http\Controllers\ConsultingsController;
@@ -62,22 +63,47 @@ Route::group(['prefix' => 'auth'], function () {
         Route::get('user', [AuthController::class, 'fetchUser']); //->middleware('permission:read-users');
     });
 });
+Route::group(['prefix' => 'risk-assessment'], function () {
+    Route::get('fetch-risks', [RiskAssessmentsController::class, 'fetchRisks']);
+    Route::get('fetch-impacts', [RiskAssessmentsController::class, 'fetchImpacts']);
+    Route::get('fetch-categories', [RiskAssessmentsController::class, 'fetchCategories']);
+    Route::get('fetch-likelihoods', [RiskAssessmentsController::class, 'fetchLikelihoods']);
+});
+Route::group(['prefix' => 'business-units'], function () {
 
+    Route::get('fetch-other-users', [BusinessUnitsController::class, 'fetchOtherUsers']);
+    Route::post('save-other-users', [BusinessUnitsController::class, 'saveOtherUser']);
+    Route::put('update-other-users/{user}', [BusinessUnitsController::class, 'updateOtherUser']);
+
+    Route::get('fetch-business-units', [BusinessUnitsController::class, 'fetchBusinessUnits']);
+    Route::get('fetch-business-processes', [BusinessUnitsController::class, 'fetchBusinessProcesses']);
+
+    Route::post('save-business-units', [BusinessUnitsController::class, 'saveBusinessUnits']);
+    Route::post('save-business-processes', [BusinessUnitsController::class, 'saveBusinessProcesses']);
+
+    Route::put('update-business-unit/{unit}', [BusinessUnitsController::class, 'updateBusinessUnit']);
+    Route::put('update-business-process/{process}', [BusinessUnitsController::class, 'updateBusinessProcess']);
+    Route::put('refresh-access-code/{business_unit}', [BusinessUnitsController::class, 'refreshAccessCode']);
+
+    Route::get('get-business-unit-impact-criteria', [BusinessUnitsController::class, 'getBusinessUnitImpactCriteria']);
+    Route::post('save-business-unit-impact-criteria', [BusinessUnitsController::class, 'saveBusinessUnitImpactCriteria']);
+    Route::put('update-business-unit-impact-criteria/{criteria}', [BusinessUnitsController::class, 'updateBusinessUnitImpactCriteria']);
+    Route::delete('delete-business-unit-impact-criteria/{criteria}', [BusinessUnitsController::class, 'deleteBusinessUnitImpactCriteria']);
+});
 Route::group(['prefix' => 'bia'], function () {
-    Route::get('fetch-business-units', [BIAController::class, 'fetchBusinessUnits']);
-    Route::get('fetch-business-processes', [BIAController::class, 'fetchBusinessProcesses']);
-
-    Route::post('save-business-units', [BIAController::class, 'saveBusinessUnits']);
-    Route::post('save-business-processes', [BIAController::class, 'saveBusinessProcesses']);
-
-    Route::put('update-business-unit/{unit}', [BIAController::class, 'updateBusinessUnit']);
-    Route::put('update-business-process{process}', [BIAController::class, 'updateBusinessProcess']);
-
 
     Route::get('fetch-bia', [BIAController::class, 'fetchBIA']);
-    Route::put('update-bia/{bia}', [BIAController::class, 'update']);
+    Route::put('update-bia/{bia}', [BIAController::class, 'updateBIA']);
 
     Route::post('store', [BIAController::class, 'store']);
+    Route::put('update-disruption-impact/{impact}', [BIAController::class, 'updateDisruptionImpact']);
+
+    Route::get('fetch-risk-assessment', [BIAController::class, 'fetchRiskAssessments']);
+    Route::post('store-risk-assessment', [BIAController::class, 'storeRiskAssessment']);
+    Route::put('update-risk-assessment-field/{assessment}', [BIAController::class, 'updateRiskAssessmentFields']);
+    Route::get('risk-assessment-summary', [BIAController::class, 'riskAssessmentSummary']);
+
+
 });
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
@@ -109,9 +135,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'clients'], function () {
         Route::get('/', [ClientsController::class, 'index']);
         Route::get('fetch-user-clients', [ClientsController::class, 'fetchUserClients']);
-        Route::get('fetch-other-users', [ClientsController::class, 'fetchOtherUsers']);
-
-        Route::post('save-other-users', [ClientsController::class, 'saveOtherUser']);
         Route::post('register', [ClientsController::class, 'store']);
         Route::post('register-client-user', [ClientsController::class, 'registerClientUser']);
 
@@ -119,7 +142,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update-client-user/{user}', [ClientsController::class, 'updateClientUser']);
         Route::put('attach-client-user/{client}', [ClientsController::class, 'attachClientUser']);
         Route::put('delete-client-user/{client}', [ClientsController::class, 'removeClientUser']);
-        Route::put('refresh-access-code/{client}', [ClientsController::class, 'refreshAccessCode']);
 
         // Route::delete('delete-client-user/{user}', [ClientsController::class, 'removeClientUser']);
 
@@ -270,9 +292,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
     Route::group(['prefix' => 'risk-assessment'], function () {
         Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
-        Route::get('fetch-impacts', [RiskAssessmentsController::class, 'fetchImpacts']);
-        Route::get('fetch-categories', [RiskAssessmentsController::class, 'fetchCategories']);
-        Route::get('fetch-likelihoods', [RiskAssessmentsController::class, 'fetchLikelihoods']);
+
+        Route::post('save-risk', [RiskAssessmentsController::class, 'saveRisk']);
+        Route::put('update-risk/{risk}', [RiskAssessmentsController::class, 'updateRisk']);
 
         Route::post('save-impacts', [RiskAssessmentsController::class, 'saveImpacts']);
         Route::post('save-asset-types', [RiskAssessmentsController::class, 'saveAssetTypes']);

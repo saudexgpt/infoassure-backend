@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Jobs\SendQueuedConfirmationEmailJob;
 use App\Mail\ConfirmNewRegistration;
-use App\Models\OtherUnitsUser;
 use App\Models\Role;
 use Illuminate\Support\Facades\Mail;
 
@@ -26,7 +25,7 @@ class ClientsController extends Controller
             $id = $this->getClient()->id;
             $condition = ['id' => $id];
         }
-        if ($user->haRole('partner') && !$user->haRole('super')) {
+        if ($user->haRole('partner')) {
             $partner_id = $this->getPartner()->id;
             $condition = ['partner_id' => $partner_id];
         }
@@ -46,11 +45,6 @@ class ClientsController extends Controller
         $user = User::find($user_id);
         $clients = $user->clients;
         return response()->json(compact('clients'), 200);
-    }
-    public function fetchOtherUsers(Request $request)
-    {
-        $users = OtherUnitsUser::where('client_id', $request->client_id)->get();
-        return response()->json(compact('users'), 200);
     }
 
     /**
@@ -91,16 +85,7 @@ class ClientsController extends Controller
         return response()->json(['message' => 'Company already exists'], 401);
     }
 
-    public function saveOtherUser(Request $request)
-    {
-        OtherUnitsUser::firstOrCreate([
-            'client_id' => $request->client_id,
-            'email' => $request->email,
-            'name' => $request->name,
-        ]);
 
-        return response()->json('success', 200);
-    }
     public function registerClientUser(Request $request)
     {
         $client = Client::find($request->client_id);
@@ -196,16 +181,7 @@ class ClientsController extends Controller
 
     }
 
-    public function refreshAccessCode(Request $request, Client $client)
-    {
-        $client->access_code = randomcode();
-        $client->save();
-        // $user->delete();
-        return response()->json(compact('client'), 200);
-        // $role = Role::where('name', 'partner')->first();
-        // $partner->roles()->sync($role->id); // role id 3 is partner
 
-    }
     public function removeClientUser(Request $request, Client $client)
     {
         $actor = $this->getUser();

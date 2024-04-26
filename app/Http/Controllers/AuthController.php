@@ -16,7 +16,7 @@ use App\Models\Client;
 use App\Models\OtherUnitsUser;
 use App\Models\Partner;
 use App\Models\UserPassword;
-
+use App\Models\BusinessUnit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
@@ -113,14 +113,14 @@ class AuthController extends Controller
         $other_user = OtherUnitsUser::where('email', $email)->first();
         if ($other_user) {
 
-            $client_id = $other_user->client_id;
-            $client = Client::find($client_id);
-            if ($client->access_code == $access_code) {
+            $business_unit_id = $other_user->business_unit_id;
+            $business_unit = BusinessUnit::find($business_unit_id);
+            if ($business_unit->access_code == $access_code) {
                 $token = randomNumber();
-                return response(compact('token'), 200);
+                return response(compact('token', 'other_user'), 200);
             }
         }
-        return response(['message' => 'Invalid Credentials'], 500);
+        return response(['message' => 'Invalid Credentials'], 401);
     }
     /**
      * Login user and create token
@@ -129,7 +129,7 @@ class AuthController extends Controller
      * @param  [string] password
      * @param  [boolean] remember_me
      */
-    public function loginNo2FA(Request $request)
+    public function login(Request $request)
     {
         $this->username = $this->findUsername();
 
@@ -155,7 +155,7 @@ class AuthController extends Controller
         // }
         return $this->generateAuthorizationKey($user);
     }
-    public function login(Request $request)
+    public function login2FA(Request $request)
     {
         $this->username = $this->findUsername();
 

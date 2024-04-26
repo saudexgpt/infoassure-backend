@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssetType;
+use App\Models\Risk;
 use App\Models\RiskAssessment;
 use App\Models\RiskCategory;
 use App\Models\RiskImpact;
@@ -11,6 +12,62 @@ use Illuminate\Http\Request;
 
 class RiskAssessmentsController extends Controller
 {
+
+
+    ////////////////////////Manage Risk////////////////////////////
+    public function fetchRisks(Request $request)
+    {
+        $client_id = $request->client_id;
+        $risks = Risk::where('client_id', $client_id)->get();
+        return response()->json(compact('risks'), 200);
+    }
+    /**
+     * Save tnew record.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\RiskAssessment  $riskAssessment
+     * @return \Illuminate\Http\Response
+     */
+    public function saveRisk(Request $request)
+    {
+        $client_id = $request->client_id;
+        Risk::firstOrCreate([
+            'client_id' => $client_id,
+            'risk_unique_id' => $request->risk_unique_id,
+            'type' => $request->type,
+            'description' => $request->description,
+            'outcome' => $request->outcome
+        ]);
+        return response()->json('success');
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\RiskAssessment  $riskAssessment
+     * @return \Illuminate\Http\Response
+     */
+    public function updateRisk(Request $request, Risk $risk)
+    {
+        $risk->type = $request->type;
+        $risk->description = $request->description;
+        $risk->outcome = $request->outcome;
+        $risk->save();
+        return response()->json(compact('risk'), 200);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\RiskAssessment  $riskAssessment
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyRisk(Risk $risk)
+    {
+        $risk->delete();
+        return response()->json([], 204);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -207,7 +264,7 @@ class RiskAssessmentsController extends Controller
                 if ($riskValue >= 12) {
                     $category = 'High';
                 }
-                if ($riskValue >= 5) {
+                if ($riskValue >= 5 && $riskValue <= 11) {
                     $category = 'Medium';
                 }
                 break;
@@ -216,7 +273,7 @@ class RiskAssessmentsController extends Controller
                 if ($riskValue >= 6) {
                     $category = 'High';
                 }
-                if ($riskValue >= 3) {
+                if ($riskValue >= 3 && $riskValue <= 5) {
                     $category = 'Medium';
                 }
                 break;
