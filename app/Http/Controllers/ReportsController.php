@@ -88,7 +88,7 @@ class ReportsController extends Controller
         $project_id = $request->project_id;
         $reports = Answer::join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
-            ->where('is_submitted', 1)
+            // ->where('is_submitted', 1)
             ->orderBy('clauses.sort_by')
             ->select(\DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->first();
@@ -104,7 +104,7 @@ class ReportsController extends Controller
         $reports = Answer::join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->groupBy('clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
-            ->where('is_submitted', 1)
+            // ->where('is_submitted', 1)
             ->orderBy('clauses.sort_by')
             ->select('clauses.name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->get();
@@ -122,7 +122,7 @@ class ReportsController extends Controller
             ];
             $non_conformity[] = [
                 'name' => $report->name,
-                'y' => ($report->non_conformity > 0) ?  $report->non_conformity : 0
+                'y' => ($report->non_conformity > 0) ? $report->non_conformity : 0
             ];
 
             $not_applicable[] = [
@@ -316,7 +316,7 @@ class ReportsController extends Controller
         $summary = RiskAssessment::join('asset_types', 'asset_types.id', '=', 'risk_assessments.asset_type_id')
             ->groupBy('asset')
             ->where(['client_id' => $client_id, 'standard_id' => $standard_id])
-            ->select('asset_types.name as asset_type', 'risk_owner', 'asset',  \DB::raw('COUNT(*) as no_of_threats'), \DB::raw('COUNT(CASE WHEN risk_category = "Low" THEN risk_assessments.id END ) as lows'), \DB::raw('COUNT(CASE WHEN risk_category = "Medium" THEN risk_assessments.id END ) as mediums'), \DB::raw('COUNT(CASE WHEN risk_category = "High" THEN risk_assessments.id END ) as highs'))
+            ->select('asset_types.name as asset_type', 'risk_owner', 'asset', \DB::raw('COUNT(*) as no_of_threats'), \DB::raw('COUNT(CASE WHEN risk_category = "Low" THEN risk_assessments.id END ) as lows'), \DB::raw('COUNT(CASE WHEN risk_category = "Medium" THEN risk_assessments.id END ) as mediums'), \DB::raw('COUNT(CASE WHEN risk_category = "High" THEN risk_assessments.id END ) as highs'))
             ->get();
         return response()->json(compact('summary'), 200);
     }
