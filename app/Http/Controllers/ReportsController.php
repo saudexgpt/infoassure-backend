@@ -57,7 +57,7 @@ class ReportsController extends Controller
             $answered_questions = Answer::where($condition)
                 ->whereIn('project_id', $projectIds)
                 ->where('is_exception', 0)
-                ->where('status', 'Closed')
+                // ->where('status', 'Closed')
                 ->count();
             $all_questions = Answer::where($condition)->whereIn('project_id', $projectIds)->count();
             $exceptions = Exception::where($condition)->whereIn('project_id', $projectIds)->count();
@@ -72,7 +72,7 @@ class ReportsController extends Controller
             $expected_documents = Upload::where($condition)->count();
             $answered_questions = Answer::where($condition)
                 ->where('is_exception', 0)
-                ->where('status', 'Closed')
+                // ->where('status', 'Closed')
                 ->count();
             $all_questions = Answer::where($condition)->count();
             $exceptions = Exception::where($condition)->count();
