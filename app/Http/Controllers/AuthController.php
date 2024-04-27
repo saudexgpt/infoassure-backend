@@ -48,7 +48,7 @@ class AuthController extends Controller
         $user = User::where('phone', $login)->first();
 
         if ($user) {
-            $fieldType =  'phone';
+            $fieldType = 'phone';
         } else {
             $fieldType = 'email';
         }
@@ -86,10 +86,10 @@ class AuthController extends Controller
         ]);
 
         $user = new User([
-            'first_name'  => $request->first_name,
-            'last_name'  => $request->last_name,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
             'username' => $request->username,
-            'phone'  => $request->phone,
+            'phone' => $request->phone,
             'email' => $request->email,
             'password' => bcrypt($request->password),
         ]);
@@ -129,7 +129,7 @@ class AuthController extends Controller
      * @param  [string] password
      * @param  [boolean] remember_me
      */
-    public function login(Request $request)
+    public function loginNo2FA(Request $request)
     {
         $this->username = $this->findUsername();
 
@@ -155,7 +155,7 @@ class AuthController extends Controller
         // }
         return $this->generateAuthorizationKey($user);
     }
-    public function login2FA(Request $request)
+    public function login(Request $request)
     {
         $this->username = $this->findUsername();
 
