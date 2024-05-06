@@ -7,6 +7,7 @@ use App\Models\BusinessUnit;
 use App\Models\BusinessUnitImpactCriteria;
 use App\Models\OtherUnitsUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BusinessUnitsController extends Controller
 {
@@ -35,7 +36,8 @@ class BusinessUnitsController extends Controller
                 'teams' => $business_unit->teams,
                 'function_performed' => $business_unit->function_performed,
                 'contact_phone' => $business_unit->contact_phone,
-                'access_code' => randomcode()
+                'access_code' => randomcode(),
+                'prepend_risk_no_value' => acronym($business_unit->unit_name),
             ]);
 
             // create default impact criteria
@@ -52,9 +54,10 @@ class BusinessUnitsController extends Controller
     }
     public function saveBusinessProcesses(Request $request)
     {
-        $client_id = BusinessUnit::find($request->business_unit_id)->client_id;
+        $business_unit = BusinessUnit::find($request->business_unit_id);
         BusinessProcess::firstOrCreate([
-            'client_id' => $client_id,
+            'generated_process_id' => $business_unit->next_process_id,
+            'client_id' => $$business_unit->client_id,
             'business_unit_id' => $request->business_unit_id,
             'name' => $request->name,
             'process_owner' => $request->process_owner,
@@ -86,6 +89,8 @@ class BusinessUnitsController extends Controller
             'remote_working' => $request->remote_working,
 
         ]);
+        $business_unit->next_process_id += 1;
+        $business_unit->save();
         return response()->json(['message' => 'Successful'], 200);
     }
 
@@ -103,6 +108,8 @@ class BusinessUnitsController extends Controller
     {
         $process->update([
             'name' => $request->name,
+            'process_owner' => $request->process_owner,
+            'objective' => $request->name,
             'description' => $request->description,
             'roles_responsible' => $request->roles_responsible,
             'no_of_people_involved' => $request->no_of_people_involved,
@@ -112,7 +119,7 @@ class BusinessUnitsController extends Controller
             'product_or_service_delivered' => $request->product_or_service_delivered,
             'regulatory_obligations' => $request->regulatory_obligations,
             'applications_used' => $request->applications_used,
-
+            'teams' => implode(',', $request->teams),
             'business_units_depended_on' => implode(',', $request->business_units_depended_on),
 
             'processes_depended_on' => $request->processes_depended_on,
@@ -206,6 +213,32 @@ class BusinessUnitsController extends Controller
     public function deleteBusinessUnitImpactCriteria(BusinessUnitImpactCriteria $criteria)
     {
         $criteria->delete();
+        return response()->json([], 204);
+    }
+    public function uploadProcessFlow(Request $request)
+    {
+        $this->validate($request, [
+            'file_uploaded' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+        // $client = $this->getClient();
+        $business_process = BusinessProcess::find($request->id);
+        $folder_key = $business_process->client_id;
+        if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
+            if ($business_process->flow_chart_diagram !== null) {
+
+                Storage::disk('public')->delete($business_process->flow_chart_diagram);
+            }
+            $name = $request->file('file_uploaded')->hashName();
+            // $file_name = $name . "." . $request->file('file_uploaded')->extension();
+            $link = $request->file('file_uploaded')->storeAs('clients/' . $folder_key . '/business-process-flow', $name, 'public');
+            $business_process->flow_chart_diagram = $link;
+            $business_process->save();
+        }
+    }
+    public function changeProcessStatus(Request $request, BusinessProcess $process)
+    {
+        $process->status = $request->status;
+        $process->save();
         return response()->json([], 204);
     }
 }

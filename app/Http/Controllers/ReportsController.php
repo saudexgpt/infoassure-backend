@@ -51,7 +51,10 @@ class ReportsController extends Controller
         if ($project_id === 'all') {
             $projectIds = $this->getMyProjects()->pluck('id');
             $condition = ['client_id' => $client_id];
-            $uploaded_documents = Upload::where($condition)->whereIn('project_id', $projectIds)->where('is_exception', 0)->where('link', '!=', NULL)->count();
+            $uploaded_documents = Upload::where($condition)->whereIn('project_id', $projectIds)
+                // ->where('is_exception', 0)
+                ->where('link', '!=', NULL)
+                ->count();
 
             $expected_documents = Upload::where($condition)->whereIn('project_id', $projectIds)->count();
             $answered_questions = Answer::where($condition)
@@ -67,7 +70,10 @@ class ReportsController extends Controller
         } else {
             $project_progress = Project::find($project_id)->progress;
             $condition = ['project_id' => $project_id, 'client_id' => $client_id];
-            $uploaded_documents = Upload::where($condition)->where('is_exception', 0)->where('link', '!=', NULL)->count();
+            $uploaded_documents = Upload::where($condition)
+                // ->where('is_exception', 0)
+                ->where('link', '!=', NULL)
+                ->count();
 
             $expected_documents = Upload::where($condition)->count();
             $answered_questions = Answer::where($condition)

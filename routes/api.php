@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnswersController;
+use App\Http\Controllers\RiskMatricesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BIAController;
@@ -63,6 +64,10 @@ Route::group(['prefix' => 'auth'], function () {
         Route::get('user', [AuthController::class, 'fetchUser']); //->middleware('permission:read-users');
     });
 });
+Route::group(['prefix' => 'risk-matrix'], function () {
+
+    Route::get('fetch-risk-matrix', [RiskMatricesController::class, 'fetchRiskMatrix']);
+});
 Route::group(['prefix' => 'risk-assessment'], function () {
     Route::get('fetch-risks', [RiskAssessmentsController::class, 'fetchRisks']);
     Route::get('fetch-impacts', [RiskAssessmentsController::class, 'fetchImpacts']);
@@ -89,6 +94,11 @@ Route::group(['prefix' => 'business-units'], function () {
     Route::post('save-business-unit-impact-criteria', [BusinessUnitsController::class, 'saveBusinessUnitImpactCriteria']);
     Route::put('update-business-unit-impact-criteria/{criteria}', [BusinessUnitsController::class, 'updateBusinessUnitImpactCriteria']);
     Route::delete('delete-business-unit-impact-criteria/{criteria}', [BusinessUnitsController::class, 'deleteBusinessUnitImpactCriteria']);
+
+    Route::post('upload-process-flow', [BusinessUnitsController::class, 'uploadProcessFlow']);
+    Route::put('change-process-status/{process}', [BusinessUnitsController::class, 'changeProcessStatus']);
+
+
 });
 Route::group(['prefix' => 'bia'], function () {
 
@@ -108,6 +118,12 @@ Route::group(['prefix' => 'bia'], function () {
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
+
+    Route::post('propose-matrix', [RiskMatricesController::class, 'proposeMatrix']);
+
+    Route::put('approve-matrix/{riskMatrix}', [RiskMatricesController::class, 'approveMatrix']);
+    Route::get('setup-risk-matrices', [RiskMatricesController::class, 'setupRiskMatrices']);
+    Route::post('customize-risk-matrix-description', [RiskMatricesController::class, 'customizeRiskMatrixDescription']);
 
     Route::get('format-doc-to-sfdt', [DocumentsController::class, 'formatDocToSFDT']);
     Route::post('save-blob-doc', [DocumentsController::class, 'saveBlobToDoc']);

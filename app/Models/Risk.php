@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Risk extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $fillable = ['client_id', 'risk_unique_id', 'type', 'description', 'outcome'];
+    protected $fillable = ['client_id', 'business_unit_id', 'risk_unique_id', 'type', 'description', 'outcome'];
     public function client()
     {
         return $this->belongsTo(Client::class);

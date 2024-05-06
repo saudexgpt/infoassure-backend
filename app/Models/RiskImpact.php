@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class RiskImpact extends Model
 {
     use HasFactory;
-    protected $fillable = ['name'];
+    protected $fillable = ['client_id', 'name', 'value', 'matrix'];
 }

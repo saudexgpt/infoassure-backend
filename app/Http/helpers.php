@@ -1,5 +1,50 @@
 <?php
+function acronym($string)
+{
+    $words = explode(" ", $string);
+    $acronym = "";
 
+    foreach ($words as $w) {
+        $acronym .= mb_substr($w, 0, 1);
+    }
+    return $acronym;
+}
+function riskImpactMatrix()
+{
+    $impact_matrices = [
+        '3x3' => [
+            ['value' => 1, 'name' => 'Minor'],
+            ['value' => 2, 'name' => 'Moderate'],
+            ['value' => 3, 'name' => 'High'],
+        ],
+        '5x5' => [
+            ['value' => 1, 'name' => 'Negligible'],
+            ['value' => 2, 'name' => 'Slight'],
+            ['value' => 3, 'name' => 'Moderate'],
+            ['value' => 4, 'name' => 'High'],
+            ['value' => 5, 'name' => 'Very High'],
+        ]
+    ];
+    return $impact_matrices;
+}
+function riskLikelihoodMatrix()
+{
+    $likelihood_matrices = [
+        '3x3' => [
+            ['value' => 1, 'name' => 'Unlikely'],
+            ['value' => 2, 'name' => 'Possible'],
+            ['value' => 3, 'name' => 'Likely'],
+        ],
+        '5x5' => [
+            ['value' => 1, 'name' => 'Improbable'],
+            ['value' => 2, 'name' => 'Unlikely'],
+            ['value' => 3, 'name' => 'Moderate'],
+            ['value' => 4, 'name' => 'Very Likely'],
+            ['value' => 5, 'name' => 'Almost  Certain'],
+        ]
+    ];
+    return $likelihood_matrices;
+}
 function defaultImpactCriteria()
 {
     return [

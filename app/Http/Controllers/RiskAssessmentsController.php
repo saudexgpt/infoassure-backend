@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssetType;
+use App\Models\BusinessUnit;
 use App\Models\Risk;
 use App\Models\RiskAssessment;
 use App\Models\RiskCategory;
 use App\Models\RiskImpact;
 use App\Models\RiskLikelihood;
+use App\Models\RiskMatrix;
 use Illuminate\Http\Request;
 
 class RiskAssessmentsController extends Controller
@@ -18,7 +20,8 @@ class RiskAssessmentsController extends Controller
     public function fetchRisks(Request $request)
     {
         $client_id = $request->client_id;
-        $risks = Risk::where('client_id', $client_id)->get();
+        $business_unit_id = $request->business_unit_id;
+        $risks = Risk::where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
         return response()->json(compact('risks'), 200);
     }
     /**
@@ -30,14 +33,18 @@ class RiskAssessmentsController extends Controller
      */
     public function saveRisk(Request $request)
     {
+        $business_unit = BusinessUnit::find($request->business_unit_id);
         $client_id = $request->client_id;
         Risk::firstOrCreate([
             'client_id' => $client_id,
-            'risk_unique_id' => $request->risk_unique_id,
+            'business_unit_id' => $request->business_unit_id,
+            'risk_unique_id' => $business_unit->prepend_risk_no_value . $business_unit->next_risk_id,
             'type' => $request->type,
             'description' => $request->description,
             'outcome' => $request->outcome
         ]);
+        $business_unit->next_risk_id += 1;
+        $business_unit->save();
         return response()->json('success');
     }
 
@@ -80,11 +87,14 @@ class RiskAssessmentsController extends Controller
     }
     public function fetchImpacts(Request $request)
     {
-        $matrix = '3x3';
-        if (isset($request->matrix) && $request->matrix != '') {
-            $matrix = $request->matrix;
+        $impacts = [];
+        $client_id = $request->client_id;
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        if ($risk_matrix) {
+            $matrix = $risk_matrix->current_matrix;
+            $impacts = RiskImpact::orderBy('value')->where('client_id', $client_id)->where('matrix', $matrix)->get();
         }
-        $impacts = RiskImpact::orderBy('value')->where('matrix', $matrix)->get();
+
         return response()->json(compact('impacts'), 200);
     }
     public function fetchCategories()
@@ -94,11 +104,13 @@ class RiskAssessmentsController extends Controller
     }
     public function fetchLikelihoods(Request $request)
     {
-        $matrix = '3x3';
-        if (isset($request->matrix) && $request->matrix != '') {
-            $matrix = $request->matrix;
+        $likelihoods = [];
+        $client_id = $request->client_id;
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        if ($risk_matrix) {
+            $matrix = $risk_matrix->current_matrix;
+            $likelihoods = RiskLikelihood::orderBy('value')->where('client_id', $client_id)->where('matrix', $matrix)->get();
         }
-        $likelihoods = RiskLikelihood::orderBy('value')->where('matrix', $matrix)->get();
         return response()->json(compact('likelihoods'), 200);
     }
 

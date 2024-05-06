@@ -10,6 +10,10 @@ use Illuminate\Notifications\Notifiable;
 class Client extends Model
 {
     use HasFactory, SoftDeletes, Notifiable;
+    public function matrix()
+    {
+        return $this->hasOne(RiskMatrix::class);
+    }
     /**
      * The roles that belong to the Client
      *
