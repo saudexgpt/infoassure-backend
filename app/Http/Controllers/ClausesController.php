@@ -34,18 +34,25 @@ class ClausesController extends Controller
     {
         $client_id = $request->client_id;
         $standard_id = $request->standard_id;
-        $clauses = Clause::with(['questions.answer' => function ($q) use ($client_id, $standard_id) {
-            $q->where(['standard_id' => $standard_id, 'client_id' => $client_id]);
-        }, 'questions.answer.evidences'])->where(['standard_id' => $standard_id])->where('will_have_audit_questions', 1)->orderBy('sort_by')->get();
+        $project_id = $request->project_id;
+        $clauses = Clause::with([
+            'questions.answer' => function ($q) use ($client_id, $standard_id, $project_id) {
+                $q->where(['standard_id' => $standard_id, 'client_id' => $client_id, 'project_id' => $project_id]);
+            },
+            'questions.answer.evidences'
+        ])->where(['standard_id' => $standard_id])->where('will_have_audit_questions', 1)->orderBy('sort_by')->get();
         return response()->json(compact('clauses'), 200);
     }
     public function fetchClausesWithDocuments(Request $request)
     {
         $client_id = $request->client_id;
         $standard_id = $request->standard_id;
-        $clauses = Clause::with(['uploads' => function ($q) use ($client_id, $standard_id) {
-            $q->where(['standard_id' => $standard_id, 'client_id' => $client_id]);
-        }])->where(['standard_id' => $standard_id])->where('requires_document_upload', 1)->orderBy('sort_by')->get();
+        $project_id = $request->project_id;
+        $clauses = Clause::with([
+            'uploads' => function ($q) use ($client_id, $standard_id, $project_id) {
+                $q->where(['standard_id' => $standard_id, 'client_id' => $client_id, 'project_id' => $project_id]);
+            }
+        ])->where(['standard_id' => $standard_id])->where('requires_document_upload', 1)->orderBy('sort_by')->get();
         return response()->json(compact('clauses'), 200);
     }
 
@@ -158,7 +165,7 @@ class ClausesController extends Controller
     {
         $client = $this->getClient();
         $upload = Upload::find($request->upload_id);
-        $folder_key =  $client->id;
+        $folder_key = $client->id;
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
             $file_name = 'file_for_clause' . $upload->clause_id . '_template' . $upload->template_id . "." . $request->file('file_uploaded')->guessClientExtension();
             $link = $request->file('file_uploaded')->storeAs('clients/' . $folder_key . '/document', $file_name, 'public');
@@ -242,7 +249,8 @@ class ClausesController extends Controller
     {
         // $client = $this->getClient();
         $client_id = $request->client_id;
-        $exceptions = Exception::with('clause', 'answer.question', 'upload')->where('client_id', $client_id)->paginate(10);
+        $project_id = $request->project_id;
+        $exceptions = Exception::with('clause', 'answer.question', 'upload')->where(['client_id' => $client_id, 'project_id' => $project_id])->paginate(10);
         return response()->json(compact('exceptions'), 200);
     }
     public function createException(Request $request)
