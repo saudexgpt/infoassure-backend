@@ -66,7 +66,7 @@ class DocumentsController extends Controller
         $file_contents = file_get_contents($filename);
         // $base64 = base64_encode($file_contents);
         // return response()->json(['sfdt' => $base64], 200);
-        $content =  "--" . MULTIPART_BOUNDARY . "\r\n" .
+        $content = "--" . MULTIPART_BOUNDARY . "\r\n" .
             "Content-Disposition: form-data; name=\"" . FORM_FIELD . "\"; filename=\"" . basename($filename) . "\"\r\n" .
             "Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n" .
             $file_contents . "\r\n";
@@ -78,13 +78,15 @@ class DocumentsController extends Controller
         // signal end of request (note the trailing "--")
         $content .= "--" . MULTIPART_BOUNDARY . "--\r\n";
 
-        $context = stream_context_create(array(
-            'http' => array(
-                'method' => 'POST',
-                'header' => $header,
-                'content' => $content,
+        $context = stream_context_create(
+            array(
+                'http' => array(
+                    'method' => 'POST',
+                    'header' => $header,
+                    'content' => $content,
+                )
             )
-        ));
+        );
         $to_url = 'https://ej2services.syncfusion.com/production/web-services/api/documenteditor/Import';
 
         return file_get_contents($to_url, false, $context);

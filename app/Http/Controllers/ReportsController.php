@@ -49,17 +49,23 @@ class ReportsController extends Controller
         }
         $project_id = $request->project_id;
         if ($project_id === 'all') {
+            $expectedDocumentProjectIds = $this->getMyProjects()->where('allow_document_uploads', 1)->pluck('id');
             $projectIds = $this->getMyProjects()->pluck('id');
             $condition = ['client_id' => $client_id];
-            $uploaded_documents = Upload::where($condition)->whereIn('project_id', $projectIds)
+
+            $uploaded_documents = Upload::where($condition)->whereIn('project_id', $expectedDocumentProjectIds)
                 // ->where('is_exception', 0)
                 ->where('link', '!=', NULL)
                 ->count();
 
-            $expected_documents = Upload::where($condition)->whereIn('project_id', $projectIds)->count();
+            $expected_documents = Upload::where($condition)->whereIn('project_id', $expectedDocumentProjectIds)->count();
             $answered_questions = Answer::where($condition)
                 ->whereIn('project_id', $projectIds)
                 ->where('is_exception', 0)
+                ->where(function ($q) {
+                    $q->where('yes_or_no', '!=', NULL);
+                    $q->orWhere('open_ended_answer', '!=', NULL);
+                })
                 // ->where('status', 'Closed')
                 ->count();
             $all_questions = Answer::where($condition)->whereIn('project_id', $projectIds)->count();
@@ -68,16 +74,24 @@ class ReportsController extends Controller
             $my_projects = $this->getUser()->projects()->where($condition)->groupBy('client_id')->select(\DB::raw('AVG(progress) as project_progress'))->first();
             $project_progress = $my_projects->project_progress;
         } else {
-            $project_progress = Project::find($project_id)->progress;
+            $project = Project::find($project_id);
+            $project_progress = $project->progress;
+            $expected_documents = 0;
             $condition = ['project_id' => $project_id, 'client_id' => $client_id];
             $uploaded_documents = Upload::where($condition)
                 // ->where('is_exception', 0)
                 ->where('link', '!=', NULL)
                 ->count();
+            if ($project->allow_document_uploads == 1) {
+                $expected_documents = Upload::where($condition)->count();
+            }
 
-            $expected_documents = Upload::where($condition)->count();
             $answered_questions = Answer::where($condition)
                 ->where('is_exception', 0)
+                ->where(function ($q) {
+                    $q->where('yes_or_no', '!=', NULL);
+                    $q->orWhere('open_ended_answer', '!=', NULL);
+                })
                 // ->where('status', 'Closed')
                 ->count();
             $all_questions = Answer::where($condition)->count();
