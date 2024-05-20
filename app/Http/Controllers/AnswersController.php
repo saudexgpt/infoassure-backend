@@ -130,7 +130,7 @@ class AnswersController extends Controller
      * @param  \App\Models\Answer  $answer
      * @return \Illuminate\Http\Response
      */
-    public function remarkOnAnswer(Request $request,  Answer $answer)
+    public function remarkOnAnswer(Request $request, Answer $answer)
     {
         $user = $this->getUser();
         $remark = $request->remark;
@@ -151,10 +151,11 @@ class AnswersController extends Controller
         $title = $request->title;
         $answer_id = $request->answer_id;
         $client_id = $client->id;
-        $folder_key =  $client_id;
+        $folder_key = $client_id;
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
 
-            $name = $request->file('file_uploaded')->hashName();
+            $name = $request->file('file_uploaded')->getClientOriginalName();
+            // $name = $request->file('file_uploaded')->hashName();
             // $file_name = $name . "." . $request->file('file_uploaded')->extension();
             $link = $request->file('file_uploaded')->storeAs('clients/' . $folder_key . '/gap-assessment-evidence', $name, 'public');
 

@@ -35,13 +35,36 @@ class RiskAssessmentsController extends Controller
     {
         $business_unit = BusinessUnit::find($request->business_unit_id);
         $client_id = $request->client_id;
+        $business_process_id = $request->business_process_id;
         Risk::firstOrCreate([
             'client_id' => $client_id,
             'business_unit_id' => $request->business_unit_id,
+            'business_process_id' => $request->business_process_id,
             'risk_unique_id' => $business_unit->prepend_risk_no_value . $business_unit->next_risk_id,
             'type' => $request->type,
             'description' => $request->description,
-            'outcome' => $request->outcome
+            'outcome' => $request->outcome,
+            'risk_owner' => $request->risk_owner,
+            'control_no' => $request->control_no,
+            'control_location' => $request->control_location,
+            'control_description' => $request->control_description,
+            'control_frequency' => $request->control_frequency,
+            'control_owner' => $request->control_owner,
+            'control_type' => $request->control_type,
+            'nature_of_control' => $request->nature_of_control,
+            'application_used_for_control' => $request->application_used_for_control,
+            'compensating_control' => $request->compensating_control,
+            'test_procedures' => $request->test_procedures,
+            'sample_size' => $request->sample_size,
+            'data_required' => $request->data_required,
+            'link_to_evidence' => $request->link_to_evidence,
+            'test_conclusion' => $request->test_conclusion,
+            'gap_description' => $request->gap_description,
+            'tod_improvement_opportunity' => $request->tod_improvement_opportunity,
+            'recommendation' => $request->recommendation,
+            'responsibility' => $request->responsibility,
+            'timeline' => $request->timeline,
+            'tod_gap_status' => $request->tod_gap_status
         ]);
         $business_unit->next_risk_id += 1;
         $business_unit->save();
