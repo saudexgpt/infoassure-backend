@@ -1,4 +1,5 @@
-<nav class="navbar navbar-expand-lg bg-white navbar-light px-4 px-lg-5 py-3 py-lg-0">
+<nav
+  class="navbar navbar-expand-xl navbar-expand-lg navbar-expand-md .navbar-expand-sm bg-white navbar-light px-4 px-lg-5 py-3 py-lg-0">
   <a href="/">
     <img src="img/logo.png" alt="Logo" width="200">
   </a>
@@ -23,7 +24,7 @@
       <a href="/contact" class="nav-item nav-link">Contact Us</a>
     </div>
     <a href="https://app.decompass.com" class="btn btn-light border text-primary py-1 px-3 me-4">Log In</a>
-    <a href="/request-quote" class="btn btn-secondary border text-white py-1 px-3">Get Started</a>
+    <a href="/request-quote" class="hide-mobile btn btn-secondary border text-white py-1 px-3">Get Started</a>
   </div>
 </nav>
 <!-- <nav class="navbar navbar-expand-lg navbar-dark px-5 py-3 py-lg-0">
