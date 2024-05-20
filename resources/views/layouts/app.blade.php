@@ -60,7 +60,7 @@
   <!-- Spinner End -->
 
   <!-- Navbar & Carousel Start -->
-  <div class="container-fluid position-relative p-0">
+  <div class="container-fluid fixed-top px-0 wow fadeIn">
     @include('layouts.navbar')
   </div>
   <!-- Navbar & Carousel End -->
@@ -69,7 +69,7 @@
     @yield('content')
   </div>
   <!-- Footer Start -->
-  <div class="container-fluid bg-dark text-light mt-0 wow fadeInUp">
+  <div class="container-fluid bg-dark text-light mt-0">
     <div class="container">
       <div class="row py-5">
         <div class="row gx-5">
@@ -267,7 +267,7 @@
   <script src="{{ URL::asset('lib/waypoints/waypoints.min.js') }}"></script>
   <script src="{{ URL::asset('lib/counterup/counterup.min.js') }}"></script>
   <script src="{{ URL::asset('lib/owlcarousel/owl.carousel.min.js') }}"></script>
-  <script src="{{ URL::asset('js/accordion.js') }}"></script>
+  <!-- <script src="{{ URL::asset('js/accordion.js') }}"></script> -->
 
   <!-- Template Javascript -->
   <script src="{{ URL::asset('js/main.js') }}"></script>

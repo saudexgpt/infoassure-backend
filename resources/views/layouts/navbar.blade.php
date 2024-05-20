@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg bg-white fixed-top navbar-light px-4 px-lg-5 py-3 py-lg-0">
+<nav class="navbar navbar-expand-lg bg-white navbar-light px-4 px-lg-5 py-3 py-lg-0">
   <a href="/">
     <img src="img/logo.png" alt="Logo" width="200">
   </a>

@@ -217,19 +217,9 @@
     flex-basis: auto
 }
 
-.navbar-collapse2 {
-    display: flex !important;
-    flex-basis: auto
-}
-
 .navbar-collapse {
     flex-basis: 100%;
     flex-grow: 7;
-    align-items: center
-}
-
-.navbar-collapse2 {
-    flex-grow: 0.1;
     align-items: center
 }
 
