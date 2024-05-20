@@ -21,7 +21,7 @@
         <strong>The Compass</strong> can benefit your organization. <br>Contact us today to schedule a demo or inquire
         about our solutions.
       </p>
-      <a href="#" class="btn btn-primary py-2 px-4 wow fadeInUp" data-wow-delay="0.7s">Book A Demo</a>
+      <a href="/request-quote" class="btn btn-primary py-2 px-4 wow fadeInUp" data-wow-delay="0.7s">Book A Demo</a>
       <!-- <a href="#" class="btn btn-primary rounded-pill py-3 px-5 wow fadeInUp" data-wow-delay="0.7s">Book A Demo</a> -->
     </div>
     <div class="col-lg-6 wow fadeInRight" data-wow-delay="0.2s">

@@ -8,7 +8,7 @@
 <div class="container-fluid bg-primary py-5 bg-header" style="margin-bottom: 50px;">
   <div class="row py-5">
     <div class="col-12 pt-lg-5 mt-lg-5 text-center">
-      <h1 class="display-4 text-white animated zoomIn">Book Free Consultation</h1>
+      <h1 class="display-4 text-white animated zoomIn">Book A Demo</h1>
       {{-- <a href="/" class="h5 text-white">Home</a> --}}
     </div>
   </div>
@@ -24,22 +24,10 @@
     </div>
   @endif
       <div class="col-lg-6">
-        <div class="section-title position-relative pb-3 mb-5">
-          <h1 class="mb-0">Need a consultation? <br>Please feel free to schedule</h1>
+        <!-- <div class="section-title position-relative pb-3 mb-1">
+          <h1 class="mb-0">Kindly fill in the form for a demo</h1>
         </div>
-        <div class="d-flex align-items-center mt-2 wow zoomIn" data-wow-delay="0.6s">
-          <div class="bg-primary d-flex align-items-center justify-content-center rounded"
-            style="width: 60px; height: 60px;">
-            <i class="fa fa-phone-alt text-white"></i>
-          </div>
-          <div class="ps-4">
-            <h4 class="text-primary mb-0"><a href="tel:+234 815 094 7567">+234 815 094 7567</a></h4>
-            <h5 class="mb-2">Mondays - Fridays | 8:00am - 5:00pm</h5>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-6">
-
+ -->
 
         @php
       $today = date('Y-m-d', strtotime('now'));
@@ -84,12 +72,12 @@
           <span class="text-danger">{{ $errors->first('phone_no') }}</span>
         @endif
               </div>
-              <div class="col-12">
+              <!-- <div class="col-12">
                 <label for="date" style="color: #ffffff">Pick Date</label>
                 <input id="date" type="text" class="form-control bg-light border-0 some-input" placeholder="Pick Date"
                   style="height: 55px;" name="date" value="{{ $today }}" required onblur="setTime()">
-              </div>
-              <div class="col-xl-12">
+              </div> -->
+              <!-- <div class="col-xl-12">
                 <label style="color: #ffffff">Set Time</label>
                 <select style="display: block" name="time" id="for_today" placeholder="time"
                   class="form-select bg-light border-2" style="height: 55px;" value="{{ old('time') }}"
@@ -141,11 +129,11 @@
                   <option>4:00 pm</option>
                   <option>5:00 pm</option>
                 </select>
-              </div>
-              <div class="col-12">
+              </div> -->
+              <!-- <div class="col-12">
                 <select name="subject" placeholder="subject" class="form-select bg-light border-2" style="height: 55px;"
                   required value="{{ old('subject') }}">
-                  <option selected value="">Reason for consultation...</option>
+                  <option selected value="">Reason for demo...</option>
                   <option>Interest in PCI DSS</option>
                   <option>Enquiries on VAPT</option>
                   <option>NDPA consultation</option>
@@ -159,7 +147,7 @@
                 <input type="text" class="form-control border-0 bg-light px-4"
                   placeholder="If not stated above, please specify" style="height: 55px;" name="other_subject"
                   value="{{ old('other_subject') }}">
-              </div>
+              </div> -->
               <div class="col-12">
                 <p class="text-white">By clicking send, I acknowledge and agree to The Compass's <a
                     class="btn-default text-primary" data-bs-target="#privacyPolicy" data-bs-toggle="modal"
