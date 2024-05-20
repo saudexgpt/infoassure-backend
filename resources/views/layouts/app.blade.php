@@ -114,7 +114,7 @@
             <div class="section-title section-title-sm position-relative pb-3 mb-4">
               <h3 class="text-light mb-0">Get In Touch</h3>
             </div>
-            <div class="d-flex mb-2">
+            <!-- <div class="d-flex mb-2">
               <p class="mb-0"><strong>Nigeria Address:</strong> 360 Herbert Macaulay Way, Yaba,<br> Lagos,
                 Nigeria.</p>
             </div>
@@ -123,7 +123,7 @@
                 House,
                 <br>Harlow, Essex, United Kingdom, CM20 1YS
               </p>
-            </div>
+            </div> -->
             <div class="d-flex mb-2">
               <i class="fa fa-envelope-open me-2"></i>
               <p class="mb-0"><a href="mailto:info@decompass.com">info@decompass.com</a></p>

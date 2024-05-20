@@ -18,33 +18,31 @@
           <div class="container py-5">
             <div class="row g-5 mb-5 py-5">
               <div class="col-lg-12">
+                <div class="d-flex align-items-center wow fadeIn" data-wow-delay="0.4s">
+                  <div class="d-flex rounded" style="width: 60px; height: 60px;">
+                    <i class="bi bi-envelope fa-3x"></i>
+                  </div>
+                  <div class="ps-4">
+                    <h5 class="mb-2 text-white">Send us a message through</h5>
+                    <p class="mb-0"><a href="mailto:info@decompass.com" class="text-white">info@decompass.com</a></p>
+                  </div>
+                </div>
                 {{-- <p>Thank you for your interest in our cybersecurity services. If you have any questions, feedback,
                   or
                   require
                   assistance, please don't hesitate to get in touch with us. We are here to help!</p> --}}
                 <!-- <div class="d-flex align-items-center wow fadeIn" data-wow-delay="0.1s">
-                  <div class="text-dark d-flex align-items-center justify-content-center rounded"
-                    style="width: 60px; height: 60px;">
-                    <i class="bi bi-telephone fa-3x"></i>
-                  </div>
-                  <div class="ps-4">
-                    <h5 class="mb-2">Call to ask any question</h5>
-                    <h5 class="text-primary mb-0"><a href="tel:+234 815 094 7567">+234 815 094 7567</a></h5>
-                  </div>
-                </div> -->
+                                  <div class="text-dark d-flex align-items-center justify-content-center rounded"
+                                    style="width: 60px; height: 60px;">
+                                    <i class="bi bi-telephone fa-3x"></i>
+                                  </div>
+                                  <div class="ps-4">
+                                    <h5 class="mb-2">Call to ask any question</h5>
+                                    <h5 class="text-primary mb-0"><a href="tel:+234 815 094 7567">+234 815 094 7567</a></h5>
+                                  </div>
+                                </div> -->
                 <br>
-                <div class="d-flex align-items-center wow fadeIn" data-wow-delay="0.4s">
-                  <div class="d-flex align-items-center justify-content-center rounded"
-                    style="width: 60px; height: 60px;">
-                    <i class="bi bi-envelope fa-3x"></i>
-                  </div>
-                  <div class="ps-4">
-                    <h5 class="mb-2 text-white">Email for a free consultation</h5>
-                    <p class="mb-0 text-white"><a href="mailto:info@decompass.com">info@decompass.com</a></p>
-                  </div>
-                </div>
-                <br>
-                <div class="d-flex align-items-center wow fadeIn" data-wow-delay="0.8s">
+                <!-- <div class="d-flex align-items-center wow fadeIn" data-wow-delay="0.8s">
                   <div class="d-flex align-items-center justify-content-center rounded"
                     style="width: 60px; height: 60px;">
                     <i class="fa fa-map-marker-alt fa-3x"></i>
@@ -58,7 +56,7 @@
                       <br>Harlow, Essex, United Kingdom, CM20 1YS
                     </p>
                   </div>
-                </div>
+                </div> -->
                 <p>&nbsp;</p>
                 <!-- <p>Follow us on social media to stay updated with the latest cybersecurity news, tips, and trends.</p>
                   <div class="d-flex mt-4">

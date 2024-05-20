@@ -58,7 +58,7 @@
       <div class="service-content">
         <h4 class="mb-4">Data Privacy and Protection Assessments</h4>
         <p class="mb-4">Specialized modules for assessing compliance with data privacy regulations such as GDPR,
-          CCPA, and other relevant frameworks
+          CCPA, NDPA, PIMS and other relevant frameworks
         </p>
         <!-- <a href="#" class="btn btn-light rounded-pill text-primary py-2 px-4">Read More</a> -->
       </div>

@@ -11,11 +11,10 @@
                     </div>
                     <p class="fs-7"><strong>The Compass</strong> is a cybersecurity compliance tool designed to assist
                         organizations in achieving and maintaining compliance with various frameworks such as ISO 27001,
-                        PCI-DSS, and more. It provides comprehensive assessments, personalized compliance roadmaps, and
+                        PCI-DSS, GDPR, NDPA, Third Party Risk Assessment and more. It provides comprehensive
+                        assessments, personalized compliance roadmaps, and
                         automated monitoring to streamline the compliance process.</p>
-                    <div class="text-center">
-                        <hr>
-                    </div>
+
                 </div>
             </div>
             <div class="testimonial-item">
@@ -28,9 +27,7 @@
                     <p class="fs-7"><strong>The Compass</strong> supports a wide range of cybersecurity frameworks,
                         including ISO 27001, ISO 22301, PCI-DSS, NDPA (Nigerian Data Protection Act), BIA, and others.
                     </p>
-                    <div class="text-center">
-                        <hr>
-                    </div>
+
                 </div>
             </div>
             <div class="testimonial-item">
@@ -43,9 +40,7 @@
                     <p class="fs-7">Security is our top priority. <strong>The Compass</strong> employs robust encryption
                         protocols and follows industry best practices to safeguard your data. Our platform is hosted on
                         secure servers with regular security audits and updates to mitigate risks.</p>
-                    <div class="text-center">
-                        <hr>
-                    </div>
+
                 </div>
             </div>
             <div class="testimonial-item">
@@ -59,9 +54,7 @@
                     <p class="fs-7">Yes, <strong>The Compass</strong> can be customized to align with your
                         organization's unique requirements. Our team works closely with clients to tailor compliance
                         roadmaps, assessments, and reporting features to address specific challenges and objectives.</p>
-                    <div class="text-center">
-                        <hr>
-                    </div>
+
                 </div>
             </div>
             <div class="testimonial-item">
@@ -76,9 +69,7 @@
                         materials, and ongoing support to help clients navigate
                         the platform effectively
                     </p>
-                    <div class="text-center">
-                        <hr>
-                    </div>
+
                 </div>
             </div>
             <div class="testimonial-item">
@@ -93,9 +84,7 @@
                         practices. “The Compass” provides automatic updates and notifications to keep clients informed
                         of any changes that may
                         impact their compliance posture.</p>
-                    <div class="text-center">
-                        <hr>
-                    </div>
+
                 </div>
             </div>
             <div class="testimonial-item">
@@ -110,9 +99,7 @@
                         comprehensive framework coverage, personalized approach, and dedicated customer support. Our
                         tool is designed to simplify the compliance process and empower organizations to achieve
                         compliance with confidence</p>
-                    <div class="text-center">
-                        <hr>
-                    </div>
+
                 </div>
             </div>
         </div>

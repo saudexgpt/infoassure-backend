@@ -171,7 +171,7 @@
     </div>
     @include('pages.partials.value_proposition')
     <div class="col-md-6 col-lg-4 col-xl-3 wow fadeInUp" data-wow-delay="0.5s">
-      <a href="{{route('features')}}" class="btn btn-primary rounded-pill py-3 px-5">Read More</a>
+      <a href="{{route('features')}}" class="btn btn-primary py-2 px-4">Read More</a>
     </div>
   </div>
 </div>
