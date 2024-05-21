@@ -94,7 +94,7 @@
               </ul>
             </div>
             <div class="tab-pane fade" id="nav-overview" role="tabpanel" aria-labelledby="nav-overview-tab">
-              <p class="mb-4">The Decompass App is your go-to platform for ensuring adherence to a multitude of industry
+              <p class="mb-4">The Compass App is your go-to platform for ensuring adherence to a multitude of industry
                 standards and regulatory requirements. From ISO 27001 to PCI DSS, ISO 22301 to NIST Cybersecurity
                 Framework, and beyond, our app provides a seamless and intuitive interface for managing and accessing
                 compliance across various domains.</p>
