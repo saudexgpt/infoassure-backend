@@ -98,7 +98,7 @@
                 standards and regulatory requirements. From ISO 27001 to PCI DSS, ISO 22301 to NIST Cybersecurity
                 Framework, and beyond, our app provides a seamless and intuitive interface for managing and accessing
                 compliance across various domains.</p>
-              <p class="mb-4">With a systematic and disciplined approach, Decompass empowers organizations in Nigeria,
+              <p class="mb-4">With a systematic and disciplined approach, The Compass empowers organizations in Nigeria,
                 Sub-Sahara Africa, and the UK to evaluate risk management, control, information technology, financial,
                 and governance processes. Our platform offers independent and objective assurance to stakeholders,
                 ensuring that organizational processes, technology, and people are aligned with established best
