@@ -81,7 +81,8 @@
                     </div>
                     <p class="fs-7">Compliance assessments and reports are updated regularly to reflect changes in
                         regulations, standards, and best
-                        practices. “The Compass” provides automatic updates and notifications to keep clients informed
+                        practices. <strong>The Compass</strong> provides automatic updates and notifications to keep
+                        clients informed
                         of any changes that may
                         impact their compliance posture.</p>
 
