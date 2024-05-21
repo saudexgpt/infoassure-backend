@@ -432,7 +432,7 @@
             </div>
             <div class="col-12 text-white">
               <p>By clicking send, I acknowledge and agree to The Compass's <a id="privacy_button"
-                  class="btn-default text-primary" data-bs-target="#privacyPolicy" data-bs-toggle="modal"
+                  class="btn-default text-white" data-bs-target="#privacyPolicy" data-bs-toggle="modal"
                   style="cursor: pointer">Privacy
                   Policy</a></p>
               <a id="policy_notice" data-bs-target="#policyNotice" data-bs-toggle="modal"></a>
