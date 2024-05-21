@@ -14,11 +14,11 @@
       <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.3s">
         <h3 class="mb-4">We Help Our Clients Stay Compliant</h3>
         <div>
-          <p class="mb-4">The Decompass App is your go-to platform for ensuring adherence to a multitude of industry
+          <p class="mb-4">The Compass App is your go-to platform for ensuring adherence to a multitude of industry
             standards and regulatory requirements. From ISO 27001 to PCI DSS, ISO 22301 to NIST Cybersecurity
             Framework, and beyond, our app provides a seamless and intuitive interface for managing and accessing
             compliance across various domains.</p>
-          <p class="mb-4">With a systematic and disciplined approach, Decompass empowers organizations in Nigeria,
+          <p class="mb-4">With a systematic and disciplined approach, The Compass empowers organizations in Nigeria,
             Sub-Sahara Africa, and the UK to evaluate risk management, control, information technology, financial,
             and governance processes. Our platform offers independent and objective assurance to stakeholders,
             ensuring that organizational processes, technology, and people are aligned with established best
@@ -59,11 +59,11 @@
               </ul>
             </div>
             <!-- <div class="tab-pane fade show active" id="nav-overview" role="tabpanel" aria-labelledby="nav-overview-tab">
-              <p class="mb-4">The Decompass App is your go-to platform for ensuring adherence to a multitude of industry
+              <p class="mb-4">The Compass App is your go-to platform for ensuring adherence to a multitude of industry
                 standards and regulatory requirements. From ISO 27001 to PCI DSS, ISO 22301 to NIST Cybersecurity
                 Framework, and beyond, our app provides a seamless and intuitive interface for managing and accessing
                 compliance across various domains.</p>
-              <p class="mb-4">With a systematic and disciplined approach, Decompass empowers organizations in Nigeria,
+              <p class="mb-4">With a systematic and disciplined approach, The Compass empowers organizations in Nigeria,
                 Sub-Sahara Africa, and the UK to evaluate risk management, control, information technology, financial,
                 and governance processes. Our platform offers independent and objective assurance to stakeholders,
                 ensuring that organizational processes, technology, and people are aligned with established best

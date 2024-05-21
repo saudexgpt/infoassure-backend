@@ -60,12 +60,15 @@
     notify you of any changes by posting the new privacy policy on this page.<br><br><strong>CONTACT
       US<br></strong>If you have any questions or complaints about our use of your information, we
     would prefer you to contact us directly so that we can address your
-    complaint.<br>dpo@<strong>The Compass</strong>ltd.com<br>28, Obanikoro Estate, Obanikoro, Lagos, Nigeria<br>+234 803
+    complaint.<br>info@decompass.com
+    <!-- <br>28, Obanikoro Estate, Obanikoro, Lagos, Nigeria<br>+234 803
     533
-    8896<br><br><strong>ISMS Policy Statement<br></strong>The Board and Management of <strong>The Compass</strong> which
+    8896<br><br> -->
+    <strong>ISMS Policy Statement<br></strong>The Board and Management of <strong>The Compass</strong> which
     operates in the Information technology sector are committed to preserving the confidentiality, integrity
     and availability of all physical and electronic information assets throughout the organization, in
-    order to preserve its asset, legal, regulatory as well as contractual, compliance and image.<br></p>
+    order to preserve its asset, legal, regulatory as well as contractual, compliance and image.<br>
+  </p>
 
 
 

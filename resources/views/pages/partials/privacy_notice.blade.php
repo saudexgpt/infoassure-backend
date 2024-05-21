@@ -1,5 +1,5 @@
 <div style="max-height: 400px; overflow: auto">
-  <p>This Privacy Notice applies to <strong>The Compass</strong> website inquiry page (www.infoassureltd.com). The
+  <p>This Privacy Notice applies to <strong>The Compass</strong> website inquiry page (https://.decompass.com). The
     privacy of
     our Users is important to us, and we are committed to safeguarding it. Hence, this Privacy Notice explains the
     Personal Information and Personally Identifiable Information (PII) that we collect, why we collect it, and what we
