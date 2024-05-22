@@ -14,4 +14,12 @@ class Risk extends Model
     {
         return $this->belongsTo(Client::class);
     }
+    public function businessUnit()
+    {
+        return $this->belongsTo(BusinessUnit::class);
+    }
+    public function businessProcess()
+    {
+        return $this->belongsTo(BusinessProcess::class);
+    }
 }

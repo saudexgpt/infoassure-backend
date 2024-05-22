@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnswersController;
+use App\Http\Controllers\RCSAController;
 use App\Http\Controllers\RiskMatricesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -119,6 +120,15 @@ Route::group(['prefix' => 'bia'], function () {
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
 
+    Route::group(['prefix' => 'rcsa'], function () {
+
+        Route::get('fetch', [RCSAController::class, 'fetchRCSA']);
+        Route::post('create-rcsa-from-rcm', [RCSAController::class, 'createRCSAFromRCM']);
+        Route::put('update-fields/{rcsa}', [RCSAController::class, 'updateFields']);
+        Route::post('store', [RCSAController::class, 'store']);
+
+
+    });
     Route::post('propose-matrix', [RiskMatricesController::class, 'proposeMatrix']);
 
     Route::put('approve-matrix/{riskMatrix}', [RiskMatricesController::class, 'approveMatrix']);
@@ -326,7 +336,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('fetch-risk_assessments', [RiskAssessmentsController::class, 'fetchRiskAssessments']);
         Route::post('store-risk-assessment', [RiskAssessmentsController::class, 'store']);
 
-        Route::put('update-fields/{riskAssessment}', [RiskAssessmentsController::class, 'updateFields']);
+        Route::put('update-fields/{riskAssessment}', [RiskAssessmentsController::class, 'updateRiskAssessmentFields']);
+        Route::put('update-risk-fields/{risk}', [RiskAssessmentsController::class, 'updateRiskFields']);
+
     });
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
 

@@ -21,7 +21,7 @@ class RiskAssessmentsController extends Controller
     {
         $client_id = $request->client_id;
         $business_unit_id = $request->business_unit_id;
-        $risks = Risk::where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
+        $risks = Risk::with('businessUnit', 'businessProcess')->where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
         return response()->json(compact('risks'), 200);
     }
     /**
@@ -33,19 +33,23 @@ class RiskAssessmentsController extends Controller
      */
     public function saveRisk(Request $request)
     {
+        if ($request->file('link_to_evidence') == null) {
+            return response()->json(['message' => 'Please uplaod a document as evidence'], 500);
+        }
+
         $business_unit = BusinessUnit::find($request->business_unit_id);
         $client_id = $request->client_id;
-        $business_process_id = $request->business_process_id;
+        // $business_process_id = $request->business_process_id;
         Risk::firstOrCreate([
             'client_id' => $client_id,
             'business_unit_id' => $request->business_unit_id,
             'business_process_id' => $request->business_process_id,
             'risk_unique_id' => $business_unit->prepend_risk_no_value . $business_unit->next_risk_id,
             'type' => $request->type,
-            'description' => $request->description,
+            'description' => $request->risk_description,
             'outcome' => $request->outcome,
             'risk_owner' => $request->risk_owner,
-            'control_no' => $request->control_no,
+            'control_no' => 'CTRL' . $business_unit->next_risk_id,
             'control_location' => $request->control_location,
             'control_description' => $request->control_description,
             'control_frequency' => $request->control_frequency,
@@ -57,7 +61,7 @@ class RiskAssessmentsController extends Controller
             'test_procedures' => $request->test_procedures,
             'sample_size' => $request->sample_size,
             'data_required' => $request->data_required,
-            'link_to_evidence' => $request->link_to_evidence,
+            'link_to_evidence' => $this->uploadRiskEvidenceDocument($request),
             'test_conclusion' => $request->test_conclusion,
             'gap_description' => $request->gap_description,
             'tod_improvement_opportunity' => $request->tod_improvement_opportunity,
@@ -70,7 +74,21 @@ class RiskAssessmentsController extends Controller
         $business_unit->save();
         return response()->json('success');
     }
+    private function uploadRiskEvidenceDocument(Request $request)
+    {
+        $folder_key = $request->client_id;
+        $file = $request->file('link_to_evidence');
+        if ($file != null && $file->isValid()) {
 
+            $name = $file->getClientOriginalName();
+            // $name = $request->file('file_uploaded')->hashName();
+            // $file_name = $name . "." . $request->file('file_uploaded')->extension();
+            $link = $file->storeAs('clients/' . $folder_key . '/risk-evidence', $name, 'public');
+
+            return $link;
+        }
+        return NULL;
+    }
     /**
      * Update the specified resource in storage.
      *
@@ -321,7 +339,7 @@ class RiskAssessmentsController extends Controller
      * @param  \App\Models\RiskAssessment  $riskAssessment
      * @return \Illuminate\Http\Response
      */
-    public function updateFields(Request $request, RiskAssessment $riskAssessment)
+    public function updateRiskAssessmentFields(Request $request, RiskAssessment $riskAssessment)
     {
         //
         $matrix = $request->matrix;
@@ -336,7 +354,15 @@ class RiskAssessmentsController extends Controller
         $this->updateReversedRiskCategory($riskAssessment, $matrix);
         return $riskAssessment;
     }
-
+    public function updateRiskFields(Request $request, Risk $risk)
+    {
+        //
+        $field = $request->field;
+        $value = $request->value;
+        $risk->$field = $value;
+        $risk->save();
+        return $risk;
+    }
 
     private function updateRiskCategory($riskAssessment, $matrix)
     {
