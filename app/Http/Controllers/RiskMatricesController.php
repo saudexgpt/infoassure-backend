@@ -19,11 +19,11 @@ class RiskMatricesController extends Controller
                 RiskImpact::firstOrCreate(
                     [
                         'client_id' => $client_id,
-                        'matrix' => $matrix
+                        'matrix' => $matrix,
+                        'value' => $content['value'],
                     ],
                     [
                         'name' => $content['name'],
-                        'value' => $content['value'],
                     ]
                 );
             }
@@ -34,11 +34,11 @@ class RiskMatricesController extends Controller
                 RiskLikelihood::firstOrCreate(
                     [
                         'client_id' => $client_id,
-                        'matrix' => $matrix
+                        'matrix' => $matrix,
+                        'value' => $content['value'],
                     ],
                     [
                         'name' => $content['name'],
-                        'value' => $content['value'],
                     ]
                 );
             }
