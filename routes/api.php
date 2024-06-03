@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AnswersController;
 use App\Http\Controllers\RCSAController;
-use App\Http\Controllers\RiskMatricesController;
+use App\Http\Controllers\RiskRegistersController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BIAController;
@@ -67,7 +67,7 @@ Route::group(['prefix' => 'auth'], function () {
 });
 Route::group(['prefix' => 'risk-matrix'], function () {
 
-    Route::get('fetch-risk-matrix', [RiskMatricesController::class, 'fetchRiskMatrix']);
+    Route::get('fetch-risk-matrix', [RiskRegistersController::class, 'fetchRiskMatrix']);
 });
 Route::group(['prefix' => 'risk-assessment'], function () {
     Route::get('fetch-risks', [RiskAssessmentsController::class, 'fetchRisks']);
@@ -126,14 +126,34 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('create-rcsa-from-rcm', [RCSAController::class, 'createRCSAFromRCM']);
         Route::put('update-fields/{rcsa}', [RCSAController::class, 'updateFields']);
         Route::post('store', [RCSAController::class, 'store']);
+        Route::post('create-new-category', [RCSAController::class, 'createNewCategory']);
+
 
 
     });
-    Route::post('propose-matrix', [RiskMatricesController::class, 'proposeMatrix']);
+    Route::post('propose-matrix', [RiskRegistersController::class, 'proposeMatrix']);
+    Route::put('approve-matrix/{riskMatrix}', [RiskRegistersController::class, 'approveMatrix']);
+    Route::get('setup-risk-matrices', [RiskRegistersController::class, 'setupRiskMatrices']);
+    Route::post('customize-risk-matrix-description', [RiskRegistersController::class, 'customizeRiskMatrixDescription']);
 
-    Route::put('approve-matrix/{riskMatrix}', [RiskMatricesController::class, 'approveMatrix']);
-    Route::get('setup-risk-matrices', [RiskMatricesController::class, 'setupRiskMatrices']);
-    Route::post('customize-risk-matrix-description', [RiskMatricesController::class, 'customizeRiskMatrixDescription']);
+
+    Route::get('fetch-risk-registers', [RiskRegistersController::class, 'fetchRiskRegisters']);
+    Route::post('store-risk-registers', [RiskRegistersController::class, 'storeRiskRegister']);
+    Route::put('update-risk-register/{riskRegister}', [RiskRegistersController::class, 'updateRiskRegister']);
+    Route::delete('delete-risk-registers/{riskRegister}', [RiskRegistersController::class, 'deleteRiskRegister']);
+
+    Route::get('fetch-risk-impact-area', [RiskRegistersController::class, 'fetchRiskImpactArea']);
+    Route::post('store-risk-impact-area', [RiskRegistersController::class, 'storeRiskImpactArea']);
+    Route::put('update-risk-impact-area/{riskImpactArea}', [RiskRegistersController::class, 'updateRiskImpactArea']);
+    Route::delete('delete-risk-impact-area/{riskImpactArea}', [RiskRegistersController::class, 'deleteRiskImpactArea']);
+
+    Route::get('fetch-risk-impact-on-area', [RiskRegistersController::class, 'fetchRiskImpactOnArea']);
+    Route::post('store-risk-impact-on-area', [RiskRegistersController::class, 'storeRiskImpactOnArea']);
+    Route::put('update-risk-impact-on-area/{riskImpactOnArea}', [RiskRegistersController::class, 'updateRiskImpactOnArea']);
+    Route::delete('delete-risk-impact-on-area/{riskImpactOnArea}', [RiskRegistersController::class, 'deleteRiskImpactOnArea']);
+
+
+
 
     Route::get('format-doc-to-sfdt', [DocumentsController::class, 'formatDocToSFDT']);
     Route::post('save-blob-doc', [DocumentsController::class, 'saveBlobToDoc']);
@@ -318,14 +338,20 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
     Route::group(['prefix' => 'risk-assessment'], function () {
         Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
+        Route::get('fetch-assets', [RiskAssessmentsController::class, 'fetchAssets']);
 
         Route::post('save-risk', [RiskAssessmentsController::class, 'saveRisk']);
         Route::put('update-risk/{risk}', [RiskAssessmentsController::class, 'updateRisk']);
 
         Route::post('save-impacts', [RiskAssessmentsController::class, 'saveImpacts']);
         Route::post('save-asset-types', [RiskAssessmentsController::class, 'saveAssetTypes']);
+        Route::post('save-assets', [RiskAssessmentsController::class, 'saveAssets']);
         Route::post('save-categories', [RiskAssessmentsController::class, 'saveCategories']);
         Route::post('save-likelihoods', [RiskAssessmentsController::class, 'saveLikelihoods']);
+
+        Route::put('update-asset-type/{asset_type}', [RiskAssessmentsController::class, 'updateAssetType']);
+        Route::put('update-asset/{asset}', [RiskAssessmentsController::class, 'updateAsset']);
+
 
         Route::delete('delete-impact/{value}', [RiskAssessmentsController::class, 'deleteImpact']);
         Route::delete('delete-asset-type/{value}', [RiskAssessmentsController::class, 'deleteAssetType']);

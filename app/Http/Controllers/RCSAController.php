@@ -12,10 +12,11 @@ class RCSAController extends Controller
 
     public function fetchRCSA(Request $request)
     {
-        $client_id = $request->client_id;
-        $business_unit_id = $request->business_unit_id;
-        $risks = RiskControlSelfAssessment::with('businessUnit', 'businessProcess')->where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
-        return response()->json(compact('risks'), 200);
+        $rcsas = RiskControlSelfAssessment::where([
+            'client_id' => $request->client_id,
+            'business_unit_id' => $request->business_unit_id
+        ])->orderBy('created_at', 'DESC')->get()->groupBy('category');
+        return response()->json(compact('rcsas'), 200);
     }
     public function createRCSAFromRCM(Request $request)
     {
@@ -32,8 +33,8 @@ class RCSAController extends Controller
                     'business_unit_id' => $risk->business_unit_id,
                     'business_process_id' => $risk->business_process_id,
 
-                    'category' => $risk->businessProcess->name,
-                    'key_process' => $risk->businessProcess->name,
+                    'category' => strtoupper($risk->businessProcess->name),
+                    'key_process' => ucwords($risk->businessProcess->name),
                     'control_owner' => $risk->control_owner,
                     'control_activities' => $risk->control_description,
                     'control_type' => $risk->control_type,
@@ -42,11 +43,11 @@ class RCSAController extends Controller
             );
         }
 
-        $rcsas = RiskControlSelfAssessment::where([
-            'client_id' => $request->client_id,
-            'business_unit_id' => $request->business_unit_id
-        ])->get()->groupBy('category');
-        return response()->json(compact('rcsas'), 200);
+        // $rcsas = RiskControlSelfAssessment::where([
+        //     'client_id' => $request->client_id,
+        //     'business_unit_id' => $request->business_unit_id
+        // ])->get()->groupBy('category');
+        return $this->fetchRCSA($request);
     }
     /**
      * Save tnew record.
@@ -78,6 +79,29 @@ class RCSAController extends Controller
             'self_assessment_of_process_level_risk' => $request->self_assessment_of_process_level_risk,
             'rm_validated_process_level_risk' => $request->rm_validated_process_level_risk,
         ]);
+        return response()->json('success');
+    }
+    public function createNewCategory(Request $request)
+    {
+        $category = $request->category;
+        $control_data = json_decode(json_encode($request->control_data));
+        foreach ($control_data as $control) {
+            RiskControlSelfAssessment::firstOrCreate(
+                [
+                    'client_id' => $request->client_id,
+                    'business_unit_id' => $request->business_unit_id,
+                    'category' => strtoupper($category),
+                    'key_process' => ucwords($control->key_process),
+                    'control_activities' => $control->control_activities
+                ],
+                [
+
+                    'control_owner' => $control->control_owner,
+                    'control_type' => $control->control_type,
+                    'risk_description' => $control->risk_description,
+                ]
+            );
+        }
         return response()->json('success');
     }
     public function updateFields(Request $request, RiskControlSelfAssessment $rcsa)

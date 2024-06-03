@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AssetType extends Model
+class Asset extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'client_id'];
+    protected $fillable = ['name', 'client_id', 'asset_type_id'];
     public function client()
     {
         return $this->belongsTo(Client::class);
     }
-    public function assets()
+
+    public function assetType()
     {
-        return $this->hasMany(Asset::class);
+        return $this->belongsTo(AssetType::class);
     }
 }

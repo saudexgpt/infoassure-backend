@@ -35,7 +35,7 @@ class ReportsController extends Controller
         // foreach ($all_projects as $project) {
         //     $project->watchProjectProgress($project);
         // }
-        return response()->json(compact('all_projects', 'all_projects_count', 'completed_projects', 'in_progress'), 200);
+        return response()->json(compact('client', 'all_projects', 'all_projects_count', 'completed_projects', 'in_progress'), 200);
     }
 
     public function clientProjectDataAnalysis(Request $request)
@@ -334,8 +334,9 @@ class ReportsController extends Controller
         $client_id = $request->client_id;
         $standard_id = $request->standard_id;
         $summary = RiskAssessment::join('asset_types', 'asset_types.id', '=', 'risk_assessments.asset_type_id')
+            ->join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
             ->groupBy('asset')
-            ->where(['client_id' => $client_id, 'standard_id' => $standard_id])
+            ->where(['risk_assessments.client_id' => $client_id, 'risk_assessments.standard_id' => $standard_id])
             ->select('asset_types.name as asset_type', 'risk_owner', 'asset', \DB::raw('COUNT(*) as no_of_threats'), \DB::raw('COUNT(CASE WHEN risk_category = "Low" THEN risk_assessments.id END ) as lows'), \DB::raw('COUNT(CASE WHEN risk_category = "Medium" THEN risk_assessments.id END ) as mediums'), \DB::raw('COUNT(CASE WHEN risk_category = "High" THEN risk_assessments.id END ) as highs'))
             ->get();
         return response()->json(compact('summary'), 200);
