@@ -6,6 +6,7 @@ use App\Models\BusinessProcess;
 use App\Models\BusinessUnit;
 use App\Models\BusinessUnitImpactCriteria;
 use App\Models\OtherUnitsUser;
+use App\Models\RiskImpactArea;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -41,14 +42,14 @@ class BusinessUnitsController extends Controller
             ]);
 
             // create default impact criteria
-            $default_impact_criteria = defaultImpactCriteria();
-            foreach ($default_impact_criteria as $criteria) {
-                BusinessUnitImpactCriteria::firstOrCreate([
-                    'client_id' => $client_id,
-                    'business_unit_id' => $business_unit->id,
-                    'name' => $criteria,
-                ]);
-            }
+            // $default_impact_criteria = defaultImpactCriteria();
+            // foreach ($default_impact_criteria as $criteria) {
+            //     RiskImpactArea::firstOrCreate([
+            //         'client_id' => $client_id,
+            //         'business_unit_id' => $business_unit->id,
+            //         'area' => $criteria,
+            //     ]);
+            // }
         }
         return response()->json(['message' => 'Successful'], 200);
     }

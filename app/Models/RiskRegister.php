@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class RiskRegister extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $fillable = ['client_id', 'business_unit_id', 'risk_id', 'risk_type', 'vunerability_description', 'threat_impact_description', 'existing_controls', 'risk_owner'];
+    protected $fillable = ['client_id', 'business_unit_id', 'business_process_id', 'risk_id', 'type', 'vunerability_description', 'outcome', 'risk_owner', 'control_no', 'control_location', 'control_description', 'control_frequency', 'control_owner', 'control_type', 'nature_of_control', 'application_used_for_control', 'compensating_control', 'test_procedures', 'sample_size', 'data_required', 'link_to_evidence', 'test_conclusion', 'gap_description', 'tod_improvement_opportunity', 'recommendation', 'responsibility', 'timeline', 'tod_gap_status'];
 
     public function client()
     {
@@ -18,5 +18,9 @@ class RiskRegister extends Model
     public function businessUnit()
     {
         return $this->belongsTo(BusinessUnit::class);
+    }
+    public function businessProcess()
+    {
+        return $this->belongsTo(BusinessProcess::class);
     }
 }

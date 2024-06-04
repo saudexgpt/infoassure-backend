@@ -163,58 +163,116 @@ class RiskRegistersController extends Controller
     /////////////////// RIKS REGISTERS ///////////////
     public function fetchRiskRegisters(Request $request)
     {
-        $business_unit_id = $request->business_unit_id;
         if (isset($request->client_id)) {
             $client_id = $request->client_id;
         } else {
             $client_id = $this->getClient()->id;
         }
-        $risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
-            ->where(['risk_registers.client_id' => $client_id, 'business_unit_id' => $business_unit_id])
-            ->select('risk_registers.*', 'business_units.unit_name', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
-            ->get();
+        $business_unit_id = $request->business_unit_id;
+        $risk_registers = RiskRegister::with('businessUnit', 'businessProcess')->where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
         return response()->json(compact('risk_registers'), 200);
+        // $business_unit_id = $request->business_unit_id;
+        // if (isset($request->client_id)) {
+        //     $client_id = $request->client_id;
+        // } else {
+        //     $client_id = $this->getClient()->id;
+        // }
+        // $risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
+        //     ->where(['risk_registers.client_id' => $client_id, 'business_unit_id' => $business_unit_id])
+        //     ->select('risk_registers.*', 'business_units.unit_name', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
+        //     ->get();
+        // return response()->json(compact('risk_registers'), 200);
     }
     public function storeRiskRegister(Request $request)
     {
-        $business_unit = BusinessUnit::find($request->business_unit_id);
-        $risk_registers = json_decode(json_encode($request->risk_registers));
-        foreach ($risk_registers as $risk_register) {
-            $riskRegister = RiskRegister::where([
-                'client_id' => $request->client_id,
-                'business_unit_id' => $request->business_unit_id,
-                'risk_id' => $business_unit->next_risk_id,
-                // 'risk_type' => $risk_register->risk_type,
-                'vunerability_description' => $risk_register->vunerability_description
-            ])->first();
-            if (!$riskRegister) {
-                RiskRegister::create(
-                    [
-                        'client_id' => $request->client_id,
-                        'business_unit_id' => $request->business_unit_id,
-                        'risk_id' => $business_unit->next_risk_id,
-                        'risk_type' => $risk_register->risk_type,
-                        'vunerability_description' => $risk_register->vunerability_description,
-                        'threat_impact_description' => $risk_register->threat_impact_description,
-                        'existing_controls' => $risk_register->existing_controls,
-                        'risk_owner' => $risk_register->risk_owner
-                    ]
-                );
-                $business_unit->next_risk_id += 1;
-                $business_unit->save();
-            }
-
+        if ($request->file('link_to_evidence') == null) {
+            return response()->json(['message' => 'Please uplaod a document as evidence'], 500);
         }
-        return response()->json(['message' => 'Successful'], 200);
+
+        $business_unit = BusinessUnit::find($request->business_unit_id);
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        // $business_process_id = $request->business_process_id;
+        $riskRegister = RiskRegister::where([
+            'client_id' => $request->client_id,
+            'business_unit_id' => $request->business_unit_id,
+            'business_process_id' => $request->business_process_id,
+            'risk_id' => $business_unit->next_risk_id,
+            // 'risk_type' => $risk_register->risk_type,
+            'vunerability_description' => $request->risk_description
+        ])->first();
+        if (!$riskRegister) {
+            RiskRegister::firstOrCreate(
+                [
+                    'client_id' => $request->client_id,
+                    'business_unit_id' => $request->business_unit_id,
+                    'business_process_id' => $request->business_process_id,
+                    'type' => $request->type,
+                    'vunerability_description' => $request->risk_description
+                ],
+                [
+                    'risk_id' => $business_unit->next_risk_id,
+                    'outcome' => $request->outcome,
+                    'risk_owner' => $request->risk_owner,
+                    'control_no' => 'CTRL' . $business_unit->next_risk_id,
+                    'control_location' => $request->control_location,
+                    'control_description' => $request->control_description,
+                    'control_frequency' => $request->control_frequency,
+                    'control_owner' => $request->control_owner,
+                    'control_type' => $request->control_type,
+                    'nature_of_control' => $request->nature_of_control,
+                    'application_used_for_control' => $request->application_used_for_control,
+                    'compensating_control' => $request->compensating_control,
+                    'test_procedures' => $request->test_procedures,
+                    'sample_size' => $request->sample_size,
+                    'data_required' => $request->data_required,
+                    'link_to_evidence' => $this->uploadRiskEvidenceDocument($request),
+                    'test_conclusion' => $request->test_conclusion,
+                    'gap_description' => $request->gap_description,
+                    'tod_improvement_opportunity' => $request->tod_improvement_opportunity,
+                    'recommendation' => $request->recommendation,
+                    'responsibility' => $request->responsibility,
+                    'timeline' => $request->timeline,
+                    'tod_gap_status' => $request->tod_gap_status
+                ]
+            );
+            $business_unit->next_risk_id += 1;
+            $business_unit->save();
+        }
+        $business_unit->next_risk_id += 1;
+        $business_unit->save();
+        return response()->json('success');
+    }
+    private function uploadRiskEvidenceDocument(Request $request)
+    {
+        $folder_key = $request->client_id;
+        $file = $request->file('link_to_evidence');
+        if ($file != null && $file->isValid()) {
+
+            $name = $file->getClientOriginalName();
+            // $name = $request->file('file_uploaded')->hashName();
+            // $file_name = $name . "." . $request->file('file_uploaded')->extension();
+            $link = $file->storeAs('clients/' . $folder_key . '/risk-evidence', $name, 'public');
+
+            return $link;
+        }
+        return NULL;
     }
     public function updateRiskRegister(Request $request, RiskRegister $riskRegister)
     {
-        $riskRegister->risk_type = $request->risk_type;
-        $riskRegister->vunerability_description = $request->vunerability_description;
-        $riskRegister->threat_impact_description = $request->threat_impact_description;
-        $riskRegister->existing_controls = $request->existing_controls;
-        $riskRegister->risk_owner = $request->risk_owner;
+        $field = $request->field;
+        $value = $request->value;
+        $riskRegister->$field = $value;
         $riskRegister->save();
+        // $riskRegister->risk_type = $request->risk_type;
+        // $riskRegister->vunerability_description = $request->vunerability_description;
+        // $riskRegister->threat_impact_description = $request->threat_impact_description;
+        // $riskRegister->existing_controls = $request->existing_controls;
+        // $riskRegister->risk_owner = $request->risk_owner;
+        // $riskRegister->save();
         return response()->json(['message' => 'Successful'], 200);
     }
     public function deleteRiskRegister(Request $request, RiskRegister $riskRegister)
@@ -226,21 +284,29 @@ class RiskRegistersController extends Controller
     /////////////////// RIKS IMPACT AREAS ///////////////
     public function fetchRiskImpactArea(Request $request)
     {
+        // $business_unit_id = $request->business_unit_id;
         if (isset($request->client_id)) {
             $client_id = $request->client_id;
         } else {
             $client_id = $this->getClient()->id;
         }
-        $risk_impact_areas = RiskImpactArea::where(['client_id' => $client_id])->orderBy('area')->get();
+        $risk_impact_areas = RiskImpactArea::where([
+            'client_id' => $client_id,
+            // 'business_unit_id' => $business_unit_id
+        ])
+            ->orderBy('area')
+            ->get();
         return response()->json(compact('risk_impact_areas'), 200);
     }
     public function storeRiskImpactArea(Request $request)
     {
         $client_id = $request->client_id;
+        // $business_unit_id = $request->business_unit_id;
         $impact_areas = $request->areas;
         foreach ($impact_areas as $area) {
             RiskImpactArea::firstOrCreate([
                 'client_id' => $client_id,
+                // 'business_unit_id' => $business_unit_id,
                 'area' => trim($area)
             ]);
         }

@@ -48,12 +48,20 @@ function riskLikelihoodMatrix()
 function defaultImpactCriteria()
 {
     return [
-        'Financial Loss',
-        'Negative Publicity',
-        'Customer Dissatisfaction',
-        'Risk to Health/Safety of staff and visitors',
-        'Interruption of other processes',
-        'Regulatory/Legal/Contractual Violation',
+        'Financial Impact',
+        'Health & Safety Impact',
+        'Reputational Impact',
+        'Legal Impact',
+        'Stakeholders Impact',
+        'People Impact',
+        'Operational Impact',
+        'Regulatory/Legal/Contractual Impact',
+        // 'Financial Loss',
+        // 'Negative Publicity',
+        // 'Customer Dissatisfaction',
+        // 'Risk to Health/Safety of staff and visitors',
+        // 'Interruption of other processes',
+        // 'Regulatory/Legal/Contractual Violation',
     ];
 }
 function scoreInPercentage($numerator, $denominator)
