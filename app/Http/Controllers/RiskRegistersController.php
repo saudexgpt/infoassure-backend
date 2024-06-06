@@ -146,6 +146,19 @@ class RiskRegistersController extends Controller
         $riskMatrix->save();
         return $this->show($riskMatrix);
     }
+    /**
+     * Set the Client Risk Appetite
+     *
+     * @param  \App\Models\RiskMatrix  $riskMatrix
+     * @return \Illuminate\Http\Response
+     */
+    public function setRiskAppetite(Request $request, RiskMatrix $riskMatrix)
+    {
+        // $user_id = $this->getUser()->id;
+        $riskMatrix->risk_appetite = $request->risk_appetite;
+        $riskMatrix->save();
+        return $this->show($riskMatrix);
+    }
 
     public function customizeRiskMatrixDescription(Request $request)
     {
@@ -169,7 +182,12 @@ class RiskRegistersController extends Controller
             $client_id = $this->getClient()->id;
         }
         $business_unit_id = $request->business_unit_id;
-        $risk_registers = RiskRegister::with('businessUnit', 'businessProcess')->where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
+        // $risk_registers = RiskRegister::with('businessUnit', 'businessProcess')->where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
+        $risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
+            ->join('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
+            ->where(['risk_registers.client_id' => $client_id, 'risk_registers.business_unit_id' => $business_unit_id])
+            ->select('risk_registers.*', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
+            ->get();
         return response()->json(compact('risk_registers'), 200);
         // $business_unit_id = $request->business_unit_id;
         // if (isset($request->client_id)) {
