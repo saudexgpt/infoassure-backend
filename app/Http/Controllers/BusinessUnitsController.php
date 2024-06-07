@@ -58,7 +58,7 @@ class BusinessUnitsController extends Controller
         $business_unit = BusinessUnit::find($request->business_unit_id);
         BusinessProcess::firstOrCreate([
             'generated_process_id' => $business_unit->next_process_id,
-            'client_id' => $$business_unit->client_id,
+            'client_id' => $business_unit->client_id,
             'business_unit_id' => $request->business_unit_id,
             'name' => $request->name,
             'process_owner' => $request->process_owner,
