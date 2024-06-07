@@ -220,7 +220,7 @@ class RiskRegistersController extends Controller
             'business_process_id' => $request->business_process_id,
             'risk_id' => $business_unit->next_risk_id,
             // 'risk_type' => $risk_register->risk_type,
-            'vunerability_description' => $request->risk_description
+            'vulnerability_description' => $request->risk_description
         ])->first();
         if (!$riskRegister) {
             RiskRegister::firstOrCreate(
@@ -229,7 +229,7 @@ class RiskRegistersController extends Controller
                     'business_unit_id' => $request->business_unit_id,
                     'business_process_id' => $request->business_process_id,
                     'type' => $request->type,
-                    'vunerability_description' => $request->risk_description
+                    'vulnerability_description' => $request->risk_description
                 ],
                 [
                     'risk_id' => $business_unit->next_risk_id,
@@ -286,7 +286,7 @@ class RiskRegistersController extends Controller
         $riskRegister->$field = $value;
         $riskRegister->save();
         // $riskRegister->risk_type = $request->risk_type;
-        // $riskRegister->vunerability_description = $request->vunerability_description;
+        // $riskRegister->vulnerability_description = $request->vulnerability_description;
         // $riskRegister->threat_impact_description = $request->threat_impact_description;
         // $riskRegister->existing_controls = $request->existing_controls;
         // $riskRegister->risk_owner = $request->risk_owner;

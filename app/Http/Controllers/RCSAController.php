@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Risk;
 use App\Models\RiskControlSelfAssessment;
+use App\Models\RiskRegister;
 use Illuminate\Http\Request;
 
 class RCSAController extends Controller
@@ -20,7 +21,7 @@ class RCSAController extends Controller
     }
     public function createRCSAFromRCM(Request $request)
     {
-        $risks = Risk::with('businessUnit', 'businessProcess')->where([
+        $risks = RiskRegister::with('businessUnit', 'businessProcess')->where([
             'client_id' => $request->client_id,
             'business_unit_id' => $request->business_unit_id
         ])->get();

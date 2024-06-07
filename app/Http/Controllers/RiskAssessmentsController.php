@@ -20,114 +20,6 @@ class RiskAssessmentsController extends Controller
 {
 
 
-    ////////////////////////Manage Risk////////////////////////////
-    public function fetchRisks(Request $request)
-    {
-        if (isset($request->client_id)) {
-            $client_id = $request->client_id;
-        } else {
-            $client_id = $this->getClient()->id;
-        }
-        $business_unit_id = $request->business_unit_id;
-        $risks = Risk::with('businessUnit', 'businessProcess')->where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
-        return response()->json(compact('risks'), 200);
-    }
-    /**
-     * Save tnew record.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\RiskAssessment  $riskAssessment
-     * @return \Illuminate\Http\Response
-     */
-    public function saveRisk(Request $request)
-    {
-        if ($request->file('link_to_evidence') == null) {
-            return response()->json(['message' => 'Please uplaod a document as evidence'], 500);
-        }
-
-        $business_unit = BusinessUnit::find($request->business_unit_id);
-        if (isset($request->client_id)) {
-            $client_id = $request->client_id;
-        } else {
-            $client_id = $this->getClient()->id;
-        }
-        // $business_process_id = $request->business_process_id;
-        Risk::firstOrCreate([
-            'client_id' => $client_id,
-            'business_unit_id' => $request->business_unit_id,
-            'business_process_id' => $request->business_process_id,
-            'risk_unique_id' => $business_unit->prepend_risk_no_value . $business_unit->next_risk_id,
-            'type' => $request->type,
-            'description' => $request->risk_description,
-            'outcome' => $request->outcome,
-            'risk_owner' => $request->risk_owner,
-            'control_no' => 'CTRL' . $business_unit->next_risk_id,
-            'control_location' => $request->control_location,
-            'control_description' => $request->control_description,
-            'control_frequency' => $request->control_frequency,
-            'control_owner' => $request->control_owner,
-            'control_type' => $request->control_type,
-            'nature_of_control' => $request->nature_of_control,
-            'application_used_for_control' => $request->application_used_for_control,
-            'compensating_control' => $request->compensating_control,
-            'test_procedures' => $request->test_procedures,
-            'sample_size' => $request->sample_size,
-            'data_required' => $request->data_required,
-            'link_to_evidence' => $this->uploadRiskEvidenceDocument($request),
-            'test_conclusion' => $request->test_conclusion,
-            'gap_description' => $request->gap_description,
-            'tod_improvement_opportunity' => $request->tod_improvement_opportunity,
-            'recommendation' => $request->recommendation,
-            'responsibility' => $request->responsibility,
-            'timeline' => $request->timeline,
-            'tod_gap_status' => $request->tod_gap_status
-        ]);
-        $business_unit->next_risk_id += 1;
-        $business_unit->save();
-        return response()->json('success');
-    }
-    private function uploadRiskEvidenceDocument(Request $request)
-    {
-        $folder_key = $request->client_id;
-        $file = $request->file('link_to_evidence');
-        if ($file != null && $file->isValid()) {
-
-            $name = $file->getClientOriginalName();
-            // $name = $request->file('file_uploaded')->hashName();
-            // $file_name = $name . "." . $request->file('file_uploaded')->extension();
-            $link = $file->storeAs('clients/' . $folder_key . '/risk-evidence', $name, 'public');
-
-            return $link;
-        }
-        return NULL;
-    }
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\RiskAssessment  $riskAssessment
-     * @return \Illuminate\Http\Response
-     */
-    public function updateRisk(Request $request, Risk $risk)
-    {
-        $risk->type = $request->type;
-        $risk->description = $request->description;
-        $risk->outcome = $request->outcome;
-        $risk->save();
-        return response()->json(compact('risk'), 200);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\RiskAssessment  $riskAssessment
-     * @return \Illuminate\Http\Response
-     */
-    public function destroyRisk(Risk $risk)
-    {
-        $risk->delete();
-        return response()->json([], 204);
-    }
     /**
      * Display a listing of the resource.
      *
@@ -304,21 +196,28 @@ class RiskAssessmentsController extends Controller
         } else {
             $client_id = $this->getClient()->id;
         }
-
+        $standard_id = 0;
         if (isset($request->standard_id)) {
             $standard_id = $request->standard_id;
         }
         $module = $request->module;
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $risk_appetite = null;
+        if ($risk_matrix) {
+
+            $risk_appetite = $risk_matrix->risk_appetite;
+        }
+
         $risk_assessments = RiskAssessment::leftJoin('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
             ->leftJoin('business_units', 'business_units.id', 'risk_assessments.business_unit_id')
             ->leftJoin('business_processes', 'business_processes.id', 'risk_assessments.business_process_id')
             ->leftJoin('asset_types', 'asset_types.id', 'risk_assessments.asset_type_id')
-            ->where(['risk_assessments.client_id' => $client_id, 'risk_assessments.standard_id' => $standard_id, 'module' => $module])
-            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'), 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
+            ->where(['risk_assessments.client_id' => $client_id, 'risk_assessments.standard_id' => $standard_id, 'risk_assessments.module' => $module])
+            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'), 'business_processes.name as business_process', 'business_units.unit_name as business_unit', 'asset_types.name as asset_type')
             ->orderBy('risk_id', 'ASC')
             ->get();
 
-        return response()->json(compact('risk_assessments'), 200);
+        return response()->json(compact('risk_assessments', 'risk_appetite'), 200);
     }
     /**
      * Store a newly created resource in storage.
@@ -411,7 +310,7 @@ class RiskAssessmentsController extends Controller
     }
     private function analyzeRiskCategory($riskValue, $matrix = '3x3')
     {
-        $category = 'Low';
+        $category = NULL;
         switch ($matrix) {
             case '5x5':
                 if ($riskValue >= 12) {
@@ -419,6 +318,9 @@ class RiskAssessmentsController extends Controller
                 }
                 if ($riskValue >= 5 && $riskValue <= 11) {
                     $category = 'Medium';
+                }
+                if ($riskValue >= 1 && $riskValue <= 4) {
+                    $category = 'Low';
                 }
                 break;
 
@@ -428,6 +330,9 @@ class RiskAssessmentsController extends Controller
                 }
                 if ($riskValue >= 3 && $riskValue <= 5) {
                     $category = 'Medium';
+                }
+                if ($riskValue >= 1 && $riskValue <= 2) {
+                    $category = 'Low';
                 }
                 break;
         }
@@ -519,8 +424,8 @@ class RiskAssessmentsController extends Controller
         $risk_value = $riskAssessment->likelihood_of_occurence * $impact_val;
         $risk_category = $this->analyzeRiskCategory($risk_value, $matrix);
 
-        $riskAssessment->impact_of_occurence = $impact_val;
-        $riskAssessment->overall_risk_rating = $risk_value;
+        $riskAssessment->impact_of_occurence = ($impact_val > 0) ? $impact_val : NULL;
+        $riskAssessment->overall_risk_rating = ($risk_value > 0) ? $risk_value : NULL;
         $riskAssessment->risk_category = $risk_category;
         $riskAssessment->save();
     }
