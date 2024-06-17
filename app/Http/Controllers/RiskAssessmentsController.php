@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\AssetType;
 use App\Models\BusinessUnit;
+use App\Models\KeyRiskIndicatorAssessment;
 use App\Models\Risk;
 use App\Models\RiskAssessment;
 use App\Models\RiskCategory;
@@ -15,6 +16,7 @@ use App\Models\RiskLikelihood;
 use App\Models\RiskMatrix;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
+use PHPUnit\Framework\Constraint\Operator;
 
 class RiskAssessmentsController extends Controller
 {
@@ -62,9 +64,14 @@ class RiskAssessmentsController extends Controller
 
         return response()->json(compact('impacts'), 200);
     }
-    public function fetchCategories()
+    public function fetchCategories(Request $request)
     {
-        $categories = RiskCategory::orderBy('name')->get();
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $categories = RiskCategory::where('client_id', $client_id)->orderBy('name')->get();
         return response()->json(compact('categories'), 200);
     }
     public function fetchLikelihoods(Request $request)
@@ -148,12 +155,28 @@ class RiskAssessmentsController extends Controller
     }
     public function saveCategories(Request $request)
     {
-        $names_array = $request->names;
-        foreach ($names_array as $name) {
-            RiskCategory::firstOrCreate([
-                'name' => trim($name)
-            ]);
+        $client_id = $request->client_id;
+        $name = $request->name;
+        $sub_categories = [];
+        foreach ($request->sub_categories as $sub_category) {
+            $sub_categories[] = ['name' => $sub_category];
         }
+        RiskCategory::firstOrCreate([
+            'client_id' => $client_id,
+            'name' => trim($name),
+            'sub_categories' => $sub_categories,
+        ]);
+        return response()->json(['message' => 'Successful'], 200);
+    }
+    public function updateCategory(Request $request, RiskCategory $riskCategory)
+    {
+        $sub_categories = [];
+        foreach ($request->sub_categories as $sub_category) {
+            $sub_categories[] = ['name' => $sub_category];
+        }
+        $riskCategory->name = $request->name;
+        $riskCategory->sub_categories = $sub_categories;
+        $riskCategory->save();
         return response()->json(['message' => 'Successful'], 200);
     }
     public function saveLikelihoods(Request $request)
@@ -348,7 +371,7 @@ class RiskAssessmentsController extends Controller
     {
         $client_id = $riskAssessment->client_id;
         $sub_field = $request->sub_field;
-        $risk_matrix = RiskMatrix::with('creator', 'approver')->where('client_id', $client_id)->first();
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
         $matrix = $risk_matrix->current_matrix;
         $field = $request->field;
         $value = $request->value;
@@ -455,5 +478,134 @@ class RiskAssessmentsController extends Controller
         $risk->$field = $value;
         $risk->save();
         return $risk;
+    }
+
+    public function fetchRiskIndicatorAssessments(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $standard_id = 0;
+        $module = $request->module;
+        $risk_assessments = RiskAssessment::where(['client_id' => $client_id, 'standard_id' => $standard_id, 'module' => $module])->where('key_risk_indicator', '!=', NULL)
+            ->select('id', 'business_unit_id')
+            ->get();
+        $business_unit_ids = [];
+        foreach ($risk_assessments as $risk_assessment) {
+            $business_unit_ids[] = $risk_assessment->business_unit_id;
+            $assessment = KeyRiskIndicatorAssessment::firstOrCreate(
+                [
+                    'client_id' => $client_id,
+                    'business_unit_id' => $risk_assessment->business_unit_id,
+                    'risk_assessment_id' => $risk_assessment->id,
+                ]
+            );
+            $this->setKRIAssessmentValues($assessment);
+        }
+        $assessments = KeyRiskIndicatorAssessment::join('risk_assessments', 'risk_assessments.id', 'key_risk_indicator_assessments.risk_assessment_id')
+            ->where('key_risk_indicator_assessments.client_id', $client_id)
+            ->whereIn('key_risk_indicator_assessments.business_unit_id', $business_unit_ids)
+            ->select('key_risk_indicator_assessments.*', 'risk_assessments.key_risk_indicator as kri')->get();
+        return response()->json(compact('assessments'), 200);
+    }
+
+    private function setKRIAssessmentValues(KeyRiskIndicatorAssessment $assessment)
+    {
+        if ($assessment->assessments == NULL) {
+            //  we want to make it 48 weeks a year, giving 4 weeks per month
+            $value = [];
+            for ($i = 1; $i <= 48; $i++) {
+                # code...
+                $value[$i] = [NULL, '#f0f0f0']; // this is the assessment value and color code
+            }
+
+
+            $assessment->assessments = $value;
+            $assessment->save();
+        }
+    }
+    public function saveKRIThreshold(Request $request)
+    {
+        $assessment = KeyRiskIndicatorAssessment::find($request->id);
+        $assessment->risk_trigger_threshold = $request->threshold;
+        $assessment->save();
+
+        return response()->json(['message' => 'Success'], 200);
+    }
+    public function updateRiskIndicatorAssessment(Request $request, KeyRiskIndicatorAssessment $assessment)
+    {
+        $field = $request->field;
+        $value = $request->value;
+        $assessment->$field = $value;
+        $assessment->save();
+
+        return response()->json(['message' => 'Success'], 200);
+    }
+    public function updateKRIAssessmentValues(Request $request, KeyRiskIndicatorAssessment $kriAssessment)
+    {
+        $new_data = [];
+        $risk_trigger_threshold = $kriAssessment->risk_trigger_threshold;
+        $key = $request->key;
+        $value = $request->value;
+        if ($value != NULL) {
+            $assessments_data = $kriAssessment->assessments;
+            foreach ($assessments_data as $k => $val) {
+                if ($k == $key) {
+                    $val[0] = $value;
+                    $val[1] = $this->getColourIndicatorFormValue($value, $risk_trigger_threshold);
+                }
+                $new_data[$k] = $val;
+            }
+
+            $kriAssessment->assessments = $new_data;
+            $kriAssessment->save();
+        }
+
+        return response()->json(['message' => 'Success'], 200);
+    }
+    private function getColourIndicatorFormValue($value, $risk_trigger_threshold)
+    {
+        foreach ($risk_trigger_threshold as $threshold) {
+            $color = $threshold['color'];
+            $val = $threshold['value'];
+            $val2 = $threshold['value2'];
+            $operator = $threshold['operator'];
+            if ($operator == '-') {
+                if ($value >= $val && $value <= $val2) {
+                    return $color;
+                }
+            } else {
+                switch ($operator) {
+                    case '==':
+                        if ($value == $val) {
+                            return $color;
+                        }
+                        break;
+
+                    case '<':
+                        if ($value < $val) {
+                            return $color;
+                        }
+                        break;
+                    case '<=':
+                        if ($value <= $val) {
+                            return $color;
+                        }
+                        break;
+                    case '>':
+                        if ($value > $val) {
+                            return $color;
+                        }
+                        break;
+                    case '>=':
+                        if ($value >= $val) {
+                            return $color;
+                        }
+                        break;
+                }
+            }
+        }
     }
 }

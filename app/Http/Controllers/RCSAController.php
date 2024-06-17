@@ -17,7 +17,21 @@ class RCSAController extends Controller
             'client_id' => $request->client_id,
             'business_unit_id' => $request->business_unit_id
         ])->orderBy('created_at', 'DESC')->get()->groupBy('category');
-        return response()->json(compact('rcsas'), 200);
+        $category_details = RiskControlSelfAssessment::groupBy('category')->where([
+            'client_id' => $request->client_id,
+            'business_unit_id' => $request->business_unit_id
+        ])->select('category', 'overall_process_control_rating', \DB::raw('ROUND(AVG((self_assessment_score) * 10 ), 1) as percent_self_assessment_score'), \DB::raw('ROUND(AVG((validation) * 10 ), 1) as percent_validation_score'))->get();
+
+        $total_scores = RiskControlSelfAssessment::where([
+            'client_id' => $request->client_id,
+            'business_unit_id' => $request->business_unit_id
+        ])->select(\DB::raw('SUM(self_assessment_score) as total_self_assessment_score'), \DB::raw('SUM(validation) as total_validation_score'), \DB::raw('(COUNT(*) * 10) as potential_max_score'))->first();
+
+        $total_scores->self_assessment_percentage_rating = sprintf('%0.2f', ($total_scores->total_self_assessment_score / $total_scores->potential_max_score) * 100);
+
+        $total_scores->validation_percentage_rating = sprintf('%0.2f', ($total_scores->total_validation_score / $total_scores->potential_max_score) * 100);
+
+        return response()->json(compact('rcsas', 'category_details', 'total_scores'), 200);
     }
     public function createRCSAFromRCM(Request $request)
     {
@@ -105,6 +119,15 @@ class RCSAController extends Controller
         }
         return response()->json('success');
     }
+    public function updateOverallControlRating(Request $request)
+    {
+        RiskControlSelfAssessment::where([
+            'client_id' => $request->client_id,
+            'business_unit_id' => $request->business_unit_id,
+            'category' => $request->category
+        ])->update(['overall_process_control_rating' => $request->value]);
+        return $this->fetchRCSA($request);
+    }
     public function updateFields(Request $request, RiskControlSelfAssessment $rcsa)
     {
         //
@@ -120,11 +143,12 @@ class RCSAController extends Controller
             $rcsa->rm_validated_process_level_risk = $this->calculateLevelRisk($rcsa->validation);
         }
         $rcsa->save();
-        $rcsas = RiskControlSelfAssessment::where([
-            'client_id' => $rcsa->client_id,
-            'business_unit_id' => $rcsa->business_unit_id
-        ])->get()->groupBy('category');
-        return response()->json(compact('rcsas'), 200);
+        return $this->fetchRCSA($request);
+        // $rcsas = RiskControlSelfAssessment::where([
+        //     'client_id' => $rcsa->client_id,
+        //     'business_unit_id' => $rcsa->business_unit_id
+        // ])->get()->groupBy('category');
+        // return response()->json(compact('rcsas'), 200);
     }
     private function calculateScore($value)
     {

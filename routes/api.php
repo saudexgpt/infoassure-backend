@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AnswersController;
+use App\Http\Controllers\PDAController;
 use App\Http\Controllers\RCSAController;
 use App\Http\Controllers\RiskRegistersController;
+use App\Http\Controllers\RoPAController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BIAController;
@@ -42,7 +44,7 @@ use App\Http\Controllers\UsersController;
 
 
 Route::get('set-admin-role', [Controller::class, 'setAdminRole']);
-
+Route::get('countries', [Controller::class, 'fetchCountries']);
 // Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
 // Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
 // Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
@@ -127,6 +129,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update-fields/{rcsa}', [RCSAController::class, 'updateFields']);
         Route::post('store', [RCSAController::class, 'store']);
         Route::post('create-new-category', [RCSAController::class, 'createNewCategory']);
+        Route::post('update-overall-control-rating', [RCSAController::class, 'updateOverallControlRating']);
 
 
 
@@ -349,6 +352,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('save-asset-types', [RiskAssessmentsController::class, 'saveAssetTypes']);
         Route::post('save-assets', [RiskAssessmentsController::class, 'saveAssets']);
         Route::post('save-categories', [RiskAssessmentsController::class, 'saveCategories']);
+        Route::put('update-category/{riskCategory}', [RiskAssessmentsController::class, 'updateCategory']);
+
         Route::post('save-likelihoods', [RiskAssessmentsController::class, 'saveLikelihoods']);
 
         Route::put('update-asset-type/{asset_type}', [RiskAssessmentsController::class, 'updateAssetType']);
@@ -366,6 +371,14 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::put('update-fields/{riskAssessment}', [RiskAssessmentsController::class, 'updateRiskAssessmentFields']);
         Route::put('update-risk-fields/{risk}', [RiskAssessmentsController::class, 'updateRiskFields']);
+
+        Route::get('fetch-risk-indicator-assessments', [RiskAssessmentsController::class, 'fetchRiskIndicatorAssessments']);
+        Route::post('save-kri-threshold', [RiskAssessmentsController::class, 'saveKRIThreshold']);
+        Route::put('update-risk-indicator-assessment/{assessment}', [RiskAssessmentsController::class, 'updateRiskIndicatorAssessment']);
+        Route::put('update-kri-assessment-value/{kriAssessment}', [RiskAssessmentsController::class, 'updateKRIAssessmentValues']);
+
+
+
 
     });
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
@@ -412,6 +425,23 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::delete('destroy-evidence/{evidence}', [DueDiligenceResponsesController::class, 'destroyDueDiligenceEvidence']);
         });
     });
+    Route::group(['prefix' => 'pda'], function () {
+
+        Route::get('/', [PDAController::class, 'index']);
+        Route::post('store', [PDAController::class, 'store']);
+
+        Route::put('update/{pda}', [PDAController::class, 'update']);
+        Route::delete('destroy/{pda}', [PDAController::class, 'destroy']);
+    });
+    Route::group(['prefix' => 'ropa'], function () {
+
+        Route::get('/', [RoPAController::class, 'index']);
+        Route::post('store', [RoPAController::class, 'store']);
+
+        Route::put('update/{ropa}', [RoPAController::class, 'update']);
+        Route::delete('destroy/{ropa}', [RoPAController::class, 'destroy']);
+    });
+
     Route::group(['prefix' => 'packages'], function () {
 
         Route::get('fetch-modules', [PackagesController::class, 'fetchModules']);

@@ -157,7 +157,11 @@ class Controller extends BaseController
         return $this->currency;
     }
 
-
+    public function fetchCountries()
+    {
+        $countries = DB::table('countries')->orderBy('country_name')->pluck('country_name');
+        return response()->json(compact('countries'), 200);
+    }
     public function uploadFile($media, $file_name, $folder_key)
     {
         $folder = "clients/" . $folder_key;

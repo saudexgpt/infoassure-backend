@@ -36,4 +36,8 @@ class RiskAssessment extends Model
     {
         return $this->belongsTo(AssetType::class);
     }
+    public function keyRiskIndicatorAssessment()
+    {
+        return $this->hasOne(KeyRiskIndicatorAssessment::class);
+    }
 }

@@ -215,23 +215,22 @@ class RiskRegistersController extends Controller
         }
         // $business_process_id = $request->business_process_id;
         $riskRegister = RiskRegister::where([
-            'client_id' => $request->client_id,
+            'client_id' => $client_id,
             'business_unit_id' => $request->business_unit_id,
             'business_process_id' => $request->business_process_id,
             'risk_id' => $business_unit->next_risk_id,
-            // 'risk_type' => $risk_register->risk_type,
-            'vulnerability_description' => $request->risk_description
+            'risk_type' => $request->type,
+            'vulnerability_description' => $request->vulnerability_description
         ])->first();
         if (!$riskRegister) {
-            RiskRegister::firstOrCreate(
+            RiskRegister::create(
                 [
-                    'client_id' => $request->client_id,
+                    'client_id' => $client_id,
                     'business_unit_id' => $request->business_unit_id,
                     'business_process_id' => $request->business_process_id,
                     'type' => $request->type,
-                    'vulnerability_description' => $request->risk_description
-                ],
-                [
+                    'sub_type' => $request->sub_type,
+                    'vulnerability_description' => $request->vulnerability_description,
                     'risk_id' => $business_unit->next_risk_id,
                     'outcome' => $request->outcome,
                     'risk_owner' => $request->risk_owner,
