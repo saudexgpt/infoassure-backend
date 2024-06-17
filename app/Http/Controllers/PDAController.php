@@ -23,9 +23,9 @@ class PDAController extends Controller
         if (isset($request->business_unit_id) && $request->business_unit_id != 'all') {
             $condition['personal_data_assessments.business_unit_id'] = $request->business_unit_id;
         }
-        if (isset($request->business_process_id) && $request->business_process_id != 'all') {
-            $condition['business_process_id'] = $request->business_process_id;
-        }
+        // if (isset($request->business_process_id) && $request->business_process_id != 'all') {
+        //     $condition['business_process_id'] = $request->business_process_id;
+        // }
         $pdas = PersonalDataAssessment::join('business_processes', 'business_processes.id', 'personal_data_assessments.business_process_id')
             ->join('business_units', 'business_units.id', 'personal_data_assessments.business_unit_id')
             ->where('personal_data_assessments.client_id', $client_id)

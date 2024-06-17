@@ -22,7 +22,7 @@ class BusinessUnitsController extends Controller
     public function fetchBusinessProcesses(Request $request)
     {
         $business_unit_id = $request->business_unit_id;
-        $business_processes = BusinessProcess::with('owner')->where('business_unit_id', $business_unit_id)->get();
+        $business_processes = BusinessProcess::where('business_unit_id', $business_unit_id)->get();
         return response()->json(compact('business_processes'), 200);
     }
     public function saveBusinessUnits(Request $request)
