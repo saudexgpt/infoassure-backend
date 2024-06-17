@@ -59,7 +59,12 @@ class RiskRegistersController extends Controller
         $risk_matrix = RiskMatrix::with('creator', 'approver')->where('client_id', $client_id)->first();
         $active_matrix = $risk_matrix->current_matrix;
 
-        $impact_matrices = RiskImpact::with('impactOnAreas.impactArea')->where(['client_id' => $client_id, 'matrix' => $active_matrix])->orderBy('value')->get()->groupBy('matrix');
+        $impact_matrices = RiskImpact::with([
+            'impactOnAreas' => function ($q) use ($client_id) {
+                $q->where('client_id', $client_id);
+            },
+            'impactOnAreas.impactArea'
+        ])->where(['client_id' => $client_id, 'matrix' => $active_matrix])->orderBy('value')->get()->groupBy('matrix');
 
         $likelihood_matrices = RiskLikelihood::where(['client_id' => $client_id, 'matrix' => $active_matrix])->orderBy('value')->get()->groupBy('matrix');
         $matrices = ['3x3', '5x5'];
@@ -160,7 +165,7 @@ class RiskRegistersController extends Controller
         return $this->show($riskMatrix);
     }
 
-    public function customizeRiskMatrixDescription(Request $request)
+    public function customizeRiskMatrix(Request $request)
     {
         $id = $request->id;
         $table = $request->table;
@@ -169,7 +174,9 @@ class RiskRegistersController extends Controller
         } else {
             $matrix = RiskLikelihood::find($id);
         }
-        $matrix->name = $request->name;
+        $field = $request->field;
+        $value = $request->value;
+        $matrix->$field = $value;
         $matrix->save();
         return response()->json([]);
     }

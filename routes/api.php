@@ -139,7 +139,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('set-risk-appetite/{riskMatrix}', [RiskRegistersController::class, 'setRiskAppetite']);
 
     Route::get('setup-risk-matrices', [RiskRegistersController::class, 'setupRiskMatrices']);
-    Route::post('customize-risk-matrix-description', [RiskRegistersController::class, 'customizeRiskMatrixDescription']);
+    Route::post('customize-risk-matrix', [RiskRegistersController::class, 'customizeRiskMatrix']);
 
 
     Route::get('fetch-risk-registers', [RiskRegistersController::class, 'fetchRiskRegisters']);
