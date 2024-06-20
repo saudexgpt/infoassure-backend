@@ -78,7 +78,7 @@ class RoPAController extends Controller
         $value = $request->value;
         $ropa->$field = $value;
         $ropa->save();
-        return response()->json(['message' => 'Successful'], 200);
+        return response()->json(compact('ropa'), 200);
 
     }
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnswersController;
+use App\Http\Controllers\DPIAController;
 use App\Http\Controllers\PDAController;
 use App\Http\Controllers\RCSAController;
 use App\Http\Controllers\RiskRegistersController;
@@ -131,6 +132,17 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('create-new-category', [RCSAController::class, 'createNewCategory']);
         Route::post('update-overall-control-rating', [RCSAController::class, 'updateOverallControlRating']);
 
+        Route::get('fetch-risk-assessments', [RCSAController::class, 'fetchRCSARiskAssessments']);
+        // Route::post('store-risk-assessment', [RiskAssessmentsController::class, 'store']);
+
+        Route::put('update-risk-assessment-fields/{riskAssessment}', [RCSAController::class, 'updateRCSARiskAssessmentFields']);
+
+
+        Route::get('fetch-risk-indicator-assessments', [RCSAController::class, 'fetchRiskIndicatorAssessments']);
+        Route::post('save-kri-threshold', [RCSAController::class, 'saveKRIThreshold']);
+        Route::put('update-risk-indicator-assessment/{assessment}', [RCSAController::class, 'updateRiskIndicatorAssessment']);
+        Route::put('update-kri-assessment-value/{kriAssessment}', [RCSAController::class, 'updateKRIAssessmentValues']);
+        Route::get('calculate-enterprise-risk-register', [RCSAController::class, 'calculateEnterpriseRiskScore']);
 
 
     });
@@ -372,12 +384,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update-fields/{riskAssessment}', [RiskAssessmentsController::class, 'updateRiskAssessmentFields']);
         Route::put('update-risk-fields/{risk}', [RiskAssessmentsController::class, 'updateRiskFields']);
 
-        Route::get('fetch-risk-indicator-assessments', [RiskAssessmentsController::class, 'fetchRiskIndicatorAssessments']);
-        Route::post('save-kri-threshold', [RiskAssessmentsController::class, 'saveKRIThreshold']);
-        Route::put('update-risk-indicator-assessment/{assessment}', [RiskAssessmentsController::class, 'updateRiskIndicatorAssessment']);
-        Route::put('update-kri-assessment-value/{kriAssessment}', [RiskAssessmentsController::class, 'updateKRIAssessmentValues']);
-
-
 
 
     });
@@ -441,7 +447,14 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update/{ropa}', [RoPAController::class, 'update']);
         Route::delete('destroy/{ropa}', [RoPAController::class, 'destroy']);
     });
+    Route::group(['prefix' => 'dpia'], function () {
 
+        Route::get('/', [DPIAController::class, 'index']);
+        // Route::post('store', [DPIAController::class, 'store']);
+
+        Route::put('update/{dpia}', [DPIAController::class, 'update']);
+        // Route::delete('destroy/{dpia}', [DPIAController::class, 'destroy']);
+    });
     Route::group(['prefix' => 'packages'], function () {
 
         Route::get('fetch-modules', [PackagesController::class, 'fetchModules']);

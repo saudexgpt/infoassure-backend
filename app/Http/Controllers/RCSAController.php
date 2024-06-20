@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KeyRiskIndicatorAssessment;
+use App\Models\RCSARiskAssessment;
 use App\Models\Risk;
 use App\Models\RiskControlSelfAssessment;
+use App\Models\RiskImpactOnArea;
+use App\Models\RiskMatrix;
 use App\Models\RiskRegister;
 use Illuminate\Http\Request;
 
@@ -16,7 +20,11 @@ class RCSAController extends Controller
         $rcsas = RiskControlSelfAssessment::where([
             'client_id' => $request->client_id,
             'business_unit_id' => $request->business_unit_id
-        ])->orderBy('created_at', 'DESC')->get()->groupBy('category');
+        ])->select('*', 'key_process as label')->orderBy('created_at', 'DESC')->get()->groupBy('category');
+        $rcsa_data = [];
+        foreach ($rcsas as $key => $value) {
+            $rcsa_data[] = ['label' => $key, 'children' => $value];
+        }
         $category_details = RiskControlSelfAssessment::groupBy('category')->where([
             'client_id' => $request->client_id,
             'business_unit_id' => $request->business_unit_id
@@ -31,7 +39,7 @@ class RCSAController extends Controller
 
         $total_scores->validation_percentage_rating = sprintf('%0.2f', ($total_scores->total_validation_score / $total_scores->potential_max_score) * 100);
 
-        return response()->json(compact('rcsas', 'category_details', 'total_scores'), 200);
+        return response()->json(compact('rcsa_data', 'category_details', 'total_scores'), 200);
     }
     public function createRCSAFromRCM(Request $request)
     {
@@ -68,7 +76,7 @@ class RCSAController extends Controller
      * Save tnew record.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\RiskAssessment  $riskAssessment
+     * @param  \App\Models\RCSARiskAssessment  $riskAssessment
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -184,5 +192,366 @@ class RCSAController extends Controller
             $risk = 'Low';
         }
         return $risk;
+    }
+    public function fetchRCSARiskAssessments(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $standard_id = 0;
+        if (isset($request->standard_id)) {
+            $standard_id = $request->standard_id;
+        }
+        $module = $request->module;
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $risk_appetite = null;
+        if ($risk_matrix) {
+
+            $risk_appetite = $risk_matrix->risk_appetite;
+        }
+
+        $risk_assessments = RCSARiskAssessment::leftJoin('risk_registers', 'risk_registers.id', 'rcsa_risk_assessments.risk_register_id')
+            ->leftJoin('business_units', 'business_units.id', 'rcsa_risk_assessments.business_unit_id')
+            ->leftJoin('business_processes', 'business_processes.id', 'rcsa_risk_assessments.business_process_id')
+            ->leftJoin('asset_types', 'asset_types.id', 'rcsa_risk_assessments.asset_type_id')
+            ->where(['rcsa_risk_assessments.client_id' => $client_id, 'rcsa_risk_assessments.standard_id' => $standard_id, 'rcsa_risk_assessments.module' => $module])
+            ->select('rcsa_risk_assessments.*', 'risk_registers.*', 'rcsa_risk_assessments.id as id', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'), 'business_processes.name as business_process', 'business_units.unit_name as business_unit', 'asset_types.name as asset_type')
+            ->orderBy('risk_id', 'ASC')
+            ->get();
+
+        return response()->json(compact('risk_assessments', 'risk_appetite'), 200);
+    }
+    private function maxValue($arrayNums)
+    {
+        $max = 0;
+        foreach ($arrayNums as $num) {
+            if ($num > $max) {
+                $max = $num;
+            }
+        }
+        return $max;
+    }
+    private function analyzeRiskCategory($riskValue, $matrix = '3x3')
+    {
+        $category = NULL;
+        switch ($matrix) {
+            case '5x5':
+                if ($riskValue >= 12) {
+                    $category = 'High';
+                }
+                if ($riskValue >= 5 && $riskValue <= 11) {
+                    $category = 'Medium';
+                }
+                if ($riskValue >= 1 && $riskValue <= 4) {
+                    $category = 'Low';
+                }
+                break;
+
+            default:
+                if ($riskValue >= 6) {
+                    $category = 'High';
+                }
+                if ($riskValue >= 3 && $riskValue <= 5) {
+                    $category = 'Medium';
+                }
+                if ($riskValue >= 1 && $riskValue <= 2) {
+                    $category = 'Low';
+                }
+                break;
+        }
+        return $category;
+    }
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\RCSARiskAssessment  $riskAssessment
+     * @return \App\Models\RCSARiskAssessment  $riskAssessment
+     */
+    public function updateRCSARiskAssessmentFields(Request $request, RCSARiskAssessment $riskAssessment)
+    {
+        $client_id = $riskAssessment->client_id;
+        $sub_field = $request->sub_field;
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $matrix = $risk_matrix->current_matrix;
+        $field = $request->field;
+        $value = $request->value;
+        $new_data = [];
+        if ($sub_field != '') {
+            $impact_data = $riskAssessment->$field;
+            foreach ($impact_data as $data) {
+                if ($sub_field == $data['slug']) {
+                    $data['impact_value'] = $value;
+                }
+                $new_data[] = $data;
+            }
+            $value = $new_data;
+        }
+
+
+        $riskAssessment->$field = $value;
+        $riskAssessment->save();
+        $this->updateRiskCategory($riskAssessment, $matrix);
+        $this->updateImpactRationale($riskAssessment, $matrix);
+        $this->updateReversedRiskCategory($riskAssessment, $matrix);
+        $this->updateRevisedImpactRationale($riskAssessment, $matrix);
+        return $riskAssessment;
+    }
+    private function updateImpactRationale($riskAssessment, $matrix)
+    {
+
+        $impactOnAreas = RiskImpactOnArea::with('impactArea')->where([
+            'impact_value' => $riskAssessment->impact_of_occurence,
+            'matrix' => $matrix,
+            'client_id' => $riskAssessment->client_id
+        ])
+            ->whereRaw('impact_level IS NOT NULL')
+            ->get();
+        $rationale = '';
+        foreach ($impactOnAreas as $impactOnArea) {
+            $area = $impactOnArea->impactArea->area;
+            $impact_level = $impactOnArea->impact_level;
+            $rationale .= "<li><strong>$area:</strong> $impact_level</li>";
+        }
+        $riskAssessment->impact_rationale = '<ul>' . $rationale . '</ul>';
+        $riskAssessment->save();
+    }
+    private function updateRevisedImpactRationale($riskAssessment, $matrix)
+    {
+
+        $impactOnAreas = RiskImpactOnArea::with('impactArea')->where([
+            'impact_value' => $riskAssessment->revised_impact_of_occurence,
+            'matrix' => $matrix,
+            'client_id' => $riskAssessment->client_id
+        ])
+            ->whereRaw('impact_level IS NOT NULL')
+            ->get();
+        $rationale = '';
+        foreach ($impactOnAreas as $impactOnArea) {
+            $area = $impactOnArea->impactArea->area;
+            $impact_level = $impactOnArea->impact_level;
+            $rationale .= "<li><strong>$area:</strong> $impact_level</li>";
+        }
+        $riskAssessment->revised_impact_rationale = '<ul>' . $rationale . '</ul>';
+        $riskAssessment->save();
+    }
+    private function updateRiskCategory($riskAssessment, $matrix)
+    {
+
+        $valuesArray = [];
+        $impact_data = $riskAssessment->impact_data;
+        foreach ($impact_data as $data) {
+            $valuesArray[] = ($data['impact_value'] != '') ? $data['impact_value'] : 0;
+        }
+
+        $impact_val = $this->maxValue($valuesArray);
+        $risk_value = $riskAssessment->likelihood_of_occurence * $impact_val;
+        $risk_category = $this->analyzeRiskCategory($risk_value, $matrix);
+
+        $riskAssessment->impact_of_occurence = ($impact_val > 0) ? $impact_val : NULL;
+        $riskAssessment->overall_risk_rating = ($risk_value > 0) ? $risk_value : NULL;
+        $riskAssessment->risk_category = $risk_category;
+        $riskAssessment->save();
+    }
+    private function updateReversedRiskCategory($riskAssessment, $matrix)
+    {
+        $valuesArray = [];
+        $impact_data = $riskAssessment->revised_impact_data;
+        foreach ($impact_data as $data) {
+            $valuesArray[] = ($data['impact_value'] != '') ? $data['impact_value'] : 0;
+        }
+
+        $impact_val = $this->maxValue($valuesArray);
+        $risk_value = $riskAssessment->revised_likelihood_of_occurence * $impact_val;
+        $risk_category = $this->analyzeRiskCategory($risk_value, $matrix);
+
+        $riskAssessment->revised_impact_of_occurence = $impact_val;
+        $riskAssessment->revised_overall_risk_rating = $risk_value;
+        $riskAssessment->revised_risk_category = $risk_category;
+        $riskAssessment->save();
+    }
+
+
+    public function fetchRiskIndicatorAssessments(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $standard_id = 0;
+        $module = $request->module;
+        $risk_assessments = RCSARiskAssessment::where(['client_id' => $client_id, 'standard_id' => $standard_id, 'module' => $module])->where('key_risk_indicator', '!=', NULL)
+            ->select('id', 'business_unit_id')
+            ->get();
+        $business_unit_ids = [];
+        foreach ($risk_assessments as $risk_assessment) {
+            $business_unit_ids[] = $risk_assessment->business_unit_id;
+            $assessment = KeyRiskIndicatorAssessment::firstOrCreate(
+                [
+                    'client_id' => $client_id,
+                    'business_unit_id' => $risk_assessment->business_unit_id,
+                    'risk_assessment_id' => $risk_assessment->id,
+                ]
+            );
+            $this->setKRIAssessmentValues($assessment);
+        }
+        $assessments = KeyRiskIndicatorAssessment::join('rcsa_risk_assessments', 'rcsa_risk_assessments.id', 'key_risk_indicator_assessments.risk_assessment_id')
+            ->where('key_risk_indicator_assessments.client_id', $client_id)
+            ->whereIn('key_risk_indicator_assessments.business_unit_id', $business_unit_ids)
+            ->select('key_risk_indicator_assessments.*', 'rcsa_risk_assessments.key_risk_indicator as kri')->get();
+        return response()->json(compact('assessments'), 200);
+    }
+
+    private function setKRIAssessmentValues(KeyRiskIndicatorAssessment $assessment)
+    {
+        if ($assessment->assessments == NULL) {
+            //  we want to make it 48 weeks a year, giving 4 weeks per month
+            $value = [];
+            for ($i = 1; $i <= 48; $i++) {
+                # code...
+                $value[$i] = [NULL, '#f0f0f0']; // this is the assessment value and color code
+            }
+
+
+            $assessment->assessments = $value;
+            $assessment->save();
+        }
+    }
+    public function saveKRIThreshold(Request $request)
+    {
+        $assessment = KeyRiskIndicatorAssessment::find($request->id);
+        $assessment->risk_trigger_threshold = $request->threshold;
+        $assessment->save();
+
+        return response()->json(['message' => 'Success'], 200);
+    }
+    public function updateRiskIndicatorAssessment(Request $request, KeyRiskIndicatorAssessment $assessment)
+    {
+        $field = $request->field;
+        $value = $request->value;
+        $assessment->$field = $value;
+        $assessment->save();
+
+        return response()->json(['message' => 'Success'], 200);
+    }
+    public function updateKRIAssessmentValues(Request $request, KeyRiskIndicatorAssessment $kriAssessment)
+    {
+        $new_data = [];
+        $risk_trigger_threshold = $kriAssessment->risk_trigger_threshold;
+        $key = $request->key;
+        $value = $request->value;
+        if ($value != NULL) {
+            $assessments_data = $kriAssessment->assessments;
+            foreach ($assessments_data as $k => $val) {
+                if ($k == $key) {
+                    $val[0] = $value;
+                    $val[1] = $this->getColourIndicatorFormValue($value, $risk_trigger_threshold);
+                }
+                $new_data[$k] = $val;
+            }
+
+            $kriAssessment->assessments = $new_data;
+            $kriAssessment->save();
+        }
+
+        return response()->json(['message' => 'Success'], 200);
+    }
+    private function getColourIndicatorFormValue($value, $risk_trigger_threshold)
+    {
+        foreach ($risk_trigger_threshold as $threshold) {
+            $color = $threshold['color'];
+            $val = $threshold['value'];
+            $val2 = $threshold['value2'];
+            $operator = $threshold['operator'];
+            if ($operator == '-') {
+                if ($value >= $val && $value <= $val2) {
+                    return $color;
+                }
+            } else {
+                switch ($operator) {
+                    case '==':
+                        if ($value == $val) {
+                            return $color;
+                        }
+                        break;
+
+                    case '<':
+                        if ($value < $val) {
+                            return $color;
+                        }
+                        break;
+                    case '<=':
+                        if ($value <= $val) {
+                            return $color;
+                        }
+                        break;
+                    case '>':
+                        if ($value > $val) {
+                            return $color;
+                        }
+                        break;
+                    case '>=':
+                        if ($value >= $val) {
+                            return $color;
+                        }
+                        break;
+                }
+            }
+        }
+    }
+    public function calculateEnterpriseRiskScore(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $condition = [];
+        if (isset($request->business_unit_id) && $request->business_unit_id != '') {
+            $condition['rcsa_risk_assessments.business_unit_id'] = $request->business_unit_id;
+        }
+        if (isset($request->type) && $request->type != '') {
+            $condition['risk_registers.type'] = $request->type;
+        }
+        if (isset($request->sub_type) && $request->sub_type != '') {
+            $condition['risk_registers.sub_type'] = $request->sub_type;
+        }
+        if (isset($request->risk_id) && $request->risk_id != '') {
+            $condition['risk_registers.risk_id'] = $request->risk_id;
+        }
+        if (isset($request->business_unit_id) && $request->business_unit_id != '') {
+            $condition['rcsa_risk_assessments.business_unit_id'] = $request->business_unit_id;
+        }
+        $risk_assessments = RCSARiskAssessment::leftJoin('risk_registers', 'risk_registers.id', 'rcsa_risk_assessments.risk_register_id')
+            ->leftJoin('business_units', 'business_units.id', 'rcsa_risk_assessments.business_unit_id')
+            ->leftJoin('business_processes', 'business_processes.id', 'rcsa_risk_assessments.business_process_id')
+            ->where(['rcsa_risk_assessments.client_id' => $client_id])
+            ->where($condition)
+            ->select('rcsa_risk_assessments.*', 'risk_registers.*', 'rcsa_risk_assessments.id as id', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'), 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
+            ->orderBy('risk_id', 'ASC')
+            ->get();
+
+        $impact_rating_count = 0;
+        $likelihood_rating_count = 0;
+        $risk_score_count = 0;
+        $count = count($risk_assessments);
+        $overall_impact_rating = 0;
+        $overall_likelihood_rating = 0;
+        $average_risk_score = 0;
+        if ($count > 0) {
+            foreach ($risk_assessments as $risk_assessment) {
+                $impact_rating_count += $risk_assessment->impact_of_occurence;
+                $likelihood_rating_count += $risk_assessment->likelihood_of_occurence;
+                $risk_score_count += $risk_assessment->overall_risk_rating;
+            }
+            $overall_impact_rating = sprintf("%.1f", $impact_rating_count / $count);
+            $overall_likelihood_rating = sprintf("%.1f", $likelihood_rating_count / $count);
+            $average_risk_score = sprintf("%.1f", $risk_score_count / $count);
+        }
+
+
+        return response()->json(compact('risk_assessments', 'overall_impact_rating', 'overall_likelihood_rating', 'average_risk_score'), 200);
     }
 }
