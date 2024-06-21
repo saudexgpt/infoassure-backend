@@ -37,7 +37,9 @@ class RCSAController extends Controller
         $total_scores->self_assessment_percentage_rating = 0;
         $total_scores->validation_percentage_rating = 0;
         if ($total_scores->potential_max_score > 0) {
+
             $total_scores->self_assessment_percentage_rating = sprintf('%0.2f', ($total_scores->total_self_assessment_score / $total_scores->potential_max_score) * 100);
+
             $total_scores->validation_percentage_rating = sprintf('%0.2f', ($total_scores->total_validation_score / $total_scores->potential_max_score) * 100);
         }
 
@@ -65,7 +67,7 @@ class RCSAController extends Controller
                     'control_owner' => $risk->control_owner,
                     'control_activities' => $risk->control_description,
                     'control_type' => $risk->control_type,
-                    'risk_description' => $risk->description,
+                    'risk_description' => $risk->vulnerability_description,
                 ]
             );
         }
