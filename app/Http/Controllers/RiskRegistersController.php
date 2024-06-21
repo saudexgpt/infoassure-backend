@@ -226,7 +226,7 @@ class RiskRegistersController extends Controller
             'business_unit_id' => $request->business_unit_id,
             'business_process_id' => $request->business_process_id,
             'risk_id' => $business_unit->next_risk_id,
-            'risk_type' => $request->type,
+            'type' => $request->type,
             'vulnerability_description' => $request->vulnerability_description
         ])->first();
         if (!$riskRegister) {
