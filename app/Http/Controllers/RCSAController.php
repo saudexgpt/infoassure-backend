@@ -34,10 +34,14 @@ class RCSAController extends Controller
             'client_id' => $request->client_id,
             'business_unit_id' => $request->business_unit_id
         ])->select(\DB::raw('SUM(self_assessment_score) as total_self_assessment_score'), \DB::raw('SUM(validation) as total_validation_score'), \DB::raw('(COUNT(*) * 10) as potential_max_score'))->first();
+        $total_scores->self_assessment_percentage_rating = 0;
+        $total_scores->validation_percentage_rating = 0;
+        if ($total_scores->potential_max_score > 0) {
+            $total_scores->self_assessment_percentage_rating = sprintf('%0.2f', ($total_scores->total_self_assessment_score / $total_scores->potential_max_score) * 100);
+            $total_scores->validation_percentage_rating = sprintf('%0.2f', ($total_scores->total_validation_score / $total_scores->potential_max_score) * 100);
+        }
 
-        $total_scores->self_assessment_percentage_rating = sprintf('%0.2f', ($total_scores->total_self_assessment_score / $total_scores->potential_max_score) * 100);
 
-        $total_scores->validation_percentage_rating = sprintf('%0.2f', ($total_scores->total_validation_score / $total_scores->potential_max_score) * 100);
 
         return response()->json(compact('rcsa_data', 'category_details', 'total_scores'), 200);
     }
