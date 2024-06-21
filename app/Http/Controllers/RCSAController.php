@@ -542,9 +542,9 @@ class RCSAController extends Controller
         $average_risk_score = 0;
         if ($count > 0) {
             foreach ($risk_assessments as $risk_assessment) {
-                $impact_rating_count += $risk_assessment->impact_of_occurence;
-                $likelihood_rating_count += $risk_assessment->likelihood_of_occurence;
-                $risk_score_count += $risk_assessment->overall_risk_rating;
+                $impact_rating_count += $risk_assessment->revised_impact_of_occurence;
+                $likelihood_rating_count += $risk_assessment->revised_likelihood_of_occurence;
+                $risk_score_count += $risk_assessment->revised_overall_risk_rating;
             }
             $overall_impact_rating = sprintf("%.1f", $impact_rating_count / $count);
             $overall_likelihood_rating = sprintf("%.1f", $likelihood_rating_count / $count);
