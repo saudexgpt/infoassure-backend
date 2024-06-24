@@ -193,7 +193,7 @@ class RiskRegistersController extends Controller
         $risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
             ->join('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
             ->where(['risk_registers.client_id' => $client_id, 'risk_registers.business_unit_id' => $business_unit_id])
-            ->select('risk_registers.*', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
+            ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
             ->get();
         return response()->json(compact('risk_registers'), 200);
         // $business_unit_id = $request->business_unit_id;
@@ -226,6 +226,7 @@ class RiskRegistersController extends Controller
             'business_unit_id' => $request->business_unit_id,
             'business_process_id' => $request->business_process_id,
             'risk_id' => $business_unit->next_risk_id,
+            'sub_unit' => $business_unit->sub_unit,
             'type' => $request->type,
             'vulnerability_description' => $request->vulnerability_description
         ])->first();
@@ -235,6 +236,7 @@ class RiskRegistersController extends Controller
                     'client_id' => $client_id,
                     'business_unit_id' => $request->business_unit_id,
                     'business_process_id' => $request->business_process_id,
+                    'sub_unit' => $request->sub_unit,
                     'type' => $request->type,
                     'sub_type' => $request->sub_type,
                     'vulnerability_description' => $request->vulnerability_description,

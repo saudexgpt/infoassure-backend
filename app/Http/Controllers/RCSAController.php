@@ -241,33 +241,45 @@ class RCSAController extends Controller
     }
     private function analyzeRiskCategory($riskValue, $matrix = '3x3')
     {
+
         $category = NULL;
+        $color = 'fcfcff';
         switch ($matrix) {
             case '5x5':
-                if ($riskValue >= 12) {
-                    $category = 'High';
+                if ($riskValue >= 15) {
+                    $category = 'Very High';
+                    $color = 'DD2C2C';
                 }
-                if ($riskValue >= 5 && $riskValue <= 11) {
+                if ($riskValue >= 10 && $riskValue <= 14) {
+                    $category = 'High';
+                    $color = 'FFA500';
+                }
+                if ($riskValue >= 5 && $riskValue <= 9) {
                     $category = 'Medium';
+                    $color = 'FFFF00';
                 }
                 if ($riskValue >= 1 && $riskValue <= 4) {
                     $category = 'Low';
+                    $color = '3BD135';
                 }
                 break;
 
             default:
                 if ($riskValue >= 6) {
                     $category = 'High';
+                    $color = 'DD2C2C';
                 }
                 if ($riskValue >= 3 && $riskValue <= 5) {
                     $category = 'Medium';
+                    $color = 'FFA500';
                 }
                 if ($riskValue >= 1 && $riskValue <= 2) {
                     $category = 'Low';
+                    $color = '3BD135';
                 }
                 break;
         }
-        return $category;
+        return array($category, $color);
     }
     /**
      * Display the specified resource.
@@ -353,11 +365,13 @@ class RCSAController extends Controller
 
         $impact_val = $this->maxValue($valuesArray);
         $risk_value = $riskAssessment->likelihood_of_occurence * $impact_val;
-        $risk_category = $this->analyzeRiskCategory($risk_value, $matrix);
+        // $risk_category = $this->analyzeRiskCategory($risk_value, $matrix);
+        list($risk_category, $color) = $this->analyzeRiskCategory($risk_value, $matrix);
 
         $riskAssessment->impact_of_occurence = ($impact_val > 0) ? $impact_val : NULL;
         $riskAssessment->overall_risk_rating = ($risk_value > 0) ? $risk_value : NULL;
         $riskAssessment->risk_category = $risk_category;
+        $riskAssessment->level_color = $color;
         $riskAssessment->save();
     }
     private function updateReversedRiskCategory($riskAssessment, $matrix)
@@ -370,11 +384,12 @@ class RCSAController extends Controller
 
         $impact_val = $this->maxValue($valuesArray);
         $risk_value = $riskAssessment->revised_likelihood_of_occurence * $impact_val;
-        $risk_category = $this->analyzeRiskCategory($risk_value, $matrix);
+        list($risk_category, $color) = $this->analyzeRiskCategory($risk_value, $matrix);
 
         $riskAssessment->revised_impact_of_occurence = $impact_val;
         $riskAssessment->revised_overall_risk_rating = $risk_value;
         $riskAssessment->revised_risk_category = $risk_category;
+        $riskAssessment->revised_level_color = $color;
         $riskAssessment->save();
     }
 
@@ -556,8 +571,38 @@ class RCSAController extends Controller
             $overall_likelihood_rating = sprintf("%.1f", $likelihood_rating_count / $count);
             $average_risk_score = sprintf("%.1f", $risk_score_count / $count);
         }
-
-
-        return response()->json(compact('risk_assessments', 'overall_impact_rating', 'overall_likelihood_rating', 'average_risk_score'), 200);
+        $severity_distribution = RCSARiskAssessment::where(['client_id' => $client_id])
+            ->where($condition)
+            ->select(\DB::raw('COUNT(CASE WHEN revised_risk_category = "Very High" THEN rcsa_risk_assessments.id END ) as very_high'), \DB::raw('COUNT(CASE WHEN revised_risk_category = "High" THEN rcsa_risk_assessments.id END ) as high'), \DB::raw('COUNT(CASE WHEN revised_risk_category = "Medium" THEN rcsa_risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_category = "Low" THEN rcsa_risk_assessments.id END ) as low'))
+            ->first();
+        $effectiveness_level = RCSARiskAssessment::where(['client_id' => $client_id])
+            ->where($condition)
+            ->select(\DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Effective" THEN rcsa_risk_assessments.id END ) as effective'), \DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Ineffective" THEN rcsa_risk_assessments.id END ) as ineffective'), \DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Sub-optimal" THEN rcsa_risk_assessments.id END ) as sub_optimal'))
+            ->first();
+        $column_series = [
+            [
+                'name' => 'Risk Severity',
+                'colors' => ['#DD2C2C', '#FFA500', '#FFFF00', '#3BD135'],
+                'data' => [
+                    ['Very High', $severity_distribution->very_high],
+                    ['High', $severity_distribution->high],
+                    ['Medium', $severity_distribution->medium],
+                    ['Low', $severity_distribution->low],
+                ], //array format
+                'colorByPoint' => true,
+                'groupPadding' => 0,
+            ],
+        ];
+        $pie_series = [
+            [
+                'name' => 'Control Effectiveness',
+                'data' => [
+                    ['name' => 'Effective', 'y' => $effectiveness_level->effective],
+                    ['name' => 'Ineffective', 'y' => $effectiveness_level->ineffective],
+                    ['name' => 'Sub-optimal', 'y' => $effectiveness_level->sub_optimal],
+                ],
+            ],
+        ];
+        return response()->json(compact('risk_assessments', 'overall_impact_rating', 'overall_likelihood_rating', 'average_risk_score', 'column_series', 'pie_series'), 200);
     }
 }

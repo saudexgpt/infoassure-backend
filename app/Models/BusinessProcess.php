@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class BusinessProcess extends Model
 {
 
     use HasFactory, SoftDeletes;
-    protected $fillable = ['generated_process_id', 'client_id', 'business_unit_id', 'process_owner', 'name', 'description', 'objective', 'roles_responsible', 'no_of_people_involved', 'minimum_no_of_people_involved', 'product_or_service_delivered', 'regulatory_obligations', 'applications_used', 'business_units_depended_on', 'processes_depended_on', 'key_vendors_or_external_dependencies', 'vital_non_electronic_records', 'vital_electronic_records', 'alternative_workaround_during_system_failure', 'key_individuals_process_depends_on', 'peak_periods', 'remote_working'];
+    protected $fillable = ['generated_process_id', 'client_id', 'business_unit_id', 'process_owner', 'teams', 'name', 'description', 'objective', 'roles_responsible', 'no_of_people_involved', 'minimum_no_of_people_involved', 'product_or_service_delivered', 'regulatory_obligations', 'applications_used', 'business_units_depended_on', 'processes_depended_on', 'key_vendors_or_external_dependencies', 'vital_non_electronic_records', 'vital_electronic_records', 'alternative_workaround_during_system_failure', 'key_individuals_process_depends_on', 'peak_periods', 'remote_working'];
 
     public function businessUnit()
     {
@@ -19,5 +20,13 @@ class BusinessProcess extends Model
     public function owner()
     {
         return $this->belongsTo(OtherUnitsUser::class, 'process_owner', 'id');
+    }
+
+    protected function teams(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => json_decode($value, true),
+            set: fn($value) => json_encode($value),
+        );
     }
 }

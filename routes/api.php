@@ -46,6 +46,8 @@ use App\Http\Controllers\UsersController;
 
 Route::get('set-admin-role', [Controller::class, 'setAdminRole']);
 Route::get('countries', [Controller::class, 'fetchCountries']);
+
+
 // Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
 // Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
 // Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
@@ -122,7 +124,7 @@ Route::group(['prefix' => 'bia'], function () {
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
-
+    Route::put('save-risk-assessment-treatment-details/{id}', [Controller::class, 'saveRiskAssessmentTreatmentDetails']);
     Route::group(['prefix' => 'rcsa'], function () {
 
         Route::get('fetch', [RCSAController::class, 'fetchRCSA']);
@@ -450,6 +452,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'dpia'], function () {
 
         Route::get('/', [DPIAController::class, 'index']);
+        Route::get('fetch-risk-assessments', [DPIAController::class, 'fetchRiskAssessments']);
         // Route::post('store', [DPIAController::class, 'store']);
 
         Route::put('update/{dpia}', [DPIAController::class, 'update']);

@@ -53,7 +53,20 @@ class DPIAController extends Controller
         return response()->json(compact('dpia_data', 'risk_appetite'), 200);
     }
 
-
+    public function fetchRiskAssessments(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $risk_assessments = DPIAssessment::join('business_units', 'business_units.id', 'd_p_i_assessments.business_unit_id')
+            ->join('business_processes', 'business_processes.id', 'd_p_i_assessments.business_process_id')
+            ->where('d_p_i_assessments.client_id', $client_id)
+            ->select('d_p_i_assessments.*', 'business_units.unit_name as business_unit', 'business_processes.name as business_process')
+            ->get();
+        return response()->json(compact('risk_assessments'), 200);
+    }
     /**
      * Update the specified resource in storage.
      *

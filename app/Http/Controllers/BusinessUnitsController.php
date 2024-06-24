@@ -34,11 +34,13 @@ class BusinessUnitsController extends Controller
                 'client_id' => $client_id,
                 'group_name' => $business_unit->group_name,
                 'unit_name' => $business_unit->unit_name,
+
+            ], [
                 'teams' => $business_unit->teams,
                 'function_performed' => $business_unit->function_performed,
                 'contact_phone' => $business_unit->contact_phone,
                 'access_code' => randomcode(),
-                'prepend_risk_no_value' => acronym($business_unit->unit_name),
+                'prepend_risk_no_value' => acronym($business_unit->unit_name)
             ]);
 
             // create default impact criteria
@@ -72,7 +74,7 @@ class BusinessUnitsController extends Controller
             'product_or_service_delivered' => $request->product_or_service_delivered,
             'regulatory_obligations' => $request->regulatory_obligations,
             'applications_used' => $request->applications_used,
-            'teams' => implode(',', $request->teams),
+            'teams' => $request->teams,
             'business_units_depended_on' => implode(',', $request->business_units_depended_on),
 
             'processes_depended_on' => $request->processes_depended_on,
@@ -120,7 +122,7 @@ class BusinessUnitsController extends Controller
             'product_or_service_delivered' => $request->product_or_service_delivered,
             'regulatory_obligations' => $request->regulatory_obligations,
             'applications_used' => $request->applications_used,
-            'teams' => implode(',', $request->teams),
+            'teams' => $request->teams,
             'business_units_depended_on' => implode(',', $request->business_units_depended_on),
 
             'processes_depended_on' => $request->processes_depended_on,

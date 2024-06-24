@@ -26,6 +26,14 @@ class RCSARiskAssessment extends Model
             set: fn($value) => json_encode($value),
         );
     }
+
+    protected function treatmentOptionDetails(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => json_decode($value, true),
+            set: fn($value) => json_encode($value),
+        );
+    }
     public function keyRiskIndicatorAssessment()
     {
         return $this->hasOne(KeyRiskIndicatorAssessment::class);

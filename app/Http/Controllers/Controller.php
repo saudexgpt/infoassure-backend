@@ -184,4 +184,16 @@ class Controller extends BaseController
         $notification = new AuditTrail($title, $action);
         return Notification::send($users->unique(), $notification);
     }
+
+    public function saveRiskAssessmentTreatmentDetails(Request $request, $id)
+    {
+        $table = $request->table;
+
+        DB::table($table)->where('id', $id)
+            ->update([
+                'treatment_option' => $request->treatment_option,
+                'treatment_option_details' => $request->treatment_option_details,
+            ]);
+        return DB::table($table)->find($id);
+    }
 }
