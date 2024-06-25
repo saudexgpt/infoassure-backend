@@ -135,7 +135,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('update-overall-control-rating', [RCSAController::class, 'updateOverallControlRating']);
 
         Route::get('fetch-risk-assessments', [RCSAController::class, 'fetchRCSARiskAssessments']);
-        // Route::post('store-risk-assessment', [RiskAssessmentsController::class, 'store']);
+        Route::post('store-risk-assessment', [RCSAController::class, 'storeRiskAssessment']);
 
         Route::put('update-risk-assessment-fields/{riskAssessment}', [RCSAController::class, 'updateRCSARiskAssessmentFields']);
 

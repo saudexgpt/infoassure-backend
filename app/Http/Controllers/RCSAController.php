@@ -6,6 +6,7 @@ use App\Models\KeyRiskIndicatorAssessment;
 use App\Models\RCSARiskAssessment;
 use App\Models\Risk;
 use App\Models\RiskControlSelfAssessment;
+use App\Models\RiskImpactArea;
 use App\Models\RiskImpactOnArea;
 use App\Models\RiskMatrix;
 use App\Models\RiskRegister;
@@ -425,6 +426,78 @@ class RCSAController extends Controller
         return response()->json(compact('assessments'), 200);
     }
 
+    public function storeRiskAssessment(Request $request)
+    {
+        $module = $request->module;
+        //
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $standard_id = $request->standard_id;
+        $business_unit_id = $request->business_unit_id;
+        // return $request;
+        $assessments = json_decode(json_encode($request->assessments));
+
+        // $impact_fields = [
+        //     ['name' => 'Confidentiality', 'slug' => 'C', 'impact_value' => ''],
+        //     ['name' => 'Integrity', 'slug' => 'I', 'impact_value' => ''],
+        //     ['name' => 'Availability', 'slug' => 'A', 'impact_value' => ''],
+        //     ['name' => 'Privacy', 'slug' => 'P', 'impact_value' => ''],
+        // ];
+        // if ($module == 'rcsa') {
+        $impact_fields = [];
+
+        $impact_areas = RiskImpactArea::where(['client_id' => $client_id])->orderBy('area')->get();
+        foreach ($impact_areas as $impact_area) {
+            $impact_fields[] = [
+                'name' => $impact_area->area,
+                'slug' => $impact_area->area,
+                'impact_value' => ''
+            ];
+        }
+        //}
+        foreach ($assessments as $assessment) {
+
+            RCSARiskAssessment::firstOrCreate(
+                [
+                    'module' => $module,
+                    'client_id' => $client_id,
+                    'standard_id' => $standard_id,
+                    'risk_register_id' => $assessment->risk_register_id,
+                    'business_unit_id' => $business_unit_id,
+                    'business_process_id' => $assessment->business_process_id,
+                ],
+                ['impact_data' => $impact_fields, 'revised_impact_data' => $impact_fields]
+            );
+            // $new_entry->client_id = $client_id;
+            // $new_entry->standard_id = $standard_id;
+            // $new_entry->asset_type_id = $asset_type_id;
+            // $new_entry->asset = $asset;
+            // $new_entry->risk_owner = $risk_owner;
+            // $new_entry->threat_impact_description = $assessment->threat_impact_description;
+            // $new_entry->vulnerability_description = $assessment->vulnerability_description;
+            // $new_entry->existing_controls = $assessment->existing_controls;
+            // $new_entry->likelihood_justification = $assessment->likelihood_justification;
+            // $new_entry->risk_likelihood_id = $assessment->risk_likelihood_id;
+            // $new_entry->confidentiality = $assessment->confidentiality;
+            // $new_entry->integrity = $assessment->integrity;
+            // $new_entry->availability = $assessment->availability;
+
+            // $valuesArray = [$assessment->confidentiality, $assessment->integrity, $assessment->availability];
+
+            // $impact_val = $this->maxValue($valuesArray);
+            // $risk_value = $assessment->risk_likelihood_id * $impact_val;
+            // $risk_category = $this->analyzeRiskCategory($risk_value);
+
+            // $new_entry->impact_value = $impact_val;
+            // $new_entry->risk_value = $risk_value;
+            // $new_entry->risk_category = $risk_category;
+            // $new_entry->save();
+        }
+        return response()->json(['message' => 'Success'], 200);
+    }
     private function setKRIAssessmentValues(KeyRiskIndicatorAssessment $assessment)
     {
         if ($assessment->assessments == NULL) {
