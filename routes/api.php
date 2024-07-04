@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnswersController;
 use App\Http\Controllers\DPIAController;
+use App\Http\Controllers\GeneralRiskLibrariesController;
 use App\Http\Controllers\PDAController;
 use App\Http\Controllers\RCSAController;
 use App\Http\Controllers\RiskRegistersController;
@@ -125,6 +126,16 @@ Route::group(['prefix' => 'bia'], function () {
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('save-risk-assessment-treatment-details/{id}', [Controller::class, 'saveRiskAssessmentTreatmentDetails']);
+
+    Route::group(['prefix' => 'risk-library'], function () {
+        Route::get('/', [GeneralRiskLibrariesController::class, 'index']);
+        Route::post('store', [GeneralRiskLibrariesController::class, 'store']);
+        Route::put('update/{generalRiskLibrary}', [GeneralRiskLibrariesController::class, 'update']);
+        Route::post('store-bulk', [GeneralRiskLibrariesController::class, 'storeBulk']);
+
+        // Route::delete('destroy/{form_field}', [GeneralRiskLibrariesController::class, 'destroy']);
+    });
+
     Route::group(['prefix' => 'rcsa'], function () {
 
         Route::get('fetch', [RCSAController::class, 'fetchRCSA']);

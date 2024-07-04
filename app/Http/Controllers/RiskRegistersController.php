@@ -189,13 +189,25 @@ class RiskRegistersController extends Controller
             $client_id = $this->getClient()->id;
         }
         $business_unit_id = $request->business_unit_id;
+        $condition = ['risk_registers.client_id' => $client_id, 'risk_registers.business_unit_id' => $business_unit_id];
+        if (isset($request->business_process_id) && $request->business_process_id != '') {
+            $condition['risk_registers.business_process_id'] = $request->business_process_id;
+        }
         // $risk_registers = RiskRegister::with('businessUnit', 'businessProcess')->where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
-        $risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
+        $unsubmitted_risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
             ->join('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
-            ->where(['risk_registers.client_id' => $client_id, 'risk_registers.business_unit_id' => $business_unit_id])
+            ->where($condition)
+            ->where('submit_mode', 'temporal')
             ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
             ->get();
-        return response()->json(compact('risk_registers'), 200);
+        $risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
+            ->join('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
+            ->where($condition)
+            ->where('submit_mode', 'final')
+            ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
+            ->get();
+        $grouped_risk_registers = $risk_registers->groupBy('type');
+        return response()->json(compact('risk_registers', 'unsubmitted_risk_registers', 'grouped_risk_registers'), 200);
         // $business_unit_id = $request->business_unit_id;
         // if (isset($request->client_id)) {
         //     $client_id = $request->client_id;
@@ -210,9 +222,9 @@ class RiskRegistersController extends Controller
     }
     public function storeRiskRegister(Request $request)
     {
-        if ($request->file('link_to_evidence') == null) {
-            return response()->json(['message' => 'Please uplaod a document as evidence'], 500);
-        }
+        // if ($request->file('link_to_evidence') == null) {
+        //     return response()->json(['message' => 'Please uplaod a document as evidence'], 500);
+        // }
 
         $business_unit = BusinessUnit::find($request->business_unit_id);
         if (isset($request->client_id)) {
@@ -220,57 +232,66 @@ class RiskRegistersController extends Controller
         } else {
             $client_id = $this->getClient()->id;
         }
-        // $business_process_id = $request->business_process_id;
-        $riskRegister = RiskRegister::where([
-            'client_id' => $client_id,
-            'business_unit_id' => $request->business_unit_id,
-            'business_process_id' => $request->business_process_id,
-            'risk_id' => $business_unit->next_risk_id,
-            'sub_unit' => $business_unit->sub_unit,
-            'type' => $request->type,
-            'vulnerability_description' => $request->vulnerability_description
-        ])->first();
+        if (isset($request->id) && $request->id != '') {
+            $riskRegister = RiskRegister::find($request->id);
+
+        } else {
+            $riskRegister = RiskRegister::where([
+                'client_id' => $client_id,
+                'business_unit_id' => $request->business_unit_id,
+                'business_process_id' => $request->business_process_id,
+                'risk_id' => $business_unit->next_risk_id,
+                'sub_unit' => $business_unit->sub_unit,
+                'type' => $request->type,
+                'vulnerability_description' => trim($request->vulnerability_description)
+            ])->first();
+        }
         if (!$riskRegister) {
-            RiskRegister::create(
-                [
-                    'client_id' => $client_id,
-                    'business_unit_id' => $request->business_unit_id,
-                    'business_process_id' => $request->business_process_id,
-                    'sub_unit' => $request->sub_unit,
-                    'type' => $request->type,
-                    'sub_type' => $request->sub_type,
-                    'vulnerability_description' => $request->vulnerability_description,
-                    'risk_id' => $business_unit->next_risk_id,
-                    'outcome' => $request->outcome,
-                    'risk_owner' => $request->risk_owner,
-                    'control_no' => 'CTRL' . $business_unit->next_risk_id,
-                    'control_location' => $request->control_location,
-                    'control_description' => $request->control_description,
-                    'control_frequency' => $request->control_frequency,
-                    'control_owner' => $request->control_owner,
-                    'control_type' => $request->control_type,
-                    'nature_of_control' => $request->nature_of_control,
-                    'application_used_for_control' => $request->application_used_for_control,
-                    'compensating_control' => $request->compensating_control,
-                    'test_procedures' => $request->test_procedures,
-                    'sample_size' => $request->sample_size,
-                    'data_required' => $request->data_required,
-                    'link_to_evidence' => $this->uploadRiskEvidenceDocument($request),
-                    'test_conclusion' => $request->test_conclusion,
-                    'gap_description' => $request->gap_description,
-                    'tod_improvement_opportunity' => $request->tod_improvement_opportunity,
-                    'recommendation' => $request->recommendation,
-                    'responsibility' => $request->responsibility,
-                    'timeline' => $request->timeline,
-                    'tod_gap_status' => $request->tod_gap_status
-                ]
-            );
+            $riskRegister = new RiskRegister();
+        }
+
+        $riskRegister->client_id = $client_id;
+        $riskRegister->business_unit_id = $request->business_unit_id;
+        $riskRegister->business_process_id = $request->business_process_id;
+        $riskRegister->sub_unit = $request->sub_unit;
+        $riskRegister->type = $request->type;
+        $riskRegister->sub_type = $request->sub_type;
+        $riskRegister->vulnerability_description = $request->vulnerability_description;
+        $riskRegister->outcome = $request->outcome;
+        $riskRegister->risk_owner = $request->risk_owner;
+        $riskRegister->control_location = $request->control_location;
+        $riskRegister->control_description = $request->control_description;
+        $riskRegister->control_frequency = $request->control_frequency;
+        $riskRegister->control_owner = $request->control_owner;
+        $riskRegister->control_type = $request->control_type;
+        $riskRegister->nature_of_control = $request->nature_of_control;
+        $riskRegister->application_used_for_control = $request->application_used_for_control;
+        $riskRegister->compensating_control = $request->compensating_control;
+        $riskRegister->test_procedures = $request->test_procedures;
+        if ($request->sample_size != null && $request->sample_size != '' && $request->sample_size != 'null') {
+            $riskRegister->sample_size = $request->sample_size;
+        }
+
+        $riskRegister->data_required = $request->data_required;
+        $riskRegister->link_to_evidence = $this->uploadRiskEvidenceDocument($request);
+        $riskRegister->test_conclusion = $request->test_conclusion;
+        $riskRegister->gap_description = $request->gap_description;
+        $riskRegister->tod_improvement_opportunity = $request->tod_improvement_opportunity;
+        $riskRegister->recommendation = $request->recommendation;
+        $riskRegister->responsibility = $request->responsibility;
+        $riskRegister->timeline = $request->timeline;
+        $riskRegister->tod_gap_status = $request->tod_gap_status;
+        $riskRegister->submit_mode = $request->submit_mode;
+        $riskRegister->save();
+        if ($riskRegister->risk_id == NULL && $request->submit_mode == 'final') {
+            $riskRegister->risk_id = $business_unit->next_risk_id;
+
+            $riskRegister->control_no = 'CTRL' . $business_unit->next_risk_id;
+            $riskRegister->save();
             $business_unit->next_risk_id += 1;
             $business_unit->save();
         }
-        $business_unit->next_risk_id += 1;
-        $business_unit->save();
-        return response()->json('success');
+        return response()->json(['id' => $riskRegister->id], 200);
     }
     private function uploadRiskEvidenceDocument(Request $request)
     {

@@ -18,14 +18,10 @@ class RCSAController extends Controller
 
     public function fetchRCSA(Request $request)
     {
-        $rcsas = RiskControlSelfAssessment::where([
+        $rcsa_data = RiskControlSelfAssessment::where([
             'client_id' => $request->client_id,
             'business_unit_id' => $request->business_unit_id
-        ])->select('*', 'key_process as label')->orderBy('created_at', 'DESC')->get()->groupBy('category');
-        $rcsa_data = [];
-        foreach ($rcsas as $key => $value) {
-            $rcsa_data[] = ['label' => $key, 'children' => $value];
-        }
+        ])->orderBy('created_at', 'DESC')->get()->groupBy('category');
         $category_details = RiskControlSelfAssessment::groupBy('category')->where([
             'client_id' => $request->client_id,
             'business_unit_id' => $request->business_unit_id
@@ -158,7 +154,7 @@ class RCSAController extends Controller
             $rcsa->rm_validated_process_level_risk = $this->calculateLevelRisk($rcsa->validation);
         }
         $rcsa->save();
-        return $this->fetchRCSA($request);
+        return response()->json(compact('rcsa')); // $this->fetchRCSA($request);
         // $rcsas = RiskControlSelfAssessment::where([
         //     'client_id' => $rcsa->client_id,
         //     'business_unit_id' => $rcsa->business_unit_id
