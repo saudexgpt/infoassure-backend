@@ -219,10 +219,10 @@ class RiskAssessmentsController extends Controller
         } else {
             $client_id = $this->getClient()->id;
         }
-        $standard_id = 0;
-        if (isset($request->standard_id)) {
-            $standard_id = $request->standard_id;
-        }
+        // $standard_id = 0;
+        // if (isset($request->standard_id)) {
+        //     $standard_id = $request->standard_id;
+        // }
         $module = $request->module;
         $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
         $risk_appetite = null;
@@ -232,15 +232,16 @@ class RiskAssessmentsController extends Controller
         }
 
         $risk_assessments = RiskAssessment::leftJoin('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
-            ->leftJoin('business_units', 'business_units.id', 'risk_assessments.business_unit_id')
+            ->join('business_units', 'business_units.id', 'risk_assessments.business_unit_id')
             ->leftJoin('business_processes', 'business_processes.id', 'risk_assessments.business_process_id')
             ->leftJoin('asset_types', 'asset_types.id', 'risk_assessments.asset_type_id')
-            ->where(['risk_assessments.client_id' => $client_id, 'risk_assessments.standard_id' => $standard_id, 'risk_assessments.module' => $module])
+            ->where(['risk_assessments.client_id' => $client_id, /*'risk_assessments.standard_id' => $standard_id,*/ 'risk_assessments.module' => $module])
             ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'), 'business_processes.name as business_process', 'business_units.unit_name as business_unit', 'asset_types.name as asset_type')
             ->orderBy('risk_id', 'ASC')
             ->get();
+        $grouped_risk_assessments = $risk_assessments->groupBy('business_unit');
 
-        return response()->json(compact('risk_assessments', 'risk_appetite'), 200);
+        return response()->json(compact('risk_assessments', 'grouped_risk_assessments', 'risk_appetite'), 200);
     }
     /**
      * Store a newly created resource in storage.

@@ -391,7 +391,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::delete('delete-likelihood/{value}', [RiskAssessmentsController::class, 'deleteLikelihood']);
 
 
-        Route::get('fetch-risk_assessments', [RiskAssessmentsController::class, 'fetchRiskAssessments']);
+        Route::get('fetch-risk-assessments', [RiskAssessmentsController::class, 'fetchRiskAssessments']);
         Route::post('store-risk-assessment', [RiskAssessmentsController::class, 'store']);
 
         Route::put('update-fields/{riskAssessment}', [RiskAssessmentsController::class, 'updateRiskAssessmentFields']);

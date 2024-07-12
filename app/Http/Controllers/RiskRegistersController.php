@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BusinessUnit;
+use App\Models\RiskControlSelfAssessment;
 use App\Models\RiskImpact;
 use App\Models\RiskImpactArea;
 use App\Models\RiskImpactOnArea;
@@ -220,6 +221,7 @@ class RiskRegistersController extends Controller
         //     ->get();
         // return response()->json(compact('risk_registers'), 200);
     }
+
     public function storeRiskRegister(Request $request)
     {
         // if ($request->file('link_to_evidence') == null) {
