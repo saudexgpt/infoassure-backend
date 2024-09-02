@@ -9,6 +9,43 @@ function acronym($string)
     }
     return $acronym;
 }
+function analyzeRiskCategory($riskValue, $matrix = '3x3')
+{
+    $category = NULL;
+    $color = 'fcfcff';
+    switch ($matrix) {
+        case '5x5':
+            if ($riskValue >= 12) {
+                $category = 'High';
+                $color = 'DD2C2C';
+            }
+            if ($riskValue >= 5 && $riskValue <= 11) {
+                $category = 'Medium';
+                $color = 'FFA500';
+            }
+            if ($riskValue >= 1 && $riskValue <= 4) {
+                $category = 'Low';
+                $color = '3BD135';
+            }
+            break;
+
+        default:
+            if ($riskValue >= 6) {
+                $category = 'High';
+                $color = 'DD2C2C';
+            }
+            if ($riskValue >= 3 && $riskValue <= 5) {
+                $category = 'Medium';
+                $color = 'FFA500';
+            }
+            if ($riskValue >= 1 && $riskValue <= 2) {
+                $category = 'Low';
+                $color = '3BD135';
+            }
+            break;
+    }
+    return array($category, $color);
+}
 function riskImpactMatrix()
 {
     $impact_matrices = [
@@ -31,16 +68,16 @@ function riskLikelihoodMatrix()
 {
     $likelihood_matrices = [
         '3x3' => [
-            ['value' => 1, 'name' => 'Unlikely'],
-            ['value' => 2, 'name' => 'Possible'],
-            ['value' => 3, 'name' => 'Likely'],
+            ['value' => 1, 'name' => 'Unlikely', 'summary' => 'It probably would not occur'],
+            ['value' => 2, 'name' => 'Possible', 'summary' => "There is a possibility that it could happen"],
+            ['value' => 3, 'name' => 'Likely', 'summary' => 'The risk is more likely to happen than not'],
         ],
         '5x5' => [
-            ['value' => 1, 'name' => 'Improbable'],
-            ['value' => 2, 'name' => 'Unlikely'],
-            ['value' => 3, 'name' => 'Moderate'],
-            ['value' => 4, 'name' => 'Very Likely'],
-            ['value' => 5, 'name' => 'Almost  Certain'],
+            ['value' => 1, 'name' => 'Improbable', 'summary' => 'Has never happened before and there is no reason to think it is any more likely now'],
+            ['value' => 2, 'name' => 'Unlikely', 'summary' => "There is a possibility that it could happen, but it probably won't"],
+            ['value' => 3, 'name' => 'Moderate', 'summary' => 'On balance, the risk is more likely to happen than not'],
+            ['value' => 4, 'name' => 'Very Likely', 'summary' => 'It would be a surprise if the risk did not occur either based on past frequency or current circumstances'],
+            ['value' => 5, 'name' => 'Almost  Certain', 'summary' => 'Either already happens regularly or there are some reasons to believe it is virtually imminent'],
         ]
     ];
     return $likelihood_matrices;
@@ -51,7 +88,6 @@ function defaultImpactCriteria()
         'Financial Impact',
         'Health & Safety Impact',
         'Reputational Impact',
-        'Legal Impact',
         'Stakeholders Impact',
         'People Impact',
         'Operational Impact',
@@ -62,6 +98,17 @@ function defaultImpactCriteria()
         // 'Risk to Health/Safety of staff and visitors',
         // 'Interruption of other processes',
         // 'Regulatory/Legal/Contractual Violation',
+    ];
+}
+function defaultBiaTimeRecoveryRequirement()
+{
+    return [
+        ['time_in_minutes' => 60, 'name' => 'Less than 1 Hour'],
+        ['time_in_minutes' => 180, 'name' => '3 Hours'],
+        ['time_in_minutes' => 540, 'name' => '1 Day'],
+        ['time_in_minutes' => 1620, 'name' => '3 Days'],
+        ['time_in_minutes' => 2700, 'name' => '1 Week'],
+        ['time_in_minutes' => 5400, 'name' => '2 Weeks'],
     ];
 }
 function scoreInPercentage($numerator, $denominator)
@@ -90,24 +137,6 @@ function rainbowColor($color)
     return $arr;
 }
 
-if (!function_exists('schoolOfSubdomain')) {
-    /**
-     * Check the existence of subdomain
-     *
-     * @param null $subdomain
-     * @return \App\Student
-     */
-
-    function schoolOfSubdomain($subdomain = null)
-    {
-        $subdomain = $subdomain ?: request()->route('subdomain');
-        $school = \App\School::where('sub_domain', $subdomain)->first();
-        if ($school) {
-            return $school;
-        }
-        return false;
-    }
-}
 
 /**
  * Delete Message
@@ -131,19 +160,6 @@ function status($status = null)
     $arr = [
         0 => 'De-active',
         1 => 'Active'
-    ];
-    if ($status !== null) {
-        return $arr[$status];
-    }
-    return $arr;
-}
-
-function feeFecurrence($status = null)
-{
-    $arr = [
-        'Termly' => 'Every Term',
-        'Once Per Session' => 'Once Per Session'
-
     ];
     if ($status !== null) {
         return $arr[$status];
@@ -186,7 +202,18 @@ function fromDate()
 {
     return date('Y-m-d' . ' 07:30:00', time());
 }
+function generateNumber($next_no)
+{
+    $no_of_digits = 4;
 
+    $digit_of_next_no = strlen($next_no);
+    $unused_digit = $no_of_digits - $digit_of_next_no;
+    $zeros = '';
+    for ($i = 1; $i <= $unused_digit; $i++) {
+        $zeros .= '0';
+    }
+    return $zeros . $next_no;
+}
 function toDate()
 {
     return date('Y-m-d' . ' 16:00:00', time());
@@ -540,8 +567,8 @@ function subdomainPublicPath($folder = null)
 
 function portalPulicPath($folder = null)
 {
-    //return storage_path('app/public/' . $folder);
-    return "/home/decompa1/public_html/storage/" . $folder;
+    return storage_path('app/public/' . $folder);
+    // return "/home/decompa1/public_html/storage/" . $folder;
 }
 
 function folderSize($dir)

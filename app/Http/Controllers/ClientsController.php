@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivatedModule;
 use App\Models\Client;
+use App\Models\Partner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Jobs\SendQueuedConfirmationEmailJob;
@@ -21,6 +23,7 @@ class ClientsController extends Controller
     {
         $user = $this->getUser();
         $condition = [];
+        $partner_with_clients = [];
         if ($user->haRole('client')) {
             $id = $this->getClient()->id;
             $condition = ['id' => $id];
@@ -29,13 +32,20 @@ class ClientsController extends Controller
             $partner_id = $this->getPartner()->id;
             $condition = ['partner_id' => $partner_id];
         }
+
+        if ($user->haRole('super')) {
+            $partner_with_clients = Partner::with('clients')->get();
+        }
+
         if (isset($request->option) && $request->option === 'all') {
             $clients = Client::where($condition)->orderBy('name')->get();
+
         } else {
 
             $clients = Client::with('users')->where($condition)->orderBy('name')->paginate($request->limit);
+            return response()->json(compact('clients'), 200);
         }
-        return response()->json(compact('clients'), 200);
+        return response()->json(compact('clients', 'partner_with_clients'), 200);
     }
 
 

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivatedModule;
+use App\Models\AvailableModule;
+use App\Models\Project;
 use App\Notifications\AuditTrail;
 use App\Models\Client;
 use App\Models\Partner;
@@ -112,15 +115,31 @@ class Controller extends BaseController
 
         return $this->user;
     }
-    public function setMyProjects()
+    public function setMyProjects($client_id = NULL)
     {
-        $client_id = $this->getUser()->client_id;
-        $this->myProjects = $this->getUser()->projects()->with('client', 'certificate', 'standard')->where(['client_id' => $client_id, /*'year' => $this->getYear()*/])->get();
+        $user = $this->getUser();
+        if ($client_id == NULL) {
+
+            $client_id = $user->client_id;
+        }
+        if ($user->haRole('client') || $user->haRole('admin') || $user->haRole('super')) {
+            $this->myProjects = $user->projects()
+                ->with('client', 'availableModule', 'standard')
+                ->where(['client_id' => $client_id, 'year' => $this->getYear()])
+                ->orderBy('id', 'DESC')
+                ->get();
+        } else {
+
+            $this->myProjects = Project::with('client', 'availableModule', 'standard')
+                ->where(['client_id' => $client_id, 'year' => $this->getYear()])
+                ->orderBy('id', 'DESC')
+                ->get();
+        }
     }
 
-    public function getMyProjects()
+    public function getMyProjects($client_id)
     {
-        $this->setMyProjects();
+        $this->setMyProjects($client_id);
 
         return $this->myProjects;
     }
@@ -185,15 +204,26 @@ class Controller extends BaseController
         return Notification::send($users->unique(), $notification);
     }
 
-    public function saveRiskAssessmentTreatmentDetails(Request $request, $id)
-    {
-        $table = $request->table;
 
-        DB::table($table)->where('id', $id)
-            ->update([
-                'treatment_option' => $request->treatment_option,
-                'treatment_option_details' => $request->treatment_option_details,
-            ]);
-        return DB::table($table)->find($id);
+
+    public function fetchAvailableModules()
+    {
+        $modules = AvailableModule::orderBy('name')->get();
+        return response()->json(compact('modules'));
     }
+
+    // public function fetchClientActivatedModules(Request $request, Client $client)
+    // {
+    //     $partner_id = $client->partner_id;
+    //     $activated_modules = ActivatedModule::with('availableModule')->where('partner_id', $partner_id)->where('client_ids', '!=', NULL)->get();
+    //     $modules = [];
+    //     foreach ($activated_modules as $activated_module) {
+    //         $client_ids_array = explode('~', $activated_module->client_ids);
+    //         if (in_array($client->id, $client_ids_array)) {
+    //             $modules[] = $activated_module->availableModule;
+    //         }
+    //     }
+
+    //     return response()->json(compact('modules'));
+    // }
 }

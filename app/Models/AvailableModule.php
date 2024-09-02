@@ -19,4 +19,8 @@ class AvailableModule extends Model
     {
         return $this->hasMany(ActivatedModule::class);
     }
+    public function standards()
+    {
+        return $this->hasMany(Standard::class);
+    }
 }

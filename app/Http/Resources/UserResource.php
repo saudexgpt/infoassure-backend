@@ -21,6 +21,7 @@ class UserResource extends JsonResource
      */
     public function toArray($request)
     {
+        $this_year = (int) date('Y', strtotime('now'));
         $permissions = [];
         if ($this->login_as !== NULL) {
 
@@ -33,10 +34,15 @@ class UserResource extends JsonResource
             $client_id = $this->client_id;
             $client = Client::find($client_id);
             $partner_id = $client->partner_id;
-            $activated_modules = ActivatedModule::with('availableModule')->where('partner_id', $partner_id)->where('client_ids', 'LIKE', '%' . $client_id . '%')->get();
-            foreach ($activated_modules as $activated_module) {
 
-                $modules[] = $activated_module->availableModule->slug;
+            $projects = $this->projects()
+                ->with('availableModule')
+                ->where(['client_id' => $client_id, 'year' => $this_year])
+                ->orderBy('id', 'DESC')
+                ->get();
+            foreach ($projects as $project) {
+
+                $modules[] = $project->availableModule->slug;
             }
             $partner = Partner::find($partner_id);
         }
@@ -72,7 +78,7 @@ class UserResource extends JsonResource
                 $this->roles->toArray()
             ),
             // 'role' => 'admin',
-            'permissions' =>  $permissions,
+            'permissions' => $permissions,
             // 'role' => 'admin',
             'all_permissions' => array_map(
                 function ($permission) {

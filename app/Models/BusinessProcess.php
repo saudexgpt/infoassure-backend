@@ -29,4 +29,20 @@ class BusinessProcess extends Model
             set: fn($value) => json_encode($value),
         );
     }
+    public function riskAssessments()
+    {
+        return $this->hasMany(RiskAssessment::class);
+    }
+    public function pdas()
+    {
+        return $this->hasMany(PersonalDataAssessment::class, 'business_process_id', 'id');
+    }
+    public function rcsas()
+    {
+        return $this->hasMany(RiskControlSelfAssessment::class, 'business_process_id', 'id');
+    }
+    public function riskRegisters()
+    {
+        return $this->hasMany(RiskRegister::class);
+    }
 }

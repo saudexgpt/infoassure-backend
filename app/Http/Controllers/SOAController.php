@@ -69,10 +69,16 @@ class SOAController extends Controller
         }
         $standard_id = $request->standard_id;
         $this->setupSOAForClient($client_id, $standard_id);
-        $soas = SOAArea::with(['controls.soa' => function ($q) use ($client_id, $standard_id) {
-            $q->where(['client_id' => $client_id, 'standard_id' => $standard_id]);
-        }])->orderBy('name')->get();
+        $soas = SOAArea::with([
+            'controls.soa' => function ($q) use ($client_id, $standard_id) {
+                $q->where(['client_id' => $client_id, 'standard_id' => $standard_id]);
+            }
+        ])->orderBy('name')->get();
         return response()->json(compact('soas'), 200);
+    }
+    public function show(Request $request, StatementOfApplicability $soa)
+    {
+        return response()->json(compact('soa'), 200);
     }
     private function setupSOAForClient($client_id, $standard_id)
     {

@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asset;
+use App\Models\AssetType;
 use App\Models\BusinessUnit;
+use App\Models\Client;
+use App\Models\GeneralRiskLibrary;
+use App\Models\PersonalDataAssessment;
 use App\Models\RiskControlSelfAssessment;
 use App\Models\RiskImpact;
 use App\Models\RiskImpactArea;
@@ -44,6 +49,7 @@ class RiskRegistersController extends Controller
                     ],
                     [
                         'name' => $content['name'],
+                        'summary' => $content['summary'],
                     ]
                 );
             }
@@ -181,6 +187,27 @@ class RiskRegistersController extends Controller
         $matrix->save();
         return response()->json([]);
     }
+    public function fetchModuleRiskRegisters(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $module = $request->module;
+        $modules = ['isms'];
+        if ($module == 'bcms' || $module == 'ndpa' || $module == 'rcsa') {
+            $modules = ['bcms', 'ndpa', 'rcsa'];
+        }
+        $risk_registers = RiskRegister::leftJoin('business_units', 'risk_registers.business_unit_id', 'business_units.id')
+            ->leftJoin('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
+            ->where(['risk_registers.client_id' => $client_id])
+            ->whereIn('module', $modules)
+            ->where('submit_mode', 'final')
+            ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id')
+            ->get();
+        return response()->json(compact('risk_registers'), 200);
+    }
     /////////////////// RIKS REGISTERS ///////////////
     public function fetchRiskRegisters(Request $request)
     {
@@ -195,17 +222,17 @@ class RiskRegistersController extends Controller
             $condition['risk_registers.business_process_id'] = $request->business_process_id;
         }
         // $risk_registers = RiskRegister::with('businessUnit', 'businessProcess')->where(['client_id' => $client_id, 'business_unit_id' => $business_unit_id])->get();
-        $unsubmitted_risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
-            ->join('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
+        $unsubmitted_risk_registers = RiskRegister::leftJoin('business_units', 'risk_registers.business_unit_id', 'business_units.id')
+            ->leftJoin('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
             ->where($condition)
             ->where('submit_mode', 'temporal')
-            ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
+            ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process')
             ->get();
-        $risk_registers = RiskRegister::join('business_units', 'risk_registers.business_unit_id', 'business_units.id')
-            ->join('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
+        $risk_registers = RiskRegister::leftJoin('business_units', 'risk_registers.business_unit_id', 'business_units.id')
+            ->leftJoin('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
             ->where($condition)
             ->where('submit_mode', 'final')
-            ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'))
+            ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process')
             ->get();
         $grouped_risk_registers = $risk_registers->groupBy('type');
         return response()->json(compact('risk_registers', 'unsubmitted_risk_registers', 'grouped_risk_registers'), 200);
@@ -222,13 +249,67 @@ class RiskRegistersController extends Controller
         // return response()->json(compact('risk_registers'), 200);
     }
 
+    public function fetchBusinessUnitsWithRiskRegisters(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $this->loadPDAToRiskRegister($client_id);
+        $business_units = BusinessUnit::with([
+            'businessProcesses.riskRegisters' => function ($q) use ($client_id) {
+                $q->where('client_id', $client_id);
+            }
+        ])->where('client_id', $client_id)->orderBy('id')->get();
+        return response()->json(compact('business_units'), 200);
+    }
+    private function loadPDAToRiskRegister($client_id)
+    {
+        $module = 'ndpa';
+        $type = 'Personal Data Asset';
+        $pdas = PersonalDataAssessment::where('client_id', $client_id)->get();
+        foreach ($pdas as $pda) {
+            $asset_name = implode(',', $pda->personal_data_item);
+            $riskRegister = RiskRegister::where([
+                'client_id' => $client_id,
+                'module' => $module,
+                'business_unit_id' => $pda->business_unit_id,
+                'business_process_id' => $pda->business_process_id,
+                'asset_name' => $asset_name,
+                'type' => $type,
+            ])->first();
+
+            if (!$riskRegister) {
+                $riskRegister = new RiskRegister();
+            }
+            $riskRegister->module = $module;
+            $riskRegister->client_id = $client_id;
+            $riskRegister->business_unit_id = $pda->business_unit_id;
+            $riskRegister->business_process_id = $pda->business_process_id;
+            $riskRegister->asset_type_name = $type;
+            $riskRegister->type = $type;
+            $riskRegister->asset_name = $asset_name;
+            $riskRegister->submit_mode = 'final';
+
+            $business_unit = BusinessUnit::find($pda->business_unit_id);
+            $riskRegister->risk_id = $business_unit->prepend_risk_no_value . generateNumber($business_unit->next_risk_id);
+
+            $riskRegister->control_no = 'CTRL' . generateNumber($business_unit->next_risk_id);
+            $riskRegister->save();
+            $business_unit->next_risk_id += 1;
+            $business_unit->save();
+        }
+    }
     public function storeRiskRegister(Request $request)
     {
         // if ($request->file('link_to_evidence') == null) {
         //     return response()->json(['message' => 'Please uplaod a document as evidence'], 500);
         // }
-
-        $business_unit = BusinessUnit::find($request->business_unit_id);
+        // if ($request->business_unit_id == 0) {
+        //     $riskRegister = $this->storeGeneralRiskRegister($request);
+        //     return response()->json(['id' => $riskRegister->id], 200);
+        // }
         if (isset($request->client_id)) {
             $client_id = $request->client_id;
         } else {
@@ -242,22 +323,36 @@ class RiskRegistersController extends Controller
                 'client_id' => $client_id,
                 'business_unit_id' => $request->business_unit_id,
                 'business_process_id' => $request->business_process_id,
-                'risk_id' => $business_unit->next_risk_id,
-                'sub_unit' => $business_unit->sub_unit,
+                'asset_type_id' => $request->asset_type_id,
+                'asset_id' => $request->asset_id,
+                'sub_unit' => $request->sub_unit,
                 'type' => $request->type,
+                'threat' => $request->threat,
                 'vulnerability_description' => trim($request->vulnerability_description)
             ])->first();
         }
         if (!$riskRegister) {
             $riskRegister = new RiskRegister();
         }
-
+        $asset_type = AssetType::find($request->asset_type_id);
+        $asset = Asset::find($request->asset_id);
+        $riskRegister->module = $request->module;
         $riskRegister->client_id = $client_id;
         $riskRegister->business_unit_id = $request->business_unit_id;
         $riskRegister->business_process_id = $request->business_process_id;
+        if ($asset_type) {
+            $riskRegister->asset_type_id = $request->asset_type_id;
+            $riskRegister->asset_type_name = $asset_type->name;
+        }
+        if ($asset) {
+            $riskRegister->asset_id = $request->asset_id;
+            $riskRegister->asset_name = $asset->name;
+        }
         $riskRegister->sub_unit = $request->sub_unit;
         $riskRegister->type = $request->type;
         $riskRegister->sub_type = $request->sub_type;
+        $riskRegister->threat = $request->threat;
+        $this->saveNewThreat($request->threat);
         $riskRegister->vulnerability_description = $request->vulnerability_description;
         $riskRegister->outcome = $request->outcome;
         $riskRegister->risk_owner = $request->risk_owner;
@@ -286,14 +381,35 @@ class RiskRegistersController extends Controller
         $riskRegister->submit_mode = $request->submit_mode;
         $riskRegister->save();
         if ($riskRegister->risk_id == NULL && $request->submit_mode == 'final') {
-            $riskRegister->risk_id = $business_unit->next_risk_id;
 
-            $riskRegister->control_no = 'CTRL' . $business_unit->next_risk_id;
-            $riskRegister->save();
-            $business_unit->next_risk_id += 1;
-            $business_unit->save();
+
+
+            if ($request->business_unit_id != 0) {
+                $business_unit = BusinessUnit::find($request->business_unit_id);
+                $riskRegister->risk_id = $business_unit->prepend_risk_no_value . generateNumber($business_unit->next_risk_id);
+
+                $riskRegister->control_no = 'CTRL' . generateNumber($business_unit->next_risk_id);
+                $riskRegister->save();
+                $business_unit->next_risk_id += 1;
+                $business_unit->save();
+            } else {
+                $client = Client::find($client_id);
+                $riskRegister->risk_id = 'RSK' . generateNumber($client->next_general_risk_id);
+
+                $riskRegister->control_no = 'CTRL' . generateNumber($client->next_general_risk_id);
+                $riskRegister->save();
+                $client->next_general_risk_id += 1;
+                $client->save();
+            }
+
         }
         return response()->json(['id' => $riskRegister->id], 200);
+    }
+    private function saveNewThreat($threat)
+    {
+        GeneralRiskLibrary::firstOrCreate([
+            'threats' => $threat
+        ]);
     }
     private function uploadRiskEvidenceDocument(Request $request)
     {

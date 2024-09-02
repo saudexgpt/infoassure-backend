@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessProcess;
 use App\Models\BusinessUnit;
-use App\Models\BusinessUnitImpactCriteria;
+use App\Models\BiaTimeRecoveryRequirement;
 use App\Models\OtherUnitsUser;
 use App\Models\RiskImpactArea;
 use Illuminate\Http\Request;
@@ -16,9 +16,11 @@ class BusinessUnitsController extends Controller
     public function fetchBusinessUnits(Request $request)
     {
         $client_id = $request->client_id;
+        $this->saveDefaultBiaTimeRecoveryRequirement($client_id);
         $business_units = BusinessUnit::with('teamMembers')->where('client_id', $client_id)->get();
         return response()->json(compact('business_units'), 200);
     }
+
     public function fetchBusinessProcesses(Request $request)
     {
         $business_unit_id = $request->business_unit_id;
@@ -28,6 +30,7 @@ class BusinessUnitsController extends Controller
     public function saveBusinessUnits(Request $request)
     {
         $client_id = $request->client_id;
+        $this->saveDefaultBiaTimeRecoveryRequirement($client_id);
         $business_units = json_decode(json_encode($request->business_units));
         foreach ($business_units as $business_unit) {
             $business_unit = BusinessUnit::firstOrCreate([
@@ -59,7 +62,7 @@ class BusinessUnitsController extends Controller
     {
         $business_unit = BusinessUnit::find($request->business_unit_id);
         BusinessProcess::firstOrCreate([
-            'generated_process_id' => $business_unit->next_process_id,
+            'generated_process_id' => $business_unit->id . '.' . $business_unit->next_process_id,
             'client_id' => $business_unit->client_id,
             'business_unit_id' => $request->business_unit_id,
             'name' => $request->name,
@@ -182,38 +185,53 @@ class BusinessUnitsController extends Controller
     }
 
 
-    public function getBusinessUnitImpactCriteria(Request $request)
+    public function getBiaTimeRecoveryRequirement(Request $request)
     {
         $client_id = $request->client_id;
-        $business_unit_id = $request->business_unit_id;
-        $impact_criteria = BusinessUnitImpactCriteria::where([
+        $this->saveDefaultBiaTimeRecoveryRequirement($client_id);
+        $time_recovery_requirements = BiaTimeRecoveryRequirement::where([
             'client_id' => $client_id,
-            'business_unit_id' => $business_unit_id
         ])->get();
-        return response()->json(compact('impact_criteria'), 200);
+        return response()->json(compact('time_recovery_requirements'), 200);
     }
-    public function saveBusinessUnitImpactCriteria(Request $request)
+
+    private function saveDefaultBiaTimeRecoveryRequirement($client_id)
+    {
+        $impact_criteria = BiaTimeRecoveryRequirement::where([
+            'client_id' => $client_id
+        ])->count();
+        if ($impact_criteria < 1) {
+
+            $default_time_requirements = defaultBiaTimeRecoveryRequirement();
+            foreach ($default_time_requirements as $default_time_requirement) {
+                BiaTimeRecoveryRequirement::firstOrCreate([
+                    'client_id' => $client_id,
+                    'name' => $default_time_requirement['name'],
+                    'time_in_minutes' => $default_time_requirement['time_in_minutes'],
+                ]);
+            }
+        }
+    }
+    public function saveBiaTimeRecoveryRequirement(Request $request)
     {
         $client_id = $request->client_id;
-        $business_unit_id = $request->business_unit_id;
-        $impact_criteria = json_decode(json_encode($request->impact_criteria));
-        foreach ($impact_criteria as $criteria) {
-            BusinessUnitImpactCriteria::firstOrCreate([
-                'client_id' => $client_id,
-                'business_unit_id' => $business_unit_id,
-                'name' => $criteria,
-            ]);
-        }
+        BiaTimeRecoveryRequirement::firstOrCreate([
+            'client_id' => $client_id,
+            'name' => $request->name,
+            'time_in_minutes' => $request->time_in_minutes,
+        ]);
         return response()->json(['message' => 'Successful'], 200);
     }
 
-    public function updateBusinessUnitImpactCriteria(Request $request, BusinessUnitImpactCriteria $criteria)
+    public function updateBiaTimeRecoveryRequirement(Request $request, BiaTimeRecoveryRequirement $criteria)
     {
-        $criteria->name = $request->name;
+        $field = $request->field;
+        $value = $request->value;
+        $criteria->$field = $value;
         $criteria->save();
         return response()->json(compact('criteria'), 200);
     }
-    public function deleteBusinessUnitImpactCriteria(BusinessUnitImpactCriteria $criteria)
+    public function deleteBiaTimeRecoveryRequirement(BiaTimeRecoveryRequirement $criteria)
     {
         $criteria->delete();
         return response()->json([], 204);

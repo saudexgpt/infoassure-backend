@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivatedModule;
+use App\Models\AvailableModule;
 use App\Models\Client;
 use App\Models\ClientProjectPlan;
 use App\Models\ConsultantProject;
@@ -15,7 +17,20 @@ use Illuminate\Http\Request;
 
 class ProjectsController extends Controller
 {
+    public function fetchClientActivatedProjects(Request $request, Client $client)
+    {
+        $partner_id = $client->partner_id;
+        $activated_modules = AvailableModule::join('activated_modules', 'available_modules.id', 'activated_modules.available_module_id')
+            ->where('partner_id', $partner_id)
+            ->select('available_modules.*')->with('standards')
+            ->get();
+        $projects = $this->getMyProjects($client->id);
 
+        // Project::with('availableModule', 'standard')
+        //     ->where(['client_id' => $client->id, 'year' => $this->getYear()])
+        //     ->orderBy('id', 'DESC')->get();
+        return response()->json(compact('projects', 'activated_modules'), 200);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -25,7 +40,8 @@ class ProjectsController extends Controller
     {
         $client = $this->getClient();
         // $consulting_id = $request->consulting_id;
-        $projects = Project::with('certificate', 'standard')->where(['client_id' => $client->id/*, 'year' => $this->getYear()*/])->orderBy('id', 'DESC')->get(); //->paginate(10);
+        // $projects = Project::with('availableModule', 'certificate', 'standard')->where(['client_id' => $client->id/*, 'year' => $this->getYear()*/])->orderBy('id', 'DESC')->get(); //->paginate(10);
+        $projects = $this->getMyProjects($client->id);
         return response()->json(compact('projects'), 200);
     }
 
@@ -44,6 +60,7 @@ class ProjectsController extends Controller
         $projects = Project::with([
             'client',
             'certificate',
+            'availableModule',
             'standard',
             'users',
             'consultants'
@@ -88,22 +105,40 @@ class ProjectsController extends Controller
      */
     public function store(Request $request)
     {
-        $partner_id = $this->getPartner()->id;
         $client_id = $request->client_id;
         $client = Client::find($client_id);
+
+        $partner_id = $client->partner_id;
         // $user = $this->getUser();
-        $consulting_id = $request->consulting_id;
+        $available_module_id = $request->available_module_id;
         $standards = json_decode(json_encode($request->standards));
-        foreach ($standards as $standard_id) {
+        if (count($standards) > 0) {
+
+            foreach ($standards as $standard_id) {
+                $standard = Standard::find($standard_id);
+                $project = Project::firstOrCreate([
+                    'title' => $standard->name,
+                    'partner_id' => $partner_id,
+                    'client_id' => $client_id,
+                    'available_module_id' => $available_module_id,
+                    'standard_id' => $standard_id,
+                    'year' => $this->getYear(),
+                ]);
+
+                // $this->storeClientProjectPlan($client_id, $project->id, $standard_id);
+
+                $this->createProjectCertificate($client_id, $project->id);
+            }
+        } else {
+            $available_module = AvailableModule::find($available_module_id);
             $project = Project::firstOrCreate([
+                'title' => $available_module->name,
                 'partner_id' => $partner_id,
                 'client_id' => $client_id,
-                'consulting_id' => $consulting_id,
-                'standard_id' => $standard_id,
+                'available_module_id' => $available_module_id,
+                'standard_id' => NULL,
                 'year' => $this->getYear(),
             ]);
-
-            // $this->storeClientProjectPlan($client_id, $project->id, $standard_id);
 
             $this->createProjectCertificate($client_id, $project->id);
         }

@@ -10,11 +10,20 @@ class Project extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
-        'partner_id', 'client_id', 'consulting_id', 'standard_id', 'year'
+        'title',
+        'partner_id',
+        'client_id',
+        'available_module_id',
+        'standard_id',
+        'year'
     ];
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+    public function availableModule()
+    {
+        return $this->belongsTo(AvailableModule::class);
     }
     public function standard()
     {

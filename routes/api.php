@@ -47,6 +47,8 @@ use App\Http\Controllers\UsersController;
 
 Route::get('set-admin-role', [Controller::class, 'setAdminRole']);
 Route::get('countries', [Controller::class, 'fetchCountries']);
+Route::get('fetch-available-modules', [Controller::class, 'fetchAvailableModules']);
+
 
 
 // Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
@@ -88,6 +90,7 @@ Route::group(['prefix' => 'business-units'], function () {
     Route::put('update-other-users/{user}', [BusinessUnitsController::class, 'updateOtherUser']);
 
     Route::get('fetch-business-units', [BusinessUnitsController::class, 'fetchBusinessUnits']);
+
     Route::get('fetch-business-processes', [BusinessUnitsController::class, 'fetchBusinessProcesses']);
 
     Route::post('save-business-units', [BusinessUnitsController::class, 'saveBusinessUnits']);
@@ -97,10 +100,10 @@ Route::group(['prefix' => 'business-units'], function () {
     Route::put('update-business-process/{process}', [BusinessUnitsController::class, 'updateBusinessProcess']);
     Route::put('refresh-access-code/{business_unit}', [BusinessUnitsController::class, 'refreshAccessCode']);
 
-    Route::get('get-business-unit-impact-criteria', [BusinessUnitsController::class, 'getBusinessUnitImpactCriteria']);
-    Route::post('save-business-unit-impact-criteria', [BusinessUnitsController::class, 'saveBusinessUnitImpactCriteria']);
-    Route::put('update-business-unit-impact-criteria/{criteria}', [BusinessUnitsController::class, 'updateBusinessUnitImpactCriteria']);
-    Route::delete('delete-business-unit-impact-criteria/{criteria}', [BusinessUnitsController::class, 'deleteBusinessUnitImpactCriteria']);
+    Route::get('get-bia-time-recovery-requirement', [BusinessUnitsController::class, 'getBiaTimeRecoveryRequirement']);
+    Route::post('save-bia-time-recovery-requirement', [BusinessUnitsController::class, 'saveBiaTimeRecoveryRequirement']);
+    Route::put('update-bia-time-recovery-requirement/{criteria}', [BusinessUnitsController::class, 'updateBiaTimeRecoveryRequirement']);
+    Route::delete('delete-bia-time-recovery-requirement/{criteria}', [BusinessUnitsController::class, 'deleteBiaTimeRecoveryRequirement']);
 
     Route::post('upload-process-flow', [BusinessUnitsController::class, 'uploadProcessFlow']);
     Route::put('change-process-status/{process}', [BusinessUnitsController::class, 'changeProcessStatus']);
@@ -125,10 +128,14 @@ Route::group(['prefix' => 'bia'], function () {
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
-    Route::put('save-risk-assessment-treatment-details/{id}', [Controller::class, 'saveRiskAssessmentTreatmentDetails']);
+
+    Route::get('fetch-client-activated-projects/{client}', [ProjectsController::class, 'fetchClientActivatedProjects']);
+
 
     Route::group(['prefix' => 'risk-library'], function () {
         Route::get('/', [GeneralRiskLibrariesController::class, 'index']);
+        Route::get('fetch-threats', [GeneralRiskLibrariesController::class, 'fetchThreats']);
+
         Route::post('store', [GeneralRiskLibrariesController::class, 'store']);
         Route::put('update/{generalRiskLibrary}', [GeneralRiskLibrariesController::class, 'update']);
         Route::post('store-bulk', [GeneralRiskLibrariesController::class, 'storeBulk']);
@@ -166,7 +173,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('setup-risk-matrices', [RiskRegistersController::class, 'setupRiskMatrices']);
     Route::post('customize-risk-matrix', [RiskRegistersController::class, 'customizeRiskMatrix']);
 
-
+    Route::get('fetch-module-risk-registers', [RiskRegistersController::class, 'fetchModuleRiskRegisters']);
+    Route::get('fetch-business-units-with-risk-registers', [RiskRegistersController::class, 'fetchBusinessUnitsWithRiskRegisters']);
     Route::get('fetch-risk-registers', [RiskRegistersController::class, 'fetchRiskRegisters']);
     Route::post('store-risk-registers', [RiskRegistersController::class, 'storeRiskRegister']);
     Route::put('update-risk-register/{riskRegister}', [RiskRegistersController::class, 'updateRiskRegister']);
@@ -333,6 +341,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
 
     Route::group(['prefix' => 'reports'], function () {
+        Route::get('client-dashboard-statistics', [ReportsController::class, 'clientDashboardStatistics']);
         Route::get('client-data-analysis-dashboard', [ReportsController::class, 'clientDataAnalysisDashbord']);
         Route::get('client-project-data-analysis', [ReportsController::class, 'clientProjectDataAnalysis']);
         Route::get('admin-data-analysis-dashboard', [ReportsController::class, 'adminDataAnalysisDashbord']);
@@ -344,6 +353,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('soa-summary', [ReportsController::class, 'soaSummary']);
         Route::get('risk-assessment-summary', [ReportsController::class, 'riskAssessmentSummary']);
         Route::get('fetch-project-answers', [ReportsController::class, 'fetchProjectAnswers']);
+        Route::get('asset-risk-analysis', [ReportsController::class, 'assetRiskAnalysis']);
+        Route::get('process-risk-analysis', [ReportsController::class, 'processRiskAnalysis']);
+        Route::get('bia-data-analysis', [ReportsController::class, 'dataAnalysisBIA']);
+
+
+
     });
 
     Route::group(['prefix' => 'exceptions'], function () {
@@ -368,18 +383,22 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
     Route::group(['prefix' => 'risk-assessment'], function () {
         Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
+        Route::get('fetch-asset-types-with-asset-assessment', [RiskAssessmentsController::class, 'fetchAssetTypesWithAssetAssessments']);
+        Route::get('fetch-asset-types-with-risk-registers', [RiskAssessmentsController::class, 'fetchAssetTypesWithRiskRegisters']);
+        Route::get('fetch-business-units-with-risk-assessments', [RiskAssessmentsController::class, 'fetchBusinessUnitsWithRiskAssessments']);
+
         Route::get('fetch-assets', [RiskAssessmentsController::class, 'fetchAssets']);
 
         Route::post('save-risk', [RiskAssessmentsController::class, 'saveRisk']);
         Route::put('update-risk/{risk}', [RiskAssessmentsController::class, 'updateRisk']);
 
-        Route::post('save-impacts', [RiskAssessmentsController::class, 'saveImpacts']);
+        // Route::post('save-impacts', [RiskAssessmentsController::class, 'saveImpacts']);
         Route::post('save-asset-types', [RiskAssessmentsController::class, 'saveAssetTypes']);
         Route::post('save-assets', [RiskAssessmentsController::class, 'saveAssets']);
         Route::post('save-categories', [RiskAssessmentsController::class, 'saveCategories']);
         Route::put('update-category/{riskCategory}', [RiskAssessmentsController::class, 'updateCategory']);
 
-        Route::post('save-likelihoods', [RiskAssessmentsController::class, 'saveLikelihoods']);
+        // Route::post('save-likelihoods', [RiskAssessmentsController::class, 'saveLikelihoods']);
 
         Route::put('update-asset-type/{asset_type}', [RiskAssessmentsController::class, 'updateAssetType']);
         Route::put('update-asset/{asset}', [RiskAssessmentsController::class, 'updateAsset']);
@@ -396,8 +415,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::put('update-fields/{riskAssessment}', [RiskAssessmentsController::class, 'updateRiskAssessmentFields']);
         Route::put('update-risk-fields/{risk}', [RiskAssessmentsController::class, 'updateRiskFields']);
+        Route::get('details/{riskAssessment}', [RiskAssessmentsController::class, 'show']);
 
-
+        Route::put('save-risk-assessment-treatment-details/{riskAssessment}', [RiskAssessmentsController::class, 'saveRiskAssessmentTreatmentDetails']);
 
     });
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
@@ -415,6 +435,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
 
         Route::get('fetch-soa', [SOAController::class, 'fetchSOA']);
+        Route::get('details/{soa}', [SOAController::class, 'show']);
         Route::put('update-soa/{soa}', [SOAController::class, 'update']);
 
         Route::put('update-fields/{riskAssessment}', [SOAController::class, 'updateFields']);
@@ -447,7 +468,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'pda'], function () {
 
         Route::get('/', [PDAController::class, 'index']);
+        Route::get('fetch-personal-data-item', [PDAController::class, 'fetchPersonalDataItems']);
         Route::post('store', [PDAController::class, 'store']);
+
 
         Route::put('update/{pda}', [PDAController::class, 'update']);
         Route::delete('destroy/{pda}', [PDAController::class, 'destroy']);

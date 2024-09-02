@@ -17,6 +17,12 @@ class GeneralRiskLibrariesController extends Controller
         $risk_libraries = GeneralRiskLibrary::orderBy('threats')->paginate(10);
         return response()->json(compact('risk_libraries'), 200);
     }
+    public function fetchThreats(Request $request)
+    {
+        // $search = $request->search;
+        $threats = GeneralRiskLibrary::orderBy('threats')->get();
+        return response()->json(compact('threats'), 200);
+    }
 
 
     /**

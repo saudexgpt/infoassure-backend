@@ -18,4 +18,12 @@ class Asset extends Model
     {
         return $this->belongsTo(AssetType::class);
     }
+    public function riskAssessments()
+    {
+        return $this->hasMany(RiskAssessment::class);
+    }
+    public function riskRegisters()
+    {
+        return $this->hasMany(RiskRegister::class);
+    }
 }

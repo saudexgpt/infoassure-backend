@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PersonalDataAssessment;
+use App\Models\PersonalDataItem;
 use Illuminate\Http\Request;
 
 class PDAController extends Controller
@@ -32,9 +33,27 @@ class PDAController extends Controller
             ->where($condition)
             ->select('personal_data_assessments.*', 'business_units.unit_name as business_unit', 'business_processes.name as business_process')
             ->get();
-        return response()->json(compact('pdas'), 200);
+        // Group By Business unit
+        $grouped_pdas = $pdas->groupBy('business_unit');
+        return response()->json(compact('pdas', 'grouped_pdas'), 200);
     }
 
+    public function fetchPersonalDataItems(Request $request)
+    {
+        $personal_data_items = PersonalDataItem::orderBy('item')->get();
+        return response()->json(compact('personal_data_items'), 200);
+    }
+    private function saveNewPersonalDataItem($items)
+    {
+        if ($items != NULL) {
+
+            foreach ($items as $item) {
+                PersonalDataItem::firstOrCreate([
+                    'item' => $item
+                ]);
+            }
+        }
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -68,6 +87,7 @@ class PDAController extends Controller
             'third_parties_shared_with' => $request->third_parties_shared_with,
             'comments' => $request->comments
         ]);
+        $this->saveNewPersonalDataItem($request->personal_data_item);
         return response()->json('success');
     }
 
@@ -86,6 +106,10 @@ class PDAController extends Controller
         $value = $request->value;
         $pda->$field = $value;
         $pda->save();
+        if ($field == 'personal_data_item') {
+
+            $this->saveNewPersonalDataItem($value);
+        }
         return response()->json(compact('pda'), 200);
 
     }

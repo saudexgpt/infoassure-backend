@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\KeyRiskIndicatorAssessment;
 use App\Models\RCSARiskAssessment;
 use App\Models\Risk;
+use App\Models\RiskAssessment;
 use App\Models\RiskControlSelfAssessment;
 use App\Models\RiskImpactArea;
 use App\Models\RiskImpactOnArea;
@@ -50,7 +51,8 @@ class RCSAController extends Controller
     {
         $risks = RiskRegister::with('businessUnit', 'businessProcess')->where([
             'client_id' => $request->client_id,
-            'business_unit_id' => $request->business_unit_id
+            'business_unit_id' => $request->business_unit_id,
+            'module' => 'rcsa',
         ])->get();
 
         foreach ($risks as $risk) {
@@ -291,48 +293,6 @@ class RCSAController extends Controller
         }
         return $max;
     }
-    private function analyzeRiskCategory($riskValue, $matrix = '3x3')
-    {
-
-        $category = NULL;
-        $color = 'fcfcff';
-        switch ($matrix) {
-            case '5x5':
-                if ($riskValue >= 15) {
-                    $category = 'Very High';
-                    $color = 'DD2C2C';
-                }
-                if ($riskValue >= 10 && $riskValue <= 14) {
-                    $category = 'High';
-                    $color = 'FFA500';
-                }
-                if ($riskValue >= 5 && $riskValue <= 9) {
-                    $category = 'Medium';
-                    $color = 'FFFF00';
-                }
-                if ($riskValue >= 1 && $riskValue <= 4) {
-                    $category = 'Low';
-                    $color = '3BD135';
-                }
-                break;
-
-            default:
-                if ($riskValue >= 6) {
-                    $category = 'High';
-                    $color = 'DD2C2C';
-                }
-                if ($riskValue >= 3 && $riskValue <= 5) {
-                    $category = 'Medium';
-                    $color = 'FFA500';
-                }
-                if ($riskValue >= 1 && $riskValue <= 2) {
-                    $category = 'Low';
-                    $color = '3BD135';
-                }
-                break;
-        }
-        return array($category, $color);
-    }
     /**
      * Display the specified resource.
      *
@@ -418,7 +378,7 @@ class RCSAController extends Controller
         $impact_val = $this->maxValue($valuesArray);
         $risk_value = $riskAssessment->likelihood_of_occurence * $impact_val;
         // $risk_category = $this->analyzeRiskCategory($risk_value, $matrix);
-        list($risk_category, $color) = $this->analyzeRiskCategory($risk_value, $matrix);
+        list($risk_category, $color) = analyzeRiskCategory($risk_value, $matrix);
 
         $riskAssessment->impact_of_occurence = ($impact_val > 0) ? $impact_val : NULL;
         $riskAssessment->overall_risk_rating = ($risk_value > 0) ? $risk_value : NULL;
@@ -436,7 +396,7 @@ class RCSAController extends Controller
 
         $impact_val = $this->maxValue($valuesArray);
         $risk_value = $riskAssessment->revised_likelihood_of_occurence * $impact_val;
-        list($risk_category, $color) = $this->analyzeRiskCategory($risk_value, $matrix);
+        list($risk_category, $color) = analyzeRiskCategory($risk_value, $matrix);
 
         $riskAssessment->revised_impact_of_occurence = $impact_val;
         $riskAssessment->revised_overall_risk_rating = $risk_value;
@@ -455,7 +415,7 @@ class RCSAController extends Controller
         }
         $standard_id = 0;
         $module = $request->module;
-        $risk_assessments = RCSARiskAssessment::where(['client_id' => $client_id, 'standard_id' => $standard_id, 'module' => $module])->where('key_risk_indicator', '!=', NULL)
+        $risk_assessments = RiskAssessment::where(['client_id' => $client_id, 'module' => $module])->where('key_risk_indicator', '!=', NULL)
             ->select('id', 'business_unit_id')
             ->get();
         $business_unit_ids = [];
@@ -470,10 +430,10 @@ class RCSAController extends Controller
             );
             $this->setKRIAssessmentValues($assessment);
         }
-        $assessments = KeyRiskIndicatorAssessment::join('rcsa_risk_assessments', 'rcsa_risk_assessments.id', 'key_risk_indicator_assessments.risk_assessment_id')
+        $assessments = KeyRiskIndicatorAssessment::join('risk_assessments', 'risk_assessments.id', 'key_risk_indicator_assessments.risk_assessment_id')
             ->where('key_risk_indicator_assessments.client_id', $client_id)
             ->whereIn('key_risk_indicator_assessments.business_unit_id', $business_unit_ids)
-            ->select('key_risk_indicator_assessments.*', 'rcsa_risk_assessments.key_risk_indicator as kri')->get();
+            ->select('key_risk_indicator_assessments.*', 'risk_assessments.key_risk_indicator as kri')->get();
         return response()->json(compact('assessments'), 200);
     }
 
@@ -584,7 +544,7 @@ class RCSAController extends Controller
         }
         $condition = [];
         if (isset($request->business_unit_id) && $request->business_unit_id != '') {
-            $condition['rcsa_risk_assessments.business_unit_id'] = $request->business_unit_id;
+            $condition['risk_assessments.business_unit_id'] = $request->business_unit_id;
         }
         if (isset($request->type) && $request->type != '') {
             $condition['risk_registers.type'] = $request->type;
@@ -596,14 +556,15 @@ class RCSAController extends Controller
             $condition['risk_registers.risk_id'] = $request->risk_id;
         }
         if (isset($request->business_unit_id) && $request->business_unit_id != '') {
-            $condition['rcsa_risk_assessments.business_unit_id'] = $request->business_unit_id;
+            $condition['risk_assessments.business_unit_id'] = $request->business_unit_id;
         }
-        $risk_assessments = RCSARiskAssessment::leftJoin('risk_registers', 'risk_registers.id', 'rcsa_risk_assessments.risk_register_id')
-            ->leftJoin('business_units', 'business_units.id', 'rcsa_risk_assessments.business_unit_id')
-            ->leftJoin('business_processes', 'business_processes.id', 'rcsa_risk_assessments.business_process_id')
-            ->where(['rcsa_risk_assessments.client_id' => $client_id])
+        $risk_assessments = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
+            ->join('business_units', 'business_units.id', 'risk_assessments.business_unit_id')
+            ->join('business_processes', 'business_processes.id', 'risk_assessments.business_process_id')
+            ->where(['risk_assessments.client_id' => $client_id])
+            ->where('risk_assessments.module', $request->module)
             ->where($condition)
-            ->select('rcsa_risk_assessments.*', 'risk_registers.*', 'rcsa_risk_assessments.id as id', \DB::raw('CONCAT(prepend_risk_no_value,risk_id) as risk_id'), 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
+            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
             ->orderBy('risk_id', 'ASC')
             ->get();
 
@@ -618,26 +579,26 @@ class RCSAController extends Controller
             foreach ($risk_assessments as $risk_assessment) {
                 $impact_rating_count += $risk_assessment->revised_impact_of_occurence;
                 $likelihood_rating_count += $risk_assessment->revised_likelihood_of_occurence;
-                $risk_score_count += $risk_assessment->revised_overall_risk_rating;
+                $risk_score_count += $risk_assessment->revised_risk_score;
             }
             $overall_impact_rating = sprintf("%.1f", $impact_rating_count / $count);
             $overall_likelihood_rating = sprintf("%.1f", $likelihood_rating_count / $count);
             $average_risk_score = sprintf("%.1f", $risk_score_count / $count);
         }
-        $severity_distribution = RCSARiskAssessment::where(['client_id' => $client_id])
+        $severity_distribution = RiskAssessment::where(['client_id' => $client_id])
             ->where($condition)
-            ->select(\DB::raw('COUNT(CASE WHEN revised_risk_category = "Very High" THEN rcsa_risk_assessments.id END ) as very_high'), \DB::raw('COUNT(CASE WHEN revised_risk_category = "High" THEN rcsa_risk_assessments.id END ) as high'), \DB::raw('COUNT(CASE WHEN revised_risk_category = "Medium" THEN rcsa_risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_category = "Low" THEN rcsa_risk_assessments.id END ) as low'))
+            ->select(\DB::raw('COUNT(CASE WHEN revised_risk_level = "Very High" THEN risk_assessments.id END ) as very_high'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "High" THEN risk_assessments.id END ) as high'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "Low" THEN risk_assessments.id END ) as low'))
             ->first();
-        $effectiveness_level = RCSARiskAssessment::where(['client_id' => $client_id])
+        $effectiveness_level = RiskAssessment::where(['client_id' => $client_id])
             ->where($condition)
-            ->select(\DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Effective" THEN rcsa_risk_assessments.id END ) as effective'), \DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Ineffective" THEN rcsa_risk_assessments.id END ) as ineffective'), \DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Sub-optimal" THEN rcsa_risk_assessments.id END ) as sub_optimal'))
+            ->select(\DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Effective" THEN risk_assessments.id END ) as effective'), \DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Ineffective" THEN risk_assessments.id END ) as ineffective'), \DB::raw('COUNT(CASE WHEN control_effectiveness_level = "Sub-optimal" THEN risk_assessments.id END ) as sub_optimal'))
             ->first();
         $column_series = [
             [
                 'name' => 'Risk Severity',
-                'colors' => ['#DD2C2C', '#FFA500', '#FFFF00', '#3BD135'],
+                'colors' => ['#DD2C2C', '#FFFF00', /*'#FFFF00',*/ '#3BD135'],
                 'data' => [
-                    ['Very High', $severity_distribution->very_high],
+                    // ['Very High', $severity_distribution->very_high],
                     ['High', $severity_distribution->high],
                     ['Medium', $severity_distribution->medium],
                     ['Low', $severity_distribution->low],
