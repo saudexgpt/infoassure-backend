@@ -194,8 +194,8 @@ class Controller extends BaseController
 
         // $user = $this->getUser();
         $users = User::whereHas('roles', function ($query) {
-            $query->where('name', '=', 'super')
-                ->orWhere('name', '=', 'admin'); // this is the role id inside of this callback
+            $query->where('name', '=', 'super');
+            // ->orWhere('name', '=', 'admin'); // this is the role id inside of this callback
         })->get();
         if ($clients != null) {
             $users = $users->merge($clients);

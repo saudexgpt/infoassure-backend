@@ -23,4 +23,8 @@ class AvailableModule extends Model
     {
         return $this->hasMany(Standard::class);
     }
+    public function generalProjectPlans()
+    {
+        return $this->belongsToMany(GeneralProjectPlan::class);
+    }
 }

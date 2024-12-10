@@ -7,6 +7,7 @@ use App\Http\Controllers\PDAController;
 use App\Http\Controllers\RCSAController;
 use App\Http\Controllers\RiskRegistersController;
 use App\Http\Controllers\RoPAController;
+use App\Http\Controllers\UploadsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BIAController;
@@ -55,6 +56,7 @@ Route::get('fetch-available-modules', [Controller::class, 'fetchAvailableModules
 // Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
 // Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
 Route::group(['prefix' => 'auth'], function () {
+    Route::post('register-client', [ClientsController::class, 'registerClient']);
     Route::post('login', [AuthController::class, 'login']);
     Route::get('confirm-registration', [AuthController::class, 'confirmRegistration']);
     Route::post('recover-password', [AuthController::class, 'recoverPassword']);
@@ -128,7 +130,6 @@ Route::group(['prefix' => 'bia'], function () {
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
-
     Route::get('fetch-client-activated-projects/{client}', [ProjectsController::class, 'fetchClientActivatedProjects']);
 
 
@@ -218,6 +219,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     Route::group(['prefix' => 'clients'], function () {
         Route::get('/', [ClientsController::class, 'index']);
+        Route::get('users', [ClientsController::class, 'fetchClientUsers']);
+
         Route::get('fetch-user-clients', [ClientsController::class, 'fetchUserClients']);
         Route::post('register', [ClientsController::class, 'store']);
         Route::post('register-client-user', [ClientsController::class, 'registerClientUser']);
@@ -314,11 +317,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update/{clause}', [ClausesController::class, 'update']);
         Route::put('set-sort-value/{clause}', [ClausesController::class, 'setSortValue']);
         Route::delete('destroy/{clause}', [ClausesController::class, 'destroy']);
-        Route::post('uploads/save', [ClausesController::class, 'createUploads']);
-        Route::post('upload-file', [ClausesController::class, 'uploadClauseFile']);
-        Route::post('upload-document-template', [ClausesController::class, 'uploadDocumentTemplate']);
-        Route::delete('destroy-template/{template}', [ClausesController::class, 'destroyTemplate']);
-        Route::put('remark-on-upload/{upload}', [ClausesController::class, 'remarkOnUpload']);
     });
     Route::group(['prefix' => 'questions'], function () {
         Route::get('/', [QuestionsController::class, 'index']);
@@ -379,7 +377,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::delete('destroy/{evidence}', [EvidenceController::class, 'destroy']);
         Route::delete('destroy-client-evidence/{client_evidence}', [EvidenceController::class, 'destroyClientEvidence']);
     });
-
+    Route::group(['prefix' => 'uploads'], function () {
+        Route::post('save', [UploadsController::class, 'createUploads']);
+        Route::post('upload-file', [UploadsController::class, 'uploadEvidenceFile']);
+        Route::post('upload-document-template', [UploadsController::class, 'uploadDocumentTemplate']);
+        Route::delete('destroy-template/{template}', [UploadsController::class, 'destroyTemplate']);
+        Route::put('remark-on-upload/{upload}', [UploadsController::class, 'remarkOnUpload']);
+    });
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
     Route::group(['prefix' => 'risk-assessment'], function () {
         Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Laratrust\Models\LaratrustRole;
+use Laratrust\Models\Role as RoleModel;
 
-class Role extends LaratrustRole
+class Role extends RoleModel
 {
     public $guarded = [];
     public function isSuperAdmin(): bool

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Upload extends Model
 {
     use HasFactory;
+    protected $connection = 'mysql';
     protected $fillable = ['client_id', 'standard_id', 'project_id', 'consulting_id', 'clause_id', 'created_by'];
     public function client()
     {
@@ -24,5 +25,9 @@ class Upload extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+    public function getFullDocumentLinkAttribute()
+    {
+        return env('APP_URL') . '/storage/' . $this->link;
     }
 }

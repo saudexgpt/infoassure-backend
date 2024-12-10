@@ -126,6 +126,7 @@ class ProjectsController extends Controller
                 ]);
 
                 // $this->storeClientProjectPlan($client_id, $project->id, $standard_id);
+                $this->assignProjectToClientStaff($request, $project);
 
                 $this->createProjectCertificate($client_id, $project->id);
             }
@@ -139,7 +140,7 @@ class ProjectsController extends Controller
                 'standard_id' => NULL,
                 'year' => $this->getYear(),
             ]);
-
+            $this->assignProjectToClientStaff($request, $project);
             $this->createProjectCertificate($client_id, $project->id);
         }
         $actor = $this->getUser();
@@ -171,7 +172,13 @@ class ProjectsController extends Controller
     // }
     public function assignProjectToClientStaff(Request $request, Project $project)
     {
-        $user_ids = $request->user_ids;
+        // $client = $project->client;
+        // $users = $client->users()->where('role', 'admin')->get();
+        $user_ids = (isset($request->user_ids)) ? $request->user_ids : [];
+        // foreach ($users as $user) {
+        //     $user_ids[] = $user->id;
+        // }
+
         $project->users()->sync($user_ids); //->paginate(10);
         return response()->json([], 204);
     }

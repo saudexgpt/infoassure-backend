@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 class Client extends Model
 {
     use HasFactory, SoftDeletes, Notifiable;
+    protected $connection = 'mysql';
     public function matrix()
     {
         return $this->hasOne(RiskMatrix::class);

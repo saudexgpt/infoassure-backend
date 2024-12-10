@@ -24,7 +24,7 @@ class ClientsController extends Controller
         $user = $this->getUser();
         $condition = [];
         $partner_with_clients = [];
-        if ($user->haRole('client')) {
+        if ($user->haRole('client') || $user->haRole('admin')) {
             $id = $this->getClient()->id;
             $condition = ['id' => $id];
         }
@@ -55,6 +55,13 @@ class ClientsController extends Controller
         $user = User::find($user_id);
         $clients = $user->clients;
         return response()->json(compact('clients'), 200);
+    }
+
+    public function fetchClientUsers()
+    {
+        $client = $this->getClient();
+        $users = $client->users;
+        return response()->json(compact('users'), 200);
     }
 
     /**

@@ -34,7 +34,7 @@ class ConfirmNewRegistration extends Mailable //implements ShouldQueue
     public function build()
     {
         $user = $this->user;
-        $password = $this->password;
+        $password = $this->password; //'The password you created during sign up'; // $this->password;
         return $this->view('emails.confirm_new_registration', compact('user', 'password'));
     }
 }

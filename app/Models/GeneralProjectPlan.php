@@ -10,12 +10,15 @@ class GeneralProjectPlan extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
-        'task', 'responsibility', 'resource', 'project_phase_id'
+        'task',
+        'responsibility',
+        'resource',
+        'project_phase_id'
     ];
-    public function standards()
-    {
-        return $this->belongsToMany(Standard::class);
-    }
+    // public function standards()
+    // {
+    //     return $this->belongsToMany(Standard::class);
+    // }
     public function projectPhase()
     {
         return $this->belongsTo(ProjectPhase::class);
@@ -23,5 +26,9 @@ class GeneralProjectPlan extends Model
     public function clientProjectPlan()
     {
         return $this->hasMany(Client::class);
+    }
+    public function availableModules()
+    {
+        return $this->belongsToMany(AvailableModule::class);
     }
 }

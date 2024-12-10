@@ -7,14 +7,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Laratrust\Traits\LaratrustUserTrait;
+use Laratrust\Contracts\LaratrustUser;
+use Laratrust\Traits\HasRolesAndPermissions;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable
+class User extends Authenticatable implements LaratrustUser
 {
-    use LaratrustUserTrait;
+    use HasRolesAndPermissions;
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
-
+    protected $connection = 'mysql';
     /**
      * The attributes that are mass assignable.
      *
@@ -102,7 +103,11 @@ class User extends Authenticatable
         $user->email = $data->email;
         $user->phone = $data->phone;
         $user->password = $data->password;
+        $user->is_client_admin = (isset($data->is_client_admin)) ? $data->is_client_admin : 0;
         $user->role = $data->role;
+        $user->login_as = (isset($data->login_as)) ? $data->login_as : $data->role;
+        $user->partner_id = (isset($data->partner_id)) ? $data->partner_id : NULL;
+        $user->client_id = (isset($data->client_id)) ? $data->client_id : NULL;
         $user->designation = $data->designation;
         $user->confirm_hash = hash('sha256', time() . $data->email);
         $user->save();
