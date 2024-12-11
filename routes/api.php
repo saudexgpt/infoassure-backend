@@ -291,6 +291,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('/store-client-project-plan', [ProjectPlanController::class, 'storeClientProjectPlan']);
         Route::put('/update-client-project-plan-fields/{client_project_plan}', [ProjectPlanController::class, 'updateClientProjectPlanFields']);
     });
+
+
     Route::group(['prefix' => 'consultings'], function () {
         Route::get('/', [ConsultingsController::class, 'index']);
         Route::get('with-clauses', [ConsultingsController::class, 'fetchWithClauses']);
@@ -299,6 +301,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update/{consulting}', [ConsultingsController::class, 'update']);
         Route::delete('destroy/{consulting}', [ConsultingsController::class, 'destroy']);
     });
+
+
     Route::group(['prefix' => 'standards'], function () {
         Route::get('/', [StandardsController::class, 'index']);
         Route::get('with-clauses', [StandardsController::class, 'fetchWithClauses']);
@@ -307,6 +311,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update/{standard}', [StandardsController::class, 'update']);
         Route::delete('destroy/{standard}', [StandardsController::class, 'destroy']);
     });
+
+
     Route::group(['prefix' => 'clauses'], function () {
         Route::get('/', [ClausesController::class, 'index']);
         Route::get('fetch-clauses-with-questions', [ClausesController::class, 'fetchClausesWithQuestions']);
@@ -318,6 +324,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('set-sort-value/{clause}', [ClausesController::class, 'setSortValue']);
         Route::delete('destroy/{clause}', [ClausesController::class, 'destroy']);
     });
+
+    Route::group(['prefix' => 'document-templates'], function () {
+
+        Route::get('fetch', [DocumentsController::class, 'fetchDocumentTemplates']);
+        Route::post('upload', [DocumentsController::class, 'uploadDocumentTemplate']);
+    });
+
     Route::group(['prefix' => 'questions'], function () {
         Route::get('/', [QuestionsController::class, 'index']);
         Route::post('save', [QuestionsController::class, 'store']);
@@ -326,6 +339,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update/{question}', [QuestionsController::class, 'update']);
         Route::delete('destroy/{question}', [QuestionsController::class, 'destroy']);
     });
+
+
     Route::group(['prefix' => 'answers'], function () {
         Route::get('/', [AnswersController::class, 'index']);
         Route::post('save', [AnswersController::class, 'store']);
@@ -365,6 +380,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('create', [ClausesController::class, 'createException']);
         Route::delete('reverse/{exception}', [ClausesController::class, 'reverseException']);
     });
+
+
 
     Route::group(['prefix' => 'evidence'], function () {
 

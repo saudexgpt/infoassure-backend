@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GapAssessmentEvidence;
-use App\Models\DueDiligenceEvidence;
-use App\Models\Upload;
+use App\Models\DocumentTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DocumentsController extends Controller
 {
+    public function fetchDocumentTemplates(Request $request)
+    {
+        $document_templates = DocumentTemplate::orderBy('title')->get();
+        return response()->json(compact('document_templates'), 200);
+    }
     //
     // public function formatDocToSFDTOlderImplementation(Request $request)
     // {

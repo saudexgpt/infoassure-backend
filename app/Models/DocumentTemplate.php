@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class DocumentTemplate extends Model
 {
     use HasFactory;
+
+    // public function getFullLinkAttribute()
+    // {
+    //     return env('APP_URL') . '/storage/' . $this->link;
+    // }
 }

@@ -32,7 +32,7 @@ class QuestionsController extends Controller
     public function store(Request $request)
     {
         Question::firstOrCreate([
-            'section_id ' => $request->section_id,
+            'section_id' => $request->section_id,
             'clause_id' => $request->clause_id,
             'question' => $request->question,
             'upload_evidence' => $request->upload_evidence,
