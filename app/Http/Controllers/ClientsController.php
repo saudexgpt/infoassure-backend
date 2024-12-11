@@ -102,6 +102,34 @@ class ClientsController extends Controller
         return response()->json(['message' => 'Company already exists'], 401);
     }
 
+    public function registerClient(Request $request)
+    {
+
+        $contact_email = $request->contact_email;
+        $client = Client::where('contact_email', $contact_email)->first();
+        if (!$client) {
+            $client = new Client();
+            $client->name = $request->organization_name;
+            $client->contact_email = $request->contact_email;
+            $client->contact_phone = $request->contact_phone;
+            $client->contact_address = $request->contact_address;
+            if ($client->save()) {
+                $request->client_id = $client->id;
+                $request->role = 'admin';
+                $this->registerClientUser($request);
+                $title = "New Client Registered";
+                //log this event
+                $description = "$client->name was registered";
+                $this->auditTrailEvent($title, $description);
+
+
+                return response()->json(compact('client'), 200);
+            }
+            return response()->json(['message' => 'Unable to register'], 500);
+        }
+        return response()->json(['message' => 'Company already exists'], 401);
+    }
+
 
     public function registerClientUser(Request $request)
     {
@@ -110,14 +138,14 @@ class ClientsController extends Controller
         $request->email = $request->admin_email;
         $request->password = $request->admin_email;
         $request->phone = $request->admin_phone;
-        $request->role = 'client';
         $user_obj = new User();
         $user = $user_obj->createUser($request);
         // sync user to client
         $client->users()->syncWithoutDetaching($user->id);
-        $role = Role::where('name', 'client')->first();
+        $role = Role::where('name', $request->role)->first();
         $user->roles()->sync($role->id); // role id 3 is client
 
+        $this->sendLoginCredentials($user);
         return response()->json('success', 200);
     }
     /**

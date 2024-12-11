@@ -24,12 +24,13 @@ class ProjectsController extends Controller
             ->where('partner_id', $partner_id)
             ->select('available_modules.*')->with('standards')
             ->get();
+        $all_modules = AvailableModule::with('standards')->orderBy('name')->get();
         $projects = $this->getMyProjects($client->id);
 
         // Project::with('availableModule', 'standard')
         //     ->where(['client_id' => $client->id, 'year' => $this->getYear()])
         //     ->orderBy('id', 'DESC')->get();
-        return response()->json(compact('projects', 'activated_modules'), 200);
+        return response()->json(compact('projects', 'activated_modules', 'all_modules'), 200);
     }
     /**
      * Display a listing of the resource.

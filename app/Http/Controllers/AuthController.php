@@ -177,9 +177,9 @@ class AuthController extends Controller
         // $this->setupTheme($user);
         $lastLoginDate = date('Y-m-d', strtotime($user->last_login));
 
-        // if ($user->email_verified_at === NULL) {
-        //     return response()->json(['message' => 'Account Activation Needed'], 403);
-        // }
+        if ($user->email_verified_at === NULL) {
+            return response()->json(['message' => 'Account Activation Needed'], 403);
+        }
         if ($user->password_status === 'default') {
             $message = 'change_password';
             return response()->json(compact('message', 'user'), 200);
