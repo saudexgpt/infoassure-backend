@@ -17,4 +17,8 @@ class ClauseSection extends Model
     {
         return $this->belongsTo(Clause::class);
     }
+    public function questions()
+    {
+        return $this->hasMany(Question::class, 'section_id', 'id');
+    }
 }

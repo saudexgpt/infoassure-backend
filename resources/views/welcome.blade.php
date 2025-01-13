@@ -31,7 +31,7 @@
 </div>
 <!-- Hero Header End -->
 <!--Partners Start-->
-<div class="container-fluid py-0 px-5 wow fadeInUp" data-wow-delay="0.1s" style="margin-top: 2rem;">
+<!-- <div class="container-fluid py-0 px-5 wow fadeInUp" data-wow-delay="0.1s" style="margin-top: 2rem;">
   <div>
     <div class="bg-white">
       <div class="owl-carousel vendor-carousel">
@@ -45,7 +45,7 @@
     </div>
   </div>
   <hr>
-</div>
+</div> -->
 <!--Partners ends-->
 
 <!-- About Start -->

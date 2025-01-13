@@ -33,17 +33,22 @@ class ClausesController extends Controller
         $client_id = $request->client_id;
         $project_id = $request->project_id;
         $clauses = Clause::with([
-            'questions.answer' => function ($q) use ($client_id, $project_id) {
+            'sections.questions.answer' => function ($q) use ($client_id, $project_id) {
                 $q->where(['client_id' => $client_id, 'project_id' => $project_id]);
             },
-            'questions.answer.assignee',
-            'questions.section'
+            'sections.questions.answer.assignee',
+            // 'questions.section'
         ])->where('will_have_audit_questions', 1)->orderBy('sort_by')->get();
+
+        $answer_completion_status = Answer::groupBy('clause_id')->where(['client_id' => $client_id, 'project_id' => $project_id])
+
+            ->select('clause_id', \DB::raw('COUNT(CASE WHEN status IS NULL OR status != "Closed" AND is_exception = 0 THEN answers.id END ) as pending'))
+            ->get()->groupBy('clause_id');
 
         $template_ids = Question::where('expected_document_template_ids', '!=', NULL)->pluck('expected_document_template_ids');
         $template_ids_array = $template_ids->flatten()->unique()->sort()->values();
         $uploads = Upload::where('client_id', $client_id)->whereIn('template_id', $template_ids_array)->get()->groupBy('template_id');
-        return response()->json(compact('clauses', 'uploads'), 200);
+        return response()->json(compact('clauses', 'uploads', 'answer_completion_status'), 200);
     }
     public function fetchClausesWithDocuments(Request $request)
     {

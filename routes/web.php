@@ -17,6 +17,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/mailable', function () {
+    $user = App\Models\User::find(1);
+
+    return new App\Mail\SendMail('Testing Mail', 'Hello World', $user);
+});
+
 Route::get('/', function () {
     return view('welcome');
 });

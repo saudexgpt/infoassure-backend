@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SendMail;
 use App\Models\ActivatedModule;
 use App\Models\AvailableModule;
 use App\Models\Project;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Notification;
 
 class Controller extends BaseController
@@ -28,6 +30,7 @@ class Controller extends BaseController
 
     protected $user;
     protected $client;
+
     protected $partner;
     protected $myProjects;
     protected $role;
@@ -148,7 +151,8 @@ class Controller extends BaseController
         $user = $this->getUser();
         // $client_user = DB::table('client_user')->where('user_id', $user->id)->first();
         // $client_id = $client_user->client_id;
-        $this->client = Client::find($user->client_id);
+        $client = Client::find($user->client_id);
+        $this->client = $client;
     }
 
     public function getClient()
@@ -204,7 +208,25 @@ class Controller extends BaseController
         return Notification::send($users->unique(), $notification);
     }
 
+    public function sendNotification($title, $message, array $userIds)
+    {
+        $client = $this->getClient();
+        $notification_channels = ($client->notification_channels) ? $client->notification_channels : ['email'];
 
+        $recipients = User::whereIn('id', $userIds)->get();
+
+        if (in_array('in_app', $notification_channels)) {
+            $notification = new AuditTrail($title, $message);
+            return Notification::send($recipients, $notification);
+        }
+
+        if (in_array('email', $notification_channels)) {
+            foreach ($recipients as $recipient) {
+
+                Mail::to($recipient)->send(new SendMail($title, $message, $recipient));
+            }
+        }
+    }
 
     public function fetchAvailableModules()
     {

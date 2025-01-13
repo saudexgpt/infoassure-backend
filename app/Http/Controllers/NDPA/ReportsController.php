@@ -17,6 +17,7 @@ use App\Models\RiskAssessment;
 use App\Models\SOAArea;
 use App\Models\Standard;
 use App\Models\StatementOfApplicability;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ReportsController extends Controller
@@ -134,16 +135,117 @@ class ReportsController extends Controller
             ->first();
         return response()->json(compact('reports'), 200);
     }
+    private function filterManagementClauseByAssignee(Request $request)
+    {
+        $client_id = $request->client_id;
+        $project_id = $request->project_id;
+        $clause_id = $request->clause_id;
+        $assignee_id = $request->assignee_id;
+        $user = User::find($assignee_id);
+        $group_by = $request->group_by;
+        $condition = ['client_id' => $client_id, 'project_id' => $project_id, 'assignee_id' => $assignee_id];
+        $reports = Answer::groupBy('answers.clause_id')
+            ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
+            ->join('clause_sections', 'clause_sections.id', '=', 'answers.section_id')
+
+            ->where($condition)
+            // ->where('is_submitted', 1)
+            ->orderBy('clauses.sort_by')
+            ->select(
+                'assignee_id',
+                \DB::raw("CONCAT(clauses.name, '-', clauses.description) as part"),
+                \DB::raw("CONCAT(clause_sections.name, '-', clause_sections.description) as section"),
+                \DB::raw('COUNT(*) as total'),
+                \DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'),
+                \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'),
+                \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'),
+                \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement')
+            )
+            ->get();
+        $categories = [];
+        $conformity = [];
+        $non_conformity = [];
+        $not_applicable = [];
+        $open_for_imporvement = [];
+        foreach ($reports as $report) {
+            $total = $report->total;
+            $name = $report->part;
+            $categories[] = $name;
+            $conformity[] = [
+                'name' => $name,
+                'y' => ($report->conformity > 0) ? $report->conformity : 0,
+            ];
+            $non_conformity[] = [
+                'name' => $name,
+                'y' => ($report->non_conformity > 0) ? $report->non_conformity : 0,
+            ];
+
+            $not_applicable[] = [
+                'name' => $name,
+                'y' => ($report->not_applicable > 0) ? $report->not_applicable : 0,
+            ];
+
+            $open_for_imporvement[] = [
+                'name' => $name,
+                'y' => ($report->open_for_imporvement > 0) ? $report->open_for_imporvement : 0,
+            ];
+        }
+        $series = [
+            [
+                'name' => 'Conformity',
+                'data' => $conformity, //array format
+                'color' => '#00A65A',
+                'stack' => 'Management Clause',
+                'dataLabels' => [
+                    'enabled' => true,
+                ],
+            ],
+            [
+                'name' => 'Non Conformity',
+                'data' => $non_conformity, //array format
+                'color' => '#F00C12',
+                'stack' => 'Management Clause',
+                'dataLabels' => [
+                    'enabled' => true,
+                ],
+            ],
+            [
+                'name' => 'Opportunity For Improvement',
+                'data' => $open_for_imporvement, //array format
+                'color' => '#FFA500',
+                'stack' => 'Management Clause',
+                'dataLabels' => [
+                    'enabled' => true,
+                ],
+            ],
+            [
+                'name' => 'N/A',
+                'data' => $not_applicable, //array format
+                'color' => '#cccccc',
+                'stack' => 'Management Clause',
+                'dataLabels' => [
+                    'enabled' => true,
+                ],
+            ],
+        ];
+        $subtitle = "Level of Conformity for each part of the NDPA Requirement by $user->name";
+        $title = 'Compliance by Assignee';
+        return response()->json(compact('categories', 'series', 'title', 'subtitle'), 200);
+    }
     public function clientProjectManagementClauseReport(Request $request)
     {
         $client_id = $request->client_id;
         $project_id = $request->project_id;
         $clause_id = $request->clause_id;
+        $assignee_id = $request->assignee_id;
+        $group_by = $request->group_by;
         $condition = ['client_id' => $client_id, 'project_id' => $project_id];
         if ($clause_id != '') {
             $condition = ['client_id' => $client_id, 'project_id' => $project_id, 'answers.clause_id' => $clause_id];
         }
-        $group_by = $request->group_by;
+        if ($group_by == 'assignee_id') {
+            return $this->filterManagementClauseByAssignee($request);
+        }
         $reports = Answer::groupBy('answers.' . $group_by)
             ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->join('clause_sections', 'clause_sections.id', '=', 'answers.section_id')

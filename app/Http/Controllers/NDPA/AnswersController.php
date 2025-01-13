@@ -60,7 +60,50 @@ class AnswersController extends Controller
             }
         }
     }
+    public function assignUserToRespond(Request $request, Answer $answer)
+    {
+        //
+        $date = date('Y-m-d H:i:s', strtotime('now'));
+        $user = $this->getUser();
+        $former_assignee_id = $answer->assignee_id;
+        $answer->assignee_id = $request->assignee_id;
+        if ($former_assignee_id != $request->assignee_id) {
+            $answer->start_date = date('Y-m-d', strtotime('now'));
+            $answer->end_date = date('Y-m-d', strtotime($request->end_date));
+            $answer->save();
 
+
+            $clause = $answer->clause;
+            $section = $answer->section;
+            $question = $answer->question;
+
+            $title1 = 'Task Assigned';
+            $message1 = "You have been <strong>assigned</strong> to a task on the NDPA Module with the details below:" .
+                "<p>Part:  $clause->name ($clause->description).</p>" .
+                "<p>Section:  $section->name ($section->description)</p>" .
+                "<p>Question:  $question->question</p>" .
+                "<p>Assigned by:  $user->name</p>" .
+                "<p>Date assigned: $answer->start_date</p>" .
+                "<p>Deadline:  $answer->end_date</p>";
+
+
+            $title2 = 'Task Unassigned';
+            $message2 = "You have been <strong>unassigned</strong> from a task on the NDPA Module with the details below:" .
+                "<p>Part:  $clause->name ($clause->description).</p>" .
+                "<p>Section:  $section->name ($section->description)</p>" .
+                "<p>Question:  $question->question</p>" .
+                "<p>Unassigned by:  $user->name</p>" .
+                "<p>Date: $date</p>";
+
+            // send task assignment notification to the assignee and and reassignment to the previous assignee if available
+            $this->sendNotification($title1, $message1, [$answer->assignee_id]);
+
+            if ($former_assignee_id != NULL) {
+                $this->sendNotification($title2, $message2, [$former_assignee_id]);
+            }
+        }
+
+    }
     /**
      * Display the specified resource.
      *
