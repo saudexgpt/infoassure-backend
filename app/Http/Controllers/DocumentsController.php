@@ -10,7 +10,11 @@ class DocumentsController extends Controller
 {
     public function fetchDocumentTemplates(Request $request)
     {
-        $document_templates = DocumentTemplate::orderBy('title')->get();
+        $document_templates = DocumentTemplate::orderBy('title')->get()->groupBy('first_letter');
+        // foreach ($document_templates as $template) {
+        //     $template->first_letter = substr($template->title, 0, 1);
+        //     $template->save();
+        // }
         return response()->json(compact('document_templates'), 200);
     }
 
@@ -26,6 +30,7 @@ class DocumentsController extends Controller
                 $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
                 $template->title = $title;
                 $template->link = $link;
+                $template->first_letter = substr($title, 0, 1);
                 $template->save();
             }
         }
