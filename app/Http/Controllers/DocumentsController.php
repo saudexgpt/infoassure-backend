@@ -12,15 +12,15 @@ class DocumentsController extends Controller
     {
         if (isset($request->title) && $request->title != '') {
 
-            $document_templates = DocumentTemplate::where('title', 'LIKE', "%$request->title%")->orderBy('title')->get();
+            $document_templates = DocumentTemplate::where('title', 'LIKE', "%$request->title%")->orderBy('title')->get()->groupBy('first_letter');
         } else {
 
-            $document_templates = DocumentTemplate::orderBy('title')->get();
+            $document_templates = DocumentTemplate::orderBy('title')->get()->groupBy('first_letter');
         }
-        foreach ($document_templates as $template) {
-            $template->first_letter = substr($template->title, 0, 1);
-            $template->save();
-        }
+        // foreach ($document_templates as $template) {
+        //     $template->first_letter = substr($template->title, 0, 1);
+        //     $template->save();
+        // }
         return response()->json(compact('document_templates'), 200);
     }
 
