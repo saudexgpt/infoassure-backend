@@ -60,7 +60,7 @@ class ProjectsController extends Controller
         }
         $client_id = $request->client_id;
         $client = Client::with('users')->find($client_id);
-        $users = $client->users;
+        $users = ($client) ? $client->users : [];
         // $consulting_id = $request->consulting_id;
         $projects = Project::with([
             'client',

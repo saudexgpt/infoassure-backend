@@ -22,10 +22,13 @@ class UsersController extends Controller
     public function fetchClientUsers()
     {
         $users = new Collection();
-        $partner_id = $this->getPartner()->id;
-        $clients = Client::with('users')->where('partner_id', $partner_id)->get();
-        foreach ($clients as $client) {
-            $users = $users->merge($client->users);
+        $partner = $this->getPartner();
+        if ($partner) {
+            $partner_id = $partner->id;
+            $clients = Client::with('users')->where('partner_id', $partner_id)->get();
+            foreach ($clients as $client) {
+                $users = $users->merge($client->users);
+            }
         }
         return response()->json(compact('users'), 200);
     }
