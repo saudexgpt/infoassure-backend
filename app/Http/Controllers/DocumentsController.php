@@ -12,10 +12,10 @@ class DocumentsController extends Controller
     {
         if (isset($request->title) && $request->title != '') {
 
-            $document_templates = DocumentTemplate::where('title', 'LIKE', "%$request->title%")->orderBy('title')->get()->groupBy('first_letter');
+            $document_templates = DocumentTemplate::where('title', 'LIKE', "%$request->title%")->orderBy('title')->get();
         } else {
 
-            $document_templates = DocumentTemplate::orderBy('title')->get()->groupBy('first_letter');
+            $document_templates = DocumentTemplate::orderBy('title')->get();
         }
         foreach ($document_templates as $template) {
             $template->first_letter = substr($template->title, 0, 1);
