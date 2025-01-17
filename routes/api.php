@@ -234,6 +234,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::put('send-login-credentials/{user}', [ClientsController::class, 'sendLoginCredentials']);
         Route::put('toggle-client-suspension/{client}', [ClientsController::class, 'toggleClientSuspension']);
+        Route::put('assign-user-as-client-admin/{client}', [ClientsController::class, 'assignUserAsClientAdmin']);
+
     });
     Route::group(['prefix' => 'partners'], function () {
         Route::get('/', [PartnersController::class, 'index']);
@@ -259,6 +261,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::post('save', [ProjectsController::class, 'store']);
         Route::put('assign-to-user/{project}', [ProjectsController::class, 'assignProjectToClientStaff']);
+        Route::put('unassign-user-from-project/{project}', [ProjectsController::class, 'unassignProjectFromClientStaff']);
 
         Route::put('set-dates/{project}', [ProjectsController::class, 'setDates']);
         Route::put('update-random-fields/{project}', [ProjectsController::class, 'updateRandomFields']);
@@ -329,6 +332,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::get('fetch', [DocumentsController::class, 'fetchDocumentTemplates']);
         Route::post('upload', [DocumentsController::class, 'uploadDocumentTemplate']);
+
+        // Route::post('upload-document-template', [UploadsController::class, 'uploadDocumentTemplate']);
     });
 
     Route::group(['prefix' => 'questions'], function () {
@@ -397,7 +402,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'uploads'], function () {
         Route::post('save', [UploadsController::class, 'createUploads']);
         Route::post('upload-file', [UploadsController::class, 'uploadEvidenceFile']);
-        Route::post('upload-document-template', [UploadsController::class, 'uploadDocumentTemplate']);
         Route::delete('destroy-template/{template}', [UploadsController::class, 'destroyTemplate']);
         Route::put('remark-on-upload/{upload}', [UploadsController::class, 'remarkOnUpload']);
     });

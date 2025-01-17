@@ -13,6 +13,23 @@ class DocumentsController extends Controller
         $document_templates = DocumentTemplate::orderBy('title')->get();
         return response()->json(compact('document_templates'), 200);
     }
+
+    public function uploadDocumentTemplate(Request $request)
+    {
+        $title = $request->title;
+        $template = DocumentTemplate::where('title', $title)->first();
+        if (!$template) {
+            $template = new DocumentTemplate();
+
+            if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
+                $file_name = 'template_for_' . str_replace(' ', '-', strtolower($title)) . "." . $request->file('file_uploaded')->guessClientExtension();
+                $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
+                $template->title = $title;
+                $template->link = $link;
+                $template->save();
+            }
+        }
+    }
     //
     // public function formatDocToSFDTOlderImplementation(Request $request)
     // {

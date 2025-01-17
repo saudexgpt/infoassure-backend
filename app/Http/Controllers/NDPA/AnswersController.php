@@ -60,48 +60,53 @@ class AnswersController extends Controller
             }
         }
     }
-    public function assignUserToRespond(Request $request, Answer $answer)
+    public function assignUserToRespond(Request $request)
     {
         //
+        $answers = json_decode(json_encode($request->answers));
         $date = date('Y-m-d H:i:s', strtotime('now'));
         $user = $this->getUser();
-        $former_assignee_id = $answer->assignee_id;
-        $answer->assignee_id = $request->assignee_id;
-        if ($former_assignee_id != $request->assignee_id) {
-            $answer->start_date = date('Y-m-d', strtotime('now'));
-            $answer->end_date = date('Y-m-d', strtotime($request->end_date));
-            $answer->save();
+        foreach ($answers as $answer) {
+            $answerObject = Answer::with('clause', 'section', 'question')->find($answer->id);
+            $former_assignee_id = $answerObject->assignee_id;
+            $assignee_id = $answer->assignee_id;
+            if ($former_assignee_id != $assignee_id) {
+                $answerObject->start_date = date('Y-m-d', strtotime('now'));
+                $answerObject->end_date = date('Y-m-d', strtotime($answer->end_date));
+                $answerObject->assignee_id = $assignee_id;
+                $answerObject->save();
 
 
-            $clause = $answer->clause;
-            $section = $answer->section;
-            $question = $answer->question;
+                $clause = $answerObject->clause;
+                $section = $answerObject->section;
+                $question = $answerObject->question;
 
-            $title1 = 'Task Assigned';
-            $message1 = "You have been <strong>assigned</strong> to a task on the NDPA Module with the details below:" .
-                "<p>Part:  $clause->name ($clause->description).</p>" .
-                "<p>Section:  $section->name ($section->description)</p>" .
-                "<p>Question:  $question->question</p>" .
-                "<p>Assigned by:  $user->name</p>" .
-                "<p>Date assigned: $answer->start_date</p>" .
-                "<p>Deadline:  $answer->end_date</p>";
+                $title1 = 'Task Assigned';
+                $message1 = "You have been <strong>assigned</strong> to a task on the NDPA Module ($clause->name) with the details below:<br>" .
+                    ucwords($section->name . ' - ' . $section->description) . "<br>" .
+                    "Question No.:  #$question->id <br>" .
+                    "Assigned by:  $user->name<br>" .
+                    "Date assigned: $answerObject->start_date<br>" .
+                    "Deadline:  $answerObject->end_date<br>" .
+                    "Extra Comment:  $answer->comment<br>";
 
 
-            $title2 = 'Task Unassigned';
-            $message2 = "You have been <strong>unassigned</strong> from a task on the NDPA Module with the details below:" .
-                "<p>Part:  $clause->name ($clause->description).</p>" .
-                "<p>Section:  $section->name ($section->description)</p>" .
-                "<p>Question:  $question->question</p>" .
-                "<p>Unassigned by:  $user->name</p>" .
-                "<p>Date: $date</p>";
+                $title2 = 'Task Unassigned';
+                $message2 = "You have been <strong>unassigned</strong> from a task on the NDPA Module ($clause->name) with the details below:<br>" .
+                    ucwords($section->name . ' - ' . $section->description) . "<br>" .
+                    "Question No.:  #$question->id <br>" .
+                    "Unassigned by:  $user->name<br>" .
+                    "Date: $date<br>";
 
-            // send task assignment notification to the assignee and and reassignment to the previous assignee if available
-            $this->sendNotification($title1, $message1, [$answer->assignee_id]);
+                // send task assignment notification to the assignee and and reassignment to the previous assignee if available
+                $this->sendNotification($title1, $message1, [$answer->assignee_id]);
 
-            if ($former_assignee_id != NULL) {
-                $this->sendNotification($title2, $message2, [$former_assignee_id]);
+                if ($former_assignee_id != NULL) {
+                    $this->sendNotification($title2, $message2, [$former_assignee_id]);
+                }
             }
         }
+
 
     }
     /**
@@ -217,24 +222,33 @@ class AnswersController extends Controller
             }, $column = 'id');
         }
         //send notification
-        $answer = Answer::with('clause', 'client.users')->find($answer_ids[0]);
+        $answer = Answer::with('clause', 'section', 'project.users')->find($answer_ids[0]);
         $clause = $answer->clause;
-        // $standard = $answer->standard;
+        $section = $answer->section;
+        $question = $answer->question;
         $name = $user->name;
-        $users = $answer->client->users;
+        $userIds = $answer->project->users()->pluck('id');
+        $userIds = $userIds->toArray();
         if ($value === 1) {
 
             $title = "Response Submitted and Analyzed";
             //log this event
-            $description = "Response on gap assessment for NDPA ($clause->name), submitted by $name, was analyzed for compliance.";
+            $description = "Response on compliance assessment for the NDPA ($clause->name) has been submitted by $name and analyzed for compliance. Check details below: <br><br>" .
+                ucwords($section->name . ' - ' . $section->description) . "<br>" .
+                "Question No.:  #$answer->question_id <br><br>";
 
         } else {
             Answer::whereIn('id', $answer_ids)->update(['is_submitted' => 0]);
             $title = "Response modification enabled";
             //log this event
-            $description = "$name enabled response modification on gap assessment for NDPA,  $clause->name";
+            $description = "$name has enabled the ability to modify responses made on compliance assessment for the NDPA ($clause->name). Check details below: <br><br>" .
+                ucwords($section->name . ' - ' . $section->description) . "<br>" .
+                "Question No.:  #$answer->question_id <br><br>";
         }
-        $this->auditTrailEvent($title, $description, $users);
+        $this->sendNotification($title, $description, $userIds);
+        $question = Question::with('answer.assignee')->find($answer->question_id);
+        return response()->json(compact('question'), 200);
+        // $this->auditTrailEvent($title, $description, $users);
     }
 
     /**

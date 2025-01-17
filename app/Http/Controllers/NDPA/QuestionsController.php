@@ -38,7 +38,7 @@ class QuestionsController extends Controller
             'upload_evidence' => $request->upload_evidence,
             'can_have_exception' => $request->can_have_exception,
             'answer_type' => $request->answer_type
-        ], ['expected_document_template_ids' => $request->expected_document_template_ids]);
+        ], ['hint' => $request->hint, 'expected_document_template_ids' => $request->expected_document_template_ids]);
         return response()->json(['message' => 'Successful'], 200);
     }
     public function uploadBulk(Request $request)
@@ -91,6 +91,7 @@ class QuestionsController extends Controller
         $question->upload_evidence = $request->upload_evidence;
         $question->can_have_exception = $request->can_have_exception;
         $question->answer_type = $request->answer_type;
+        $question->hint = $request->hint;
         $question->expected_document_template_ids = $request->expected_document_template_ids;
         $question->save();
         return response()->json(['message' => 'Successful'], 200);

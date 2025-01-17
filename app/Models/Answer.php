@@ -19,6 +19,7 @@ class Answer extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
     public function clause()
     {
         return $this->belongsTo(Clause::class);

@@ -71,10 +71,76 @@ class ReportsController extends Controller
 
             $client_id = $this->getClient()->id;
         }
+
         $project_id = $request->project_id;
 
-        $template_ids = Question::where('expected_document_template_ids', '!=', NULL)->pluck('expected_document_template_ids');
-        $template_ids_array = $template_ids->flatten()->unique()->sort()->values();
+        $condition = ['project_id' => $project_id, 'client_id' => $client_id];
+        $group_by = $request->group_by;
+        if ($group_by == 'assignee_id') {
+            $assignee_id = $request->assignee_id;
+            $template_ids = Question::join('answers', 'questions.id', '=', 'answers.question_id')
+                ->where('answers.assignee_id', $assignee_id)
+                ->where('questions.expected_document_template_ids', '!=', NULL)
+                ->pluck('expected_document_template_ids');
+
+            $template_ids_array = $template_ids->flatten()->unique()->sort()->values();
+
+            $answered_questions = Answer::where($condition)
+                ->where('assignee_id', $assignee_id)
+                ->where('is_exception', 0)
+                ->where(function ($q) {
+                    $q->where('yes_or_no', '!=', NULL);
+                    $q->orWhere('open_ended_answer', '!=', NULL);
+                })
+                // ->where('status', 'Closed')
+                ->count();
+            $all_questions = Answer::where($condition)->where('assignee_id', $assignee_id)->count();
+            $exceptions = Answer::where($condition)
+                ->where('assignee_id', $assignee_id)
+                ->where('is_exception', 1)
+                ->count();
+        } else if ($group_by == 'section_id') {
+            $clause_id = $request->clause_id;
+            $template_ids = Question::join('answers', 'questions.id', '=', 'answers.question_id')
+                ->where('answers.clause_id', $clause_id)
+                ->where('questions.expected_document_template_ids', '!=', NULL)
+                ->pluck('expected_document_template_ids');
+            $template_ids_array = $template_ids->flatten()->unique()->sort()->values();
+
+            $answered_questions = Answer::where($condition)
+                ->where('clause_id', $clause_id)
+                ->where('is_exception', 0)
+                ->where(function ($q) {
+                    $q->where('yes_or_no', '!=', NULL);
+                    $q->orWhere('open_ended_answer', '!=', NULL);
+                })
+                // ->where('status', 'Closed')
+                ->count();
+            $all_questions = Answer::where($condition)->where('clause_id', $clause_id)->count();
+            $exceptions = Answer::where($condition)
+                ->where('clause_id', $clause_id)
+                ->where('is_exception', 1)
+                ->count();
+        } else {
+            $template_ids = Question::where('expected_document_template_ids', '!=', NULL)->pluck('expected_document_template_ids');
+            $template_ids_array = $template_ids->flatten()->unique()->sort()->values();
+
+
+            $answered_questions = Answer::where($condition)
+                ->where('is_exception', 0)
+                ->where(function ($q) {
+                    $q->where('yes_or_no', '!=', NULL);
+                    $q->orWhere('open_ended_answer', '!=', NULL);
+                })
+                // ->where('status', 'Closed')
+                ->count();
+            $all_questions = Answer::where($condition)->count();
+            $exceptions = Answer::where($condition)
+                ->where('is_exception', 1)
+                ->count();
+        }
+
+
 
         $uploaded_documents = Upload::where('client_id', $client_id)
             ->whereIn('template_id', $template_ids_array)
@@ -85,39 +151,42 @@ class ReportsController extends Controller
             ->whereIn('template_id', $template_ids_array)
             ->count();
 
-        if ($project_id === 'all') {
-            $expectedDocumentProjectIds = $this->getMyProjects($client_id)->where('allow_document_uploads', 1)->pluck('id');
-            $projectIds = $this->getMyProjects($client_id)->pluck('id');
-            $condition = ['client_id' => $client_id];
-            $answered_questions = Answer::where($condition)
-                ->whereIn('project_id', $projectIds)
-                ->where('is_exception', 0)
-                ->where(function ($q) {
-                    $q->where('yes_or_no', '!=', NULL);
-                    $q->orWhere('open_ended_answer', '!=', NULL);
-                })
-                // ->where('status', 'Closed')
-                ->count();
-            $all_questions = Answer::where($condition)->whereIn('project_id', $projectIds)->count();
-            $exceptions = Exception::where($condition)->whereIn('project_id', $projectIds)->count();
+        $project = Project::find($project_id);
+        $project_progress = $project->progress;
 
-            $my_projects = $this->getUser()->projects()->where($condition)->groupBy('client_id')->select(\DB::raw('AVG(progress) as project_progress'))->first();
-            $project_progress = $my_projects->project_progress;
-        } else {
-            $project = Project::find($project_id);
-            $project_progress = $project->progress;
-            $condition = ['project_id' => $project_id, 'client_id' => $client_id];
-            $answered_questions = Answer::where($condition)
-                ->where('is_exception', 0)
-                ->where(function ($q) {
-                    $q->where('yes_or_no', '!=', NULL);
-                    $q->orWhere('open_ended_answer', '!=', NULL);
-                })
-                // ->where('status', 'Closed')
-                ->count();
-            $all_questions = Answer::where($condition)->count();
-            $exceptions = Exception::where($condition)->count();
-        }
+        // if ($project_id === 'all') {
+        //     $expectedDocumentProjectIds = $this->getMyProjects($client_id)->where('allow_document_uploads', 1)->pluck('id');
+        //     $projectIds = $this->getMyProjects($client_id)->pluck('id');
+        //     $condition = ['client_id' => $client_id];
+        //     $answered_questions = Answer::where($condition)
+        //         ->whereIn('project_id', $projectIds)
+        //         ->where('is_exception', 0)
+        //         ->where(function ($q) {
+        //             $q->where('yes_or_no', '!=', NULL);
+        //             $q->orWhere('open_ended_answer', '!=', NULL);
+        //         })
+        //         // ->where('status', 'Closed')
+        //         ->count();
+        //     $all_questions = Answer::where($condition)->whereIn('project_id', $projectIds)->count();
+        //     $exceptions = Exception::where($condition)->whereIn('project_id', $projectIds)->count();
+
+        //     $my_projects = $this->getUser()->projects()->where($condition)->groupBy('client_id')->select(\DB::raw('AVG(progress) as project_progress'))->first();
+        //     $project_progress = $my_projects->project_progress;
+        // } else {
+        //     $project = Project::find($project_id);
+        //     $project_progress = $project->progress;
+        //     $condition = ['project_id' => $project_id, 'client_id' => $client_id];
+        //     $answered_questions = Answer::where($condition)
+        //         ->where('is_exception', 0)
+        //         ->where(function ($q) {
+        //             $q->where('yes_or_no', '!=', NULL);
+        //             $q->orWhere('open_ended_answer', '!=', NULL);
+        //         })
+        //         // ->where('status', 'Closed')
+        //         ->count();
+        //     $all_questions = Answer::where($condition)->count();
+        //     $exceptions = Exception::where($condition)->count();
+        // }
 
 
         return response()->json(compact('uploaded_documents', 'expected_documents', 'answered_questions', 'all_questions', 'exceptions', 'project_progress'), 200);
@@ -473,10 +542,15 @@ class ReportsController extends Controller
         $project_id = $request->project_id;
         $clause_id = $request->clause_id;
         $condition = ['client_id' => $client_id, 'project_id' => $project_id];
+
+        $group_by = $request->group_by;
         if ($clause_id != '') {
             $condition = ['client_id' => $client_id, 'project_id' => $project_id, 'answers.clause_id' => $clause_id];
         }
-        $group_by = $request->group_by;
+
+        if ($group_by == 'assignee_id') {
+            $condition = ['client_id' => $client_id, 'project_id' => $project_id, 'answers.assignee_id' => $request->assignee_id];
+        }
         $clauses = Answer::groupBy('answers.' . $group_by)
             ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->join('clause_sections', 'clause_sections.id', '=', 'answers.section_id')

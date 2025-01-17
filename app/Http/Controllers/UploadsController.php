@@ -83,32 +83,20 @@ class UploadsController extends Controller
 
             $user = $this->getUser();
             $users = $client->users;
-            $name = $user->name . ' (' . $user->email . ')';
+            $userIds = $client->users()->pluck('id');
+            $userIds = $userIds->toArray();
+
+            $name = $user->name;// . ' (' . $user->email . ')';
             $title = "Document Uploaded";
             //log this event
-            $description = "$name uploaded document for $upload->template_title";
-            $this->auditTrailEvent($title, $description, $users);
+            $description = "$name uploaded a document titled: $upload->template_title";
+            $this->sendNotification($title, $description, $userIds);
+            // $this->auditTrailEvent($title, $description, $users);
 
             return $link;
         }
     }
-    public function uploadDocumentTemplate(Request $request)
-    {
-        $clause_id = $request->clause_id;
-        $title = $request->title;
-        $template = new DocumentTemplate();
-        if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
-            $file_name = 'template_for_clause_' . $clause_id . '_' . time() . "." . $request->file('file_uploaded')->guessClientExtension();
-            $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
-            // $media = $request->file('file_uploaded');
-            // $file_name = 'file_for_clause_' . $upload->id . '_' . time() . "." . $request->file('file_uploaded')->guessClientExtension();
-            // $link = $this->uploadFile($media, $file_name, $folder_key);
-            $template->clause_id = $clause_id;
-            $template->title = $title;
-            $template->link = $link;
-            $template->save();
-        }
-    }
+
 
     public function remarkOnUpload(Request $request, Upload $upload)
     {

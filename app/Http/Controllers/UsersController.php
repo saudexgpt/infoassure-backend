@@ -55,7 +55,7 @@ class UsersController extends Controller
         $user = $this->getUser();
         // $school = $this->getSchool();
         // $sess_id = $this->getSession()->id;
-        $notifications = $user->notifications()->orderBy('created_at', 'DESC')->paginate($request->limit);
+        $notifications = $user->notifications()->orderBy('created_at', 'DESC')->take(5)->get();
         $unread_notifications = $user->unreadNotifications()->count();
         return response()->json(compact('notifications', 'unread_notifications'), 200);
     }
@@ -63,7 +63,9 @@ class UsersController extends Controller
     {
         $user = $this->getUser();
         $user->unreadNotifications->markAsRead();
-        return $this->userNotifications($request);
+        $notifications = $user->notifications()->orderBy('created_at', 'DESC')->paginate($request->limit);
+        $unread_notifications = $user->unreadNotifications()->count();
+        return response()->json(compact('notifications', 'unread_notifications'), 200);
     }
     public function changePassword()
     {

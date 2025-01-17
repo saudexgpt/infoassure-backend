@@ -49,6 +49,10 @@ class ProjectsController extends Controller
     public function clientProjects(Request $request)
     {
         $user = $this->getUser();
+        $year = $this->getYear();
+        if (isset($request->year) && $request->year != '') {
+            $year = (int) $request->year;
+        }
         $condition = [];
         if ($user->haRole('partner') && !$user->haRole('super')) {
             $partner_id = $this->getPartner()->id;
@@ -65,7 +69,7 @@ class ProjectsController extends Controller
             'standard',
             'users',
             'consultants'
-        ])->where($condition)->where(['client_id' => $client_id/*, 'year' => $this->getYear()*/])->orderBy('id', 'DESC')->get(); //->paginate(10);
+        ])->where($condition)->where(['client_id' => $client_id, 'year' => $year])->orderBy('id', 'DESC')->get(); //->paginate(10);
         return response()->json(compact('projects', 'users'), 200);
     }
     public function clientProjectCertificates(Request $request)
@@ -173,14 +177,28 @@ class ProjectsController extends Controller
     // }
     public function assignProjectToClientStaff(Request $request, Project $project)
     {
-        // $client = $project->client;
+        $user = $this->getUser();
         // $users = $client->users()->where('role', 'admin')->get();
         $user_ids = (isset($request->user_ids)) ? $request->user_ids : [];
         // foreach ($users as $user) {
         //     $user_ids[] = $user->id;
         // }
 
-        $project->users()->sync($user_ids); //->paginate(10);
+        $project->users()->syncWithoutDetaching($user_ids); //->paginate(10);
+
+        $title = "The $project->title Project Engagement";
+        $message = "You have been engaged on the $project->title Project by $user->name. Stay connected for upcoming tasks.";
+        $this->sendNotification($title, $message, $user_ids);
+        return response()->json([], 204);
+    }
+    public function unassignProjectFromClientStaff(Request $request, Project $project)
+    {
+        $user = $this->getUser();
+        $user_id = $request->user_id;
+        $project->users()->detach([$user_id]);
+        $title = 'Project Disengagement';
+        $message = "You have been <strong>disengaged</strong> from the $project->title Project by $user->name.";
+        $this->sendNotification($title, $message, [$user_id]);
         return response()->json([], 204);
     }
 

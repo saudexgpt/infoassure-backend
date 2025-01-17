@@ -115,13 +115,13 @@ class ClientsController extends Controller
             $client->contact_address = $request->contact_address;
             if ($client->save()) {
                 $request->client_id = $client->id;
-                $request->role = 'admin';
+                $request->role = 'client';
+                $request->set_as = 'admin';
                 $this->registerClientUser($request);
                 $title = "New Client Registered";
                 //log this event
                 $description = "$client->name was registered";
                 $this->auditTrailEvent($title, $description);
-
 
                 return response()->json(compact('client'), 200);
             }
@@ -140,6 +140,11 @@ class ClientsController extends Controller
         $request->phone = $request->admin_phone;
         $user_obj = new User();
         $user = $user_obj->createUser($request);
+        // make this user the client admin
+        if ($request->set_as == 'admin') {
+            $client->admin_user_id = $user->id;
+            $client->save();
+        }
         // sync user to client
         $client->users()->syncWithoutDetaching($user->id);
         $role = Role::where('name', $request->role)->first();
@@ -226,6 +231,13 @@ class ClientsController extends Controller
 
     }
 
+    public function assignUserAsClientAdmin(Request $request, Client $client)
+    {
+        $client->admin_user_id = $request->user_id;
+        $client->save();
+        $client = $client->with('users')->find($client->id);
+        return response()->json(compact('client'), 200);
+    }
 
     public function removeClientUser(Request $request, Client $client)
     {

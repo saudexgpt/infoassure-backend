@@ -3,6 +3,7 @@
 namespace App\Models\NDPA;
 
 use App\Models\Client;
+use App\Models\Project;
 use App\Models\Standard;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -44,6 +45,11 @@ class Answer extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
     }
     public function evidences()
     {

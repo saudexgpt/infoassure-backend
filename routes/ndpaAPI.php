@@ -44,7 +44,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
             Route::post('submit', [AnswersController::class, 'submitAnswers']);
             Route::put('remark-on-answer/{answer}', [AnswersController::class, 'remarkOnAnswer']);
-            Route::put('assign-user-to-respond/{answer}', [AnswersController::class, 'assignUserToRespond']);
+            Route::post('assign-user-to-respond', [AnswersController::class, 'assignUserToRespond']);
 
             // Route::post('upload-gap-assessment-evidence', [AnswersController::class, 'uploadGapAssessmentEvidence']);
             // Route::delete('destroy-gap-assessment-evidence/{gap_assessment_evidence}', [AnswersController::class, 'destroyGapAssessmentEvidenceEvidence']);

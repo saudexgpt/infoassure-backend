@@ -23,6 +23,13 @@ class UserResource extends JsonResource
     {
         $this_year = (int) date('Y', strtotime('now'));
         $permissions = [];
+        $roles = [$this->login_as];
+        $all_roles = array_map(
+            function ($role) {
+                return $role['name'];
+            },
+            $this->roles->toArray()
+        );
         if ($this->login_as !== NULL) {
 
             $role = Role::with('permissions')->where('name', $this->login_as)->first();
@@ -30,9 +37,13 @@ class UserResource extends JsonResource
         }
         $modules = [];
         $partner = '';
-        if ($this->haRole('client') || $this->haRole('admin')) {
+        if ($this->haRole('client')) {
             $client_id = $this->client_id;
             $client = Client::find($client_id);
+            if ($client->admin_user_id == $this->id) {
+                $roles[] = 'admin';
+                $all_roles[] = 'admin';
+            }
             $partner_id = $client->partner_id;
 
             $projects = $this->projects()
@@ -55,7 +66,7 @@ class UserResource extends JsonResource
                 $modules[] = $activated_module->availableModule->slug;
             }
         }
-        if ($this->haRole('super') || $this->haRole('admin')) {
+        if ($this->haRole('super') || in_array('admin', $roles)) {
             $modules = AvailableModule::pluck('slug');
         }
         return [
@@ -64,19 +75,14 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'password_status' => $this->password_status,
-            'notifications' => [],
+            'notifications' => $this->notifications()->orderBy('created_at', 'DESC')->take(5)->get(),
             'login_as' => $this->login_as,
             'partner_id' => $this->partner_id,
             'client_id' => $this->client_id,
             'modules' => $modules,
             // 'activity_logs' => $this->notifications()->orderBy('created_at', 'DESC')->get(),
-            'roles' => [$this->login_as],
-            'all_roles' => array_map(
-                function ($role) {
-                    return $role['name'];
-                },
-                $this->roles->toArray()
-            ),
+            'roles' => $roles,
+            'all_roles' => $all_roles,
             // 'role' => 'admin',
             'permissions' => $permissions,
             // 'role' => 'admin',
