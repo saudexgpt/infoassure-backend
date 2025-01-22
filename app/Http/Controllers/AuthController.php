@@ -234,7 +234,7 @@ class AuthController extends Controller
             }
             $_2fa->delete();
         }
-        return response()->json(['message' => 'Invalid Token. Please resend.'], 500);
+        return response()->json(['message' => 'Invalid or Expired Token. Please Resend'], 500);
     }
     private function generateAuthorizationKey($user, $saveToken = true)
     {
