@@ -70,7 +70,7 @@ Route::group(['prefix' => 'auth'], function () {
 
     // Route::post('register', [AuthController::class, 'register'])->middleware('permission:create-users');
 
-    Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::group(['middleware' => 'auth:api'], function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::post('login-as', [AuthController::class, 'loginAs']);
         Route::get('user', [AuthController::class, 'fetchUser']); //->middleware('permission:read-users');
@@ -130,7 +130,7 @@ Route::group(['prefix' => 'bia'], function () {
 });
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
-Route::group(['middleware' => 'auth:sanctum'], function () {
+Route::group(['middleware' => 'auth:api'], function () {
     Route::get('fetch-client-activated-projects/{client}', [ProjectsController::class, 'fetchClientActivatedProjects']);
 
 
