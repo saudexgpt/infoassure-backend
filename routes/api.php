@@ -7,6 +7,7 @@ use App\Http\Controllers\PDAController;
 use App\Http\Controllers\RCSAController;
 use App\Http\Controllers\RiskRegistersController;
 use App\Http\Controllers\RoPAController;
+use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\UploadsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -519,6 +520,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::group(['prefix' => 'packages'], function () {
 
+        Route::get('fetch-packages', [PackagesController::class, 'fetchPackages']);
+        Route::post('store', [PackagesController::class, 'storePackage']);
+        Route::put('update/{package}', [PackagesController::class, 'updatePackage']);
+
+        Route::delete('destroy/{package}', [PackagesController::class, 'deletePackage']);
+
         Route::get('fetch-modules', [PackagesController::class, 'fetchModules']);
         Route::get('fetch-activated-modules', [PackagesController::class, 'fetchActivatedModules']);
 
@@ -526,6 +533,16 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::delete('deactivate-partners-module/{activated_module}', [PackagesController::class, 'deactivatePartnersModule']);
         Route::put('activate-clients-module/{activated_module}', [PackagesController::class, 'activateClientsModule']);
         Route::put('deactivate-client-module/{activated_module}', [PackagesController::class, 'deactivateClientModule']);
+    });
+
+    Route::group(['prefix' => 'subscriptions'], function () {
+
+        Route::get('/', [SubscriptionsController::class, 'index']);
+        Route::get('fetch-subscription-details', [SubscriptionsController::class, 'fetchSubscriptionDetails']);
+        Route::post('store', [SubscriptionsController::class, 'store']);
+        Route::post('payment', [SubscriptionsController::class, 'paymentForSubscription']);
+        Route::post('successful-payment-status', [SubscriptionsController::class, 'sucessfulPaymentStatus']);
+
     });
     // Access Control Roles & Permission
     Route::group(['prefix' => 'acl'], function () {

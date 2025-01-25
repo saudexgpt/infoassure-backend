@@ -9,6 +9,7 @@ use App\Models\ClientProjectPlan;
 use App\Models\ConsultantProject;
 use App\Models\FeedBack;
 use App\Models\GeneralProjectPlan;
+use App\Models\ModuleFeature;
 use App\Models\Project;
 use App\Models\ProjectCertificate;
 use App\Models\Standard;
@@ -26,7 +27,13 @@ class ProjectsController extends Controller
             ->get();
         $all_modules = AvailableModule::with('standards')->orderBy('name')->get();
         $projects = $this->getMyProjects($client->id);
+        foreach ($projects as $project) {
+            $package = $project->package;
+            $featureIds = $package->features;
 
+            $module_slug = ModuleFeature::whereIn('id', $featureIds)->pluck('slug');
+            $project->feature_slug = $module_slug;
+        }
         // Project::with('availableModule', 'standard')
         //     ->where(['client_id' => $client->id, 'year' => $this->getYear()])
         //     ->orderBy('id', 'DESC')->get();

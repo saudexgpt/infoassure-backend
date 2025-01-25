@@ -27,4 +27,13 @@ class AvailableModule extends Model
     {
         return $this->belongsToMany(GeneralProjectPlan::class);
     }
+    public function features()
+    {
+        return $this->hasMany(ModuleFeature::class, 'available_module_id', 'id');
+    }
+
+    public function packages()
+    {
+        return $this->hasMany(ModulePackage::class, 'available_module_id', 'id');
+    }
 }

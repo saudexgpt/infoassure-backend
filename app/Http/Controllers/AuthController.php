@@ -302,8 +302,11 @@ class AuthController extends Controller
         // $request->user()->tokens()->delete();
 
         // log this event
-        // $description = 'logged out of the portal';
-        // $this->auditTrailEvent($request, $description);
+        $name = $request->user()->name . ' (' . $request->user()->email . ')';
+        $title = "Log out action";
+        //log this event
+        $description = "$name logged out of the portal";
+        $this->auditTrailEvent($title, $description);
 
         $request->user()->currentAccessToken()->delete();
         return response()->json([

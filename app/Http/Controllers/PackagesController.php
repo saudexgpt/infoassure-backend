@@ -5,10 +5,45 @@ namespace App\Http\Controllers;
 use App\Models\ActivatedModule;
 use App\Models\AvailableModule;
 use App\Models\Client;
+use App\Models\ModulePackage;
 use Illuminate\Http\Request;
 
 class PackagesController extends Controller
 {
+    public function fetchPackages()
+    {
+        $packages = ModulePackage::with('availableModule')->orderBy('available_module_id')->get()->groupBy('available_module_id');
+        return response()->json(compact('packages'), 200);
+    }
+
+    public function storePackage(Request $request)
+    {
+        $name = $request->name;
+        $available_module_id = $request->available_module_id;
+        $package = ModulePackage::where(['name' => $name, 'available_module_id' => $available_module_id])->first();
+        if (!$package) {
+            $package = new ModulePackage();
+        }
+        $package->name = $name;
+        $package->available_module_id = $available_module_id;
+        $package->features = $request->features;
+        $package->price = $request->price;
+        $package->save();
+        return 'success';
+    }
+    public function updatePackage(Request $request, ModulePackage $package)
+    {
+        $package->name = $request->name;
+        $package->features = $request->features;
+        $package->price = $request->price;
+        $package->save();
+        return 'success';
+    }
+    public function deletePackage(Request $request, ModulePackage $package)
+    {
+        $package->delete();
+        return 'success';
+    }
     public function fetchActivatedModules(Request $request)
     {
         $partner_id = $this->getPartner()->id;
@@ -22,7 +57,7 @@ class PackagesController extends Controller
     }
     public function fetchModules()
     {
-        $modules = AvailableModule::with('activatedModules.partner')->where('status', 'Ready')->get();
+        $modules = AvailableModule::with('activatedModules.partner', 'features', 'packages')->where('status', 'Ready')->get();
         return response()->json(compact('modules'), 200);
     }
     public function activatePartnersModule(Request $request)

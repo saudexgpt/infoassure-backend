@@ -127,13 +127,13 @@ class Controller extends BaseController
         }
         if ($user->haRole('client') || $user->haRole('admin') || $user->haRole('super')) {
             $this->myProjects = $user->projects()
-                ->with('client', 'availableModule', 'standard')
+                ->with('client', 'availableModule', 'package')
                 ->where(['client_id' => $client_id, 'year' => $this->getYear()])
                 ->orderBy('id', 'DESC')
                 ->get();
         } else {
 
-            $this->myProjects = Project::with('client', 'availableModule', 'standard')
+            $this->myProjects = Project::with('client', 'availableModule', 'package')
                 ->where(['client_id' => $client_id, 'year' => $this->getYear()])
                 ->orderBy('id', 'DESC')
                 ->get();

@@ -15,7 +15,8 @@ class Project extends Model
         'partner_id',
         'client_id',
         'available_module_id',
-        'standard_id',
+        'subscription_id',
+        'module_package_id',
         'year'
     ];
     public function client()
@@ -25,6 +26,10 @@ class Project extends Model
     public function availableModule()
     {
         return $this->belongsTo(AvailableModule::class);
+    }
+    public function package()
+    {
+        return $this->belongsTo(ModulePackage::class, 'module_package_id', 'id');
     }
     public function standard()
     {
