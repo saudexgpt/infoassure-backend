@@ -117,6 +117,7 @@ class ClientsController extends Controller
                 $request->client_id = $client->id;
                 $request->role = 'client';
                 $request->set_as = 'admin';
+                $request->login_as = 'admin';
                 $this->registerClientUser($request);
                 $title = "New Client Registered";
                 //log this event
