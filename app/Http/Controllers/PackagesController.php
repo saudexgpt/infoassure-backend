@@ -57,7 +57,13 @@ class PackagesController extends Controller
     }
     public function fetchModules()
     {
-        $modules = AvailableModule::with('activatedModules.partner', 'features', 'packages')->where('status', 'Ready')->get();
+        $modules = AvailableModule::with([
+            'activatedModules.partner',
+            'features',
+            'packages' => function ($q) {
+                // $q->where('price', 0.00);
+            }
+        ])->where('status', 'Ready')->get();
         return response()->json(compact('modules'), 200);
     }
     public function activatePartnersModule(Request $request)

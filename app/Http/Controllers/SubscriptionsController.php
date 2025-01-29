@@ -44,11 +44,20 @@ class SubscriptionsController extends Controller
         );
         $subscription = PackageSubscription::find($new_subscription->id);
         $this->createSubscriptionDetails($subscription, $cart_items);
+
+
+        if ($subscription->total < 1) {
+            $this->createProject($subscription->id);
+        }
         return response()->json(compact('subscription'), 200);
     }
 
     private function createSubscriptionDetails($subscription, $cart_items)
     {
+        PackageSubscriptionDetail::where([
+            'client_id' => $subscription->client_id,
+            'subscription_id' => $subscription->id
+        ])->where('amount', 0)->delete();
         foreach ($cart_items as $item) {
             PackageSubscriptionDetail::updateOrCreate(
                 [
