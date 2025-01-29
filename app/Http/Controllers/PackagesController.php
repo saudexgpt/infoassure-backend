@@ -61,7 +61,7 @@ class PackagesController extends Controller
             'activatedModules.partner',
             'features',
             'packages' => function ($q) {
-                // $q->where('price', 0.00);
+                $q->where('price', 0);
             }
         ])->where('status', 'Ready')->get();
         return response()->json(compact('modules'), 200);
