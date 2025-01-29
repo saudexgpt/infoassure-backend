@@ -42,7 +42,6 @@ class UserResource extends JsonResource
             $client = Client::find($client_id);
             if ($client->admin_user_id == $this->id) {
                 $roles[] = 'admin';
-                $all_roles[] = 'admin';
             }
             $partner_id = $client->partner_id;
 
@@ -68,6 +67,10 @@ class UserResource extends JsonResource
         }
         if ($this->haRole('super') || in_array('admin', $roles)) {
             $modules = AvailableModule::pluck('slug');
+        }
+        if (in_array('admin', $roles)) {
+
+            $all_roles[] = 'admin';
         }
         return [
             'id' => $this->id,

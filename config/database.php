@@ -2,6 +2,15 @@
 
 use Illuminate\Support\Str;
 
+$modes = [
+    //'ONLY_FULL_GROUP_BY', // Disable this to allow grouping by one column
+    'STRICT_TRANS_TABLES',
+    'NO_ZERO_IN_DATE',
+    'NO_ZERO_DATE',
+    'ERROR_FOR_DIVISION_BY_ZERO',
+    // 'NO_AUTO_CREATE_USER',
+    'NO_ENGINE_SUBSTITUTION'
+];
 return [
 
     /*
@@ -52,12 +61,12 @@ return [
         //     'password' => env('MONGO_DB_PASSWORD'),
         //     'options'  => []
         // ],
-        'ndpa' => [
+        'vdd' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
-            'database' => env('NDPA_DB', 'forge'),
+            'database' => env('VDD_DB', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
@@ -66,15 +75,7 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
-            'modes' => [
-                //'ONLY_FULL_GROUP_BY', // Disable this to allow grouping by one column
-                'STRICT_TRANS_TABLES',
-                'NO_ZERO_IN_DATE',
-                'NO_ZERO_DATE',
-                'ERROR_FOR_DIVISION_BY_ZERO',
-                // 'NO_AUTO_CREATE_USER',
-                'NO_ENGINE_SUBSTITUTION'
-            ],
+            'modes' => $modes,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
@@ -94,21 +95,32 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
-            'modes' => [
-                //'ONLY_FULL_GROUP_BY', // Disable this to allow grouping by one column
-                'STRICT_TRANS_TABLES',
-                'NO_ZERO_IN_DATE',
-                'NO_ZERO_DATE',
-                'ERROR_FOR_DIVISION_BY_ZERO',
-                // 'NO_AUTO_CREATE_USER',
-                'NO_ENGINE_SUBSTITUTION'
-            ],
+            'modes' => $modes,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
-
+        'ndpa' => [
+            'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('NDPA_DB', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'modes' => $modes,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

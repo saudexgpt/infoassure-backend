@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\VendorDueDiligence;
 
+use App\Http\Controllers\Controller;
 use App\Models\ActivatedModule;
 use App\Models\Client;
 use App\Models\Partner;
@@ -12,7 +13,7 @@ use App\Mail\ConfirmNewRegistration;
 use App\Models\Role;
 use Illuminate\Support\Facades\Mail;
 
-class ClientsController extends Controller
+class VendorsController extends Controller
 {
     /**
      * Display a listing of the resource.
