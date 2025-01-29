@@ -410,17 +410,19 @@ class ReportsController extends Controller
     }
     public function adminDataAnalysisDashbord()
     {
+        $client = $this->getClient();
         // $uploaded_documents = Upload::where('is_exception', 0)->where('link', '!=', NULL)->count();
         // $expected_documents = Upload::count();
         // $answered_questions = Answer::where('is_exception', 0)->where('is_submitted', 1)->count();
         // $all_questions = Answer::count();
         // $exceptions = Exception::count();
         // return response()->json(compact('uploaded_documents', 'expected_documents', 'answered_questions', 'all_questions', 'exceptions', 'clients', 'projects', 'standards'), 200);
-        $clients = Client::count();
-        $projects = Project::count();
-        $standards = Standard::count();
-        $uploads = Upload::where('is_exception', 0)->where('link', '!=', NULL)->count();
-        return response()->json(compact('clients', 'projects', 'standards', 'uploads'), 200);
+        $users = $client->users()->count();
+        $projects = Project::where('client_id', $client->id)->count();
+        $uploads = Upload::where('client_id', $client->id)
+            ->where('is_exception', 0)
+            ->where('link', '!=', NULL)->count();
+        return response()->json(compact('users', 'projects', 'uploads'), 200);
     }
 
     public function soaSummary(Request $request)

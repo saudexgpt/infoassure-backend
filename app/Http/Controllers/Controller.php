@@ -151,7 +151,7 @@ class Controller extends BaseController
         $user = $this->getUser();
         // $client_user = DB::table('client_user')->where('user_id', $user->id)->first();
         // $client_id = $client_user->client_id;
-        $client = Client::find($user->client_id);
+        $client = Client::with('users')->find($user->client_id);
         $this->client = $client;
     }
 
