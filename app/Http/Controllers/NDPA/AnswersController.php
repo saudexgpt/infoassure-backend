@@ -49,15 +49,15 @@ class AnswersController extends Controller
                 'client_id' => $client_id,
                 'section_id' => $fetch_question->section_id,
                 'project_id' => $project_id,
-                'assignee_id' => $client->admin_user_id,
+
                 'question_id' => $fetch_question->id,
                 'clause_id' => $fetch_question->clause_id,
                 // 'created_by' => $user->id,
             ];
             if ($fetch_question->question != NULL) {
-
-                $answer_obj = new Answer();
-                $answer_obj->createProjectAnswer($data);
+                Answer::firstOrCreate($data, ['assignee_id' => $client->admin_user_id]);
+                // $answer_obj = new Answer();
+                // $answer_obj->createProjectAnswer($data, );
             }
         }
     }
