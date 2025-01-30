@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Answer extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $fillable = ['client_id', 'section_id', 'project_id', 'question_id', 'clause_id', 'created_by'];
+    protected $fillable = ['client_id', 'assignee_id', 'section_id', 'project_id', 'question_id', 'clause_id', 'created_by'];
 
     protected $connection = 'ndpa';
     /**

@@ -41,6 +41,7 @@ class AnswersController extends Controller
         $project_id = $request->project_id;
         $consulting_id = $request->consulting_id;
         $client_id = $request->client_id;
+        $client = Client::find($client_id);
         $fetch_questions = Question::get();
         foreach ($fetch_questions as $fetch_question) {
             // create answer
@@ -48,7 +49,7 @@ class AnswersController extends Controller
                 'client_id' => $client_id,
                 'section_id' => $fetch_question->section_id,
                 'project_id' => $project_id,
-                // 'consulting_id' => $consulting_id,
+                'assignee_id' => $client->admin_user_id,
                 'question_id' => $fetch_question->id,
                 'clause_id' => $fetch_question->clause_id,
                 // 'created_by' => $user->id,
