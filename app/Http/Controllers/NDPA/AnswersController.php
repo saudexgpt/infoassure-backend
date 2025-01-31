@@ -55,7 +55,7 @@ class AnswersController extends Controller
                 // 'created_by' => $user->id,
             ];
             if ($fetch_question->question != NULL) {
-                Answer::firstOrCreate($data, ['assignee_id' => $client->admin_user_id]);
+                Answer::updateOrCreate($data, ['assignee_id' => $client->admin_user_id]);
                 // $answer_obj = new Answer();
                 // $answer_obj->createProjectAnswer($data, );
             }
