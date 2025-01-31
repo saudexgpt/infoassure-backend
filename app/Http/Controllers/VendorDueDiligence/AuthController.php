@@ -42,70 +42,6 @@ class AuthController extends Controller
         // $this->middleware('guest')->except('logout');
         // $this->username = $this->findUsername();
     }
-    public function findUsername()
-    {
-        $login = request()->input('username');
-
-        $user = User::where('phone', $login)->first();
-
-        if ($user) {
-            $fieldType = 'phone';
-        } else {
-            $fieldType = 'email';
-        }
-
-
-        request()->merge([$fieldType => $login]);
-
-
-        return $fieldType;
-    }
-    public function username()
-    {
-        return $this->username;
-    }
-    /**
-     * Create user
-     *
-     * @param  [string] name
-     * @param  [string] email
-     * @param  [string] password
-     * @param  [string] password_confirmation
-     * @return [string] message
-     */
-    public function register(Request $request)
-    {
-        $request->validate([
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'username' => 'required|string|unique:users',
-            'phone' => 'required|string|unique:users',
-            'email' => 'required|string|unique:users',
-            'password' => 'required|string',
-            'c_password' => 'required|same:password'
-        ]);
-
-        $user = new User([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'username' => $request->username,
-            'phone' => $request->phone,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-        ]);
-
-        if ($user->save()) {
-            $tokenResult = $user->createToken('Personal Access Token');
-            $token = $tokenResult->plainTextToken;
-
-            return response()->json([
-                'message' => 'Successfully created user!',
-                'accessToken' => $token,
-            ], 201);
-        } else {
-            return response()->json(['error' => 'Provide proper details']);
-        }
-    }
     public function otherUserLogin(Request $request)
     {
         $email = $request->email;
@@ -129,39 +65,11 @@ class AuthController extends Controller
      * @param  [string] password
      * @param  [boolean] remember_me
      */
-    public function loginNo2FA(Request $request)
-    {
-        $this->username = $this->findUsername();
-
-        $credentials = $request->only($this->username(), 'password');
-        $request->validate([
-            // 'email' => 'required|string|email',
-            'password' => 'required|string',
-            'remember_me' => 'boolean'
-        ]);
-
-        // $credentials = request(['email', 'password']);
-        if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'message' => 'Invalid Credentials'
-            ], 401);
-        }
-
-        $user = $request->user();
-        // $this->setupTheme($user);
-
-        // if ($user->email_verified_at === NULL) {
-        //     return response()->json(['message' => 'Account Activation Needed'], 403);
-        // }
-        return $this->generateAuthorizationKey($user);
-    }
     public function login(Request $request)
     {
-        $this->username = $this->findUsername();
-
-        $credentials = $request->only($this->username(), 'password');
+        $credentials = $request->only('email', 'password');
         $request->validate([
-            // 'email' => 'required|string|email',
+            'email' => 'required|string|email',
             'password' => 'required|string',
             'remember_me' => 'boolean'
         ]);
@@ -174,31 +82,8 @@ class AuthController extends Controller
         }
 
         $user = $request->user();
-
-        // $this->setupTheme($user);
-        $lastLoginDate = date('Y-m-d', strtotime($user->last_login));
-
-        if ($user->email_verified_at === NULL) {
-            return response()->json(['message' => 'Account Activation Needed'], 403);
-        }
-        if ($user->password_status === 'default') {
-            $message = 'change_password';
-            return response()->json(compact('message', 'user'), 200);
-        }
-        $clients = $user->clients;
-        if (!empty($clients) && isset($clients[0])) {
-            $client = $clients[0];
-            if ($client->is_active === 0) {
-                return response()->json(['message' => 'Your account has been suspended. Kindly contact the administrator'], 403);
-            }
-        }
-        if ($user->system_mac_address !== NULL && $user->system_mac_address === $this->macAddr && $this->todayDate === $lastLoginDate) {
-            return $this->generateAuthorizationKey($user);
-        }
-
-
-
-        return $this->send2FACode($user);
+        $token = randomNumber();
+        return response(compact('token', 'user'), 200);
     }
 
     public function send2FACode(User $user)
