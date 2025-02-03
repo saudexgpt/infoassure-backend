@@ -11,6 +11,7 @@ use App\Models\Project;
 use App\Models\NDPA\Question;
 use App\Models\Upload;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use OpenAI\Laravel\Facades\OpenAI;
 
@@ -55,11 +56,21 @@ class AnswersController extends Controller
                 // 'created_by' => $user->id,
             ];
             if ($fetch_question->question != NULL) {
-                Answer::updateOrCreate($data, ['assignee_id' => $client->admin_user_id]);
+                Answer::firstOrCreate($data/*, ['assignee_id' => $client->admin_user_id]*/);
                 // $answer_obj = new Answer();
                 // $answer_obj->createProjectAnswer($data, );
             }
         }
+        Answer::where([
+            'client_id' => $client_id,
+            'project_id' => $project_id,
+            'assignee_id' => NULL,
+        ])->chunkById(100, function (Collection $answers) use ($client) {
+            foreach ($answers as $answer) {
+                $answer->assignee_id = $client->admin_user_id;
+                $answer->save();
+            }
+        }, 'id');
     }
     public function assignUserToRespond(Request $request)
     {
