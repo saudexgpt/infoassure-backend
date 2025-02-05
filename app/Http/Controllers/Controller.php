@@ -210,9 +210,9 @@ class Controller extends BaseController
 
     public function sendNotification($title, $message, array $userIds)
     {
-        $client = $this->getClient();
-        $notification_channels = ($client->notification_channels) ? $client->notification_channels : ['email', 'in_app'];
-
+        // $client = $this->getClient();
+        // $notification_channels = ($client->notification_channels) ? $client->notification_channels : ['email', 'in_app'];
+        $notification_channels = ['email', 'in_app'];
         $recipients = User::whereIn('id', $userIds)->get();
 
         if (in_array('in_app', $notification_channels)) {

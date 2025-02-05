@@ -571,7 +571,7 @@ function portalPulicPath($folder = null)
 
         return storage_path('app/public/' . $folder);
     }
-    return "/home/decompa1/public_html/storage/" . $folder;
+    return "/var/www/decompass.com/storage/" . $folder;
 }
 
 function folderSize($dir)

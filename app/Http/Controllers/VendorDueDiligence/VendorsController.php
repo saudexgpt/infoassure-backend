@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\VendorDueDiligence;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivatedModule;
 use App\Models\Client;
-use App\Models\Partner;
-use App\Models\User;
+use App\Models\Country;
+use App\Models\VendorDueDiligence\BankDetail;
+use App\Models\VendorDueDiligence\DocumentUpload;
+use App\Models\VendorDueDiligence\User;
+use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Request;
-use App\Jobs\SendQueuedConfirmationEmailJob;
 use App\Mail\ConfirmNewRegistration;
-use App\Models\Role;
 use Illuminate\Support\Facades\Mail;
 
 class VendorsController extends Controller
@@ -22,47 +22,45 @@ class VendorsController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $this->getUser();
-        $condition = [];
-        $partner_with_clients = [];
-        if ($user->haRole('client') || $user->haRole('admin')) {
-            $id = $this->getClient()->id;
-            $condition = ['id' => $id];
-        }
-        if ($user->haRole('partner')) {
-            $partner_id = $this->getPartner()->id;
-            $condition = ['partner_id' => $partner_id];
-        }
+        // $user = $this->getUser();
+        // $condition = [];
+        // $partner_with_clients = [];
+        // if ($user->haRole('client') || $user->haRole('admin')) {
+        //     $id = $this->getClient()->id;
+        //     $condition = ['id' => $id];
+        // }
+        // if ($user->haRole('partner')) {
+        //     $partner_id = $this->getPartner()->id;
+        //     $condition = ['partner_id' => $partner_id];
+        // }
 
-        if ($user->haRole('super')) {
-            $partner_with_clients = Partner::with('clients')->get();
-        }
+        // if ($user->haRole('super')) {
+        //     $partner_with_clients = Partner::with('clients')->get();
+        // }
 
-        if (isset($request->option) && $request->option === 'all') {
-            $clients = Client::where($condition)->orderBy('name')->get();
+        // if (isset($request->option) && $request->option === 'all') {
+        //     $clients = Client::where($condition)->orderBy('name')->get();
 
-        } else {
+        // } else {
 
-            $clients = Client::with('users')->where($condition)->orderBy('name')->paginate($request->limit);
-            return response()->json(compact('clients'), 200);
-        }
-        return response()->json(compact('clients', 'partner_with_clients'), 200);
+        //     $clients = Client::with('users')->where($condition)->orderBy('name')->paginate($request->limit);
+        //     return response()->json(compact('clients'), 200);
+        // }
+        // return response()->json(compact('clients', 'partner_with_clients'), 200);
     }
 
 
-    public function fetchUserClients()
+    public function showVendor(Request $request, Vendor $vendor)
     {
-        $user_id = $this->getUser()->id;
-        $user = User::find($user_id);
-        $clients = $user->clients;
-        return response()->json(compact('clients'), 200);
+        $vendor = Vendor::with('bankDetail', 'documentUploads')->find($vendor->id);
+        $business_types = $this->businessTypes();
+        $countries = Country::get();
+        return response()->json(compact('vendor', 'business_types', 'countries'), 200);
     }
 
-    public function fetchClientUsers()
+    public function businessTypes()
     {
-        $client = $this->getClient();
-        $users = $client->users;
-        return response()->json(compact('users'), 200);
+        return ['Cloud Provider', 'Consultancy', 'Cybersecurity Services', 'Financial Services', 'IT Services'];
     }
 
     /**
@@ -181,20 +179,63 @@ class VendorsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Client  $client
-     * @return \Illuminate\Http\Response
+     * @return string
      */
-    public function update(Request $request)
+    public function updateVendor(Request $request)
     {
-        $client = Client::find($request->id);
-        $client->name = $request->name;
-        $client->contact_email = $request->contact_email;
-        $client->contact_phone = $request->contact_phone;
-        $client->contact_address = $request->contact_address;
-        $client->navbar_bg = $request->navbar_bg;
-        $client->sidebar_bg = $request->sidebar_bg;
-        $client->save();
-        $this->changeClientLogo($request, $client);
+        $data = $request->toArray();
+        $vendor_id = $request->id;
+        Vendor::find($vendor_id)->update($data);
+        BankDetail::updateOrCreate([
+            'vendor_id' => $request->id,
+        ], [
+            'bank_name' => $request->bank_name,
+            'account_name' => $request->account_name,
+            'account_no' => $request->account_no,
+        ]);
+        $files = $request->file('uploadable_files');
+        $file_titles = $request->uploadable_files_titles;
+        $titles = [];
+        $counter = 0;
+        $extra_message = '';
+        foreach ($files as $file) {
+            $title = $file_titles[$counter]; //$file->getClientOriginalName();
+            if ($file->isValid()) {
+                $formated_name = str_replace(' ', '_', ucwords($title));
+                $file_name = $formated_name . '_' . $vendor_id . "." . $file->guessClientExtension();
+                $link = $file->storeAs('vendors/' . $vendor_id . '/documents', $file_name, 'public');
+                DocumentUpload::updateOrCreate([
+                    'vendor_id' => $vendor_id,
+                    'title' => $title
+                ], ['link' => $link]);
+
+                $extra_message = 'Some required documents were also uploaded.';
+
+                // $this->auditTrailEvent($title, $description, $users);
+            }
+
+            $counter++;
+        }
+        $vendor = Vendor::find($vendor_id);
+        $client = Client::with('users')->find($vendor->client_id);
+        $token = $request->bearerToken();
+        $user = User::where('api_token', $token)->first();
+        $name = $user->name;// . ' (' . $user->email . ')';
+        $title = "Vendor profile updated";
+        $userIds = $client->users()->pluck('id')->toArray();
+        //log this event
+        $description = "The vendor profile for $vendor->name was updated by $user->name. <br>" . $extra_message;
+        $this->sendNotification($title, $description, $userIds);
+
+        return 'success';
+    }
+
+    public function deleteUploadedDocument(Request $rquest, DocumentUpload $document)
+    {
+        $document_link = $document->link;
+        unlink(portalPulicPath($document_link));
+        $document->delete();
+        return 'success';
     }
     private function changeClientLogo($data, $client)
     {
