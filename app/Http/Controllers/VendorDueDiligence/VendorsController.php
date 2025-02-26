@@ -10,7 +10,7 @@ use App\Models\VendorDueDiligence\DocumentUpload;
 use App\Models\VendorDueDiligence\User;
 use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Request;
-use App\Mail\ConfirmNewRegistration;
+use App\Mail\SendVendorCredentials;
 use Illuminate\Support\Facades\Mail;
 
 class VendorsController extends Controller
@@ -22,31 +22,27 @@ class VendorsController extends Controller
      */
     public function index(Request $request)
     {
-        // $user = $this->getUser();
-        // $condition = [];
-        // $partner_with_clients = [];
-        // if ($user->haRole('client') || $user->haRole('admin')) {
-        //     $id = $this->getClient()->id;
-        //     $condition = ['id' => $id];
-        // }
-        // if ($user->haRole('partner')) {
-        //     $partner_id = $this->getPartner()->id;
-        //     $condition = ['partner_id' => $partner_id];
-        // }
+        $user = $this->getUser();
+        $condition = [];
 
-        // if ($user->haRole('super')) {
-        //     $partner_with_clients = Partner::with('clients')->get();
-        // }
+        if ($user->haRole('client') || $user->haRole('admin')) {
 
-        // if (isset($request->option) && $request->option === 'all') {
-        //     $clients = Client::where($condition)->orderBy('name')->get();
+            $id = $this->getClient()->id;
+            if (isset($request->all) && $request->all == true) {
+                $vendors = Vendor::with('users', 'bankDetail', 'documentUploads')
+                    ->where(['client_id' => $id])
+                    ->orderBy('name')
+                    ->get();
+            } else {
+                $vendors = Vendor::with('users', 'bankDetail', 'documentUploads')
+                    ->where(['client_id' => $id])
+                    ->orderBy('name')
+                    ->paginate($request->limit);
+            }
 
-        // } else {
-
-        //     $clients = Client::with('users')->where($condition)->orderBy('name')->paginate($request->limit);
-        //     return response()->json(compact('clients'), 200);
-        // }
-        // return response()->json(compact('clients', 'partner_with_clients'), 200);
+            return response()->json(compact('vendors'), 200);
+        }
+        return response()->json(['message' => 'Permission Denied'], 403);
     }
 
 
@@ -72,29 +68,29 @@ class VendorsController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
-        if (!$user->haRole('partner')) {
-            return response()->json(['message' => 'Clients registration is restricted to Partners only'], 500);
+        if (!$user->haRole('admin')) {
+            return response()->json(['message' => 'Access Denied'], 403);
         }
-        $partner_id = $this->getPartner()->id;
+        $client_id = $this->getClient()->id;
 
         $contact_email = $request->contact_email;
-        $client = Client::where('contact_email', $contact_email)->first();
-        if (!$client) {
-            $client = new Client();
-            $client->partner_id = $partner_id;
-            $client->name = $request->organization_name;
-            $client->contact_email = $request->contact_email;
-            $client->contact_phone = $request->contact_phone;
-            $client->contact_address = $request->contact_address;
-            if ($client->save()) {
+        $vendor = Vendor::where(['contact_email' => $contact_email, 'client_id' => $client_id])->first();
+        if (!$vendor) {
+            $vendor = new Vendor();
+            $vendor->client_id = $client_id;
+            $vendor->name = $request->organization_name;
+            $vendor->contact_email = $request->contact_email;
+            $vendor->contact_phone = $request->contact_phone;
+            $vendor->contact_address = $request->contact_address;
+            if ($vendor->save()) {
                 $actor = $this->getUser();
-                $title = "New Client Registered";
+                $title = "New Vendor Registered";
                 //log this event
-                $description = "$client->name was registered by $actor->name";
+                $description = "$vendor->name was registered by $actor->name";
                 $this->auditTrailEvent($title, $description);
 
 
-                return response()->json(compact('client'), 200);
+                return response()->json(compact('vendor'), 200);
             }
             return response()->json(['message' => 'Unable to register'], 500);
         }
@@ -131,31 +127,22 @@ class VendorsController extends Controller
     }
 
 
-    public function registerClientUser(Request $request)
+    public function registerVendorUser(Request $request)
     {
-        $client = Client::find($request->client_id);
+        $actor = $this->getUser();
+
+        $vendor = Vendor::find($request->vendor_id);
         $request->name = $request->admin_first_name . ' ' . $request->admin_last_name;
         $request->email = $request->admin_email;
         $request->password = $request->admin_email;
         $request->phone = $request->admin_phone;
         $user_obj = new User();
         $user = $user_obj->createUser($request);
-        // make this user the client admin
-        $roles = [$request->role];
-        if (isset($request->roles)) {
-            if (in_array('admin', $request->roles)) {
 
-                $client->admin_user_id = $user->id;
-                $client->save();
-            }
-            $roles = $request->roles;
-        }
-        // sync user to client
-        $client->users()->syncWithoutDetaching($user->id);
-        $roleIds = Role::whereIn('name', $roles)->pluck('id');
-        $user->roles()->sync($roleIds); // role id 3 is client
-
-        $this->sendLoginCredentials($user);
+        $title = "New Vendor User Registered";
+        //log this event
+        $description = "$request->name was registered under $vendor->name  by $actor->name";
+        $this->auditTrailEvent($title, $description);
         return response()->json('success', 200);
     }
     /**
@@ -166,15 +153,29 @@ class VendorsController extends Controller
      */
     public function sendLoginCredentials(User $user)
     {
-        $password = $user->email; // randomPassword();
+        $actor = $this->getUser();
+        $client = $this->getClient();
+        $password = randomPassword(); // $user->email; // randomPassword();
         $user->password = $password;
         $user->save();
+
+        $title = "$actor->name from $client->name";
+        $message = "We are glad to bring you to the Vendor Due Diligence module of " . env('APP_NAME') . ". Kindly use the credentials below to perform the assessment. <br>" .
+            "<div style='font-family: monospace;'> <br>
+            Username: $user->email <br>
+            Password: $password
+        </div>";
         //email will be sent later containing login credentials
         // SendQueuedConfirmationEmailJob::dispatch($user, $password);
-        Mail::to($user)->send(new ConfirmNewRegistration($user, $password));
+        Mail::to($user)->send(new SendVendorCredentials($title, $message, $user));
         // \Illuminate\Support\Facades\Artisan::call('queue:work --queue=high,default');
         return response()->json([], 204);
     }
+
+    // public function updateVendorByClient(Request $request) 
+    // {
+
+    // }
     /**
      * Update the specified resource in storage.
      *
@@ -224,12 +225,44 @@ class VendorsController extends Controller
         $title = "Vendor profile updated";
         $userIds = $client->users()->pluck('id')->toArray();
         //log this event
-        $description = "The vendor profile for $vendor->name was updated by $user->name. <br>" . $extra_message;
+        $description = "The vendor profile for $vendor->name was updated by $name. <br>" . $extra_message;
         $this->sendNotification($title, $description, $userIds);
 
         return 'success';
     }
+    public function approvalAction(Request $request, Vendor $vendor)
+    {
+        $user = $this->getUser();
+        $client = $this->getClient();
+        $field = $request->field;
+        $approval = [
+            'action' => $request->action,
+            'details' => ($request->details) ? $request->details : null,
+            'approved_by' => $user->name,
+        ];
+        $vendor->$field = $approval;
+        $vendor->save();
+        $vendor = $vendor->with('users', 'bankDetail', 'documentUploads')->find($vendor->id);
 
+        //  send notifications accordingly after the final approval action
+        if ($field == 'second_approval') {
+            $actioned = ($request->action === 'Approve') ? 'Approved' : 'Rejected';
+            $details = ($request->details) ? 'Reasons: ' . $request->details : '';
+            $vendorUserIds = User::where('vendor_id', $vendor->id)->pluck('id')->toArray();
+
+
+            $title = "Application Reviewed and $actioned";
+            //log this event
+            $description = "$user->name from $client->name has reviewed and " . strtolower($actioned) . " your application. <br>" .
+                $details;
+            //log this event
+            // $description = "The vendor profile for $vendor->name was updated by $name. <br>" . $extra_message;
+            $this->sendVendorNotification($title, $description, $vendorUserIds);
+        }
+
+
+        return response()->json(compact('vendor'), 200);
+    }
     public function deleteUploadedDocument(Request $rquest, DocumentUpload $document)
     {
         $document_link = $document->link;
@@ -248,7 +281,7 @@ class VendorsController extends Controller
             $client->save();
         }
     }
-    public function updateClientUser(Request $request, User $user)
+    public function updateVendorUser(Request $request, User $user)
     {
 
         $user->name = $request->name;

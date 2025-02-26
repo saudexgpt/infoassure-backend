@@ -10,4 +10,9 @@ class DueDiligenceEvidence extends Model
     use HasFactory;
     protected $connection = 'vdd';
     protected $table = 'due_diligence_evidence';
+
+    public function getFullDocumentLinkAttribute()
+    {
+        return env('APP_URL') . '/storage/' . $this->link;
+    }
 }

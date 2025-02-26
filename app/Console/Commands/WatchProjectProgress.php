@@ -3,9 +3,13 @@
 namespace App\Console\Commands;
 
 use App\Models\Answer;
+use App\Models\EmailList;
 use App\Models\Project;
 use App\Models\ProjectCertificate;
 use App\Models\Question;
+use App\Models\User;
+use App\Models\VendorDueDiligence\User as VendorUser;
+
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
@@ -57,6 +61,22 @@ class WatchProjectProgress extends Command
         });
     }
 
+    public function populateEmailList()
+    {
+        User::chunkById(100, function (Collection $users) {
+            foreach ($users as $user) {
+                EmailList::firstOrCreate(['email' => $user->email, 'name' => $user->name]);
+            }
+        }, $column = 'id');
+
+        VendorUser::chunkById(100, function (Collection $users) {
+            foreach ($users as $user) {
+                EmailList::firstOrCreate(['email' => $user->email, 'name' => $user->name]);
+            }
+        }, $column = 'id');
+        return;
+    }
+
     /**
      * Execute the console command.
      *
@@ -64,6 +84,7 @@ class WatchProjectProgress extends Command
      */
     public function handle()
     {
-        $this->deleteAnswersForDeletedQuestions();
+        $this->populateEmailList();
+        // $this->deleteAnswersForDeletedQuestions();
     }
 }

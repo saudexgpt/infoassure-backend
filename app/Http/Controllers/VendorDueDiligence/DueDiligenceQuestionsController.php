@@ -3,14 +3,28 @@
 namespace App\Http\Controllers\VendorDueDiligence;
 
 use App\Http\Controllers\Controller;
-use App\Models\DueDiligenceQuestion;
+use App\Models\VendorDueDiligence\DefaultQuestion;
+use App\Models\VendorDueDiligence\DueDiligenceQuestion;
 use Illuminate\Http\Request;
 
 class DueDiligenceQuestionsController extends Controller
 {
+    public function fetchDefaultQuestions(Request $request)
+    {
+        $questions = DefaultQuestion::orderBy('domain')
+            ->orderBy('question')
+            ->get()
+            ->groupBy('domain');
+        return response()->json(compact('questions'), 200);
+    }
     public function index(Request $request)
     {
-        $questions = DueDiligenceQuestion::paginate($request->limit);
+        $client_id = $request->client_id;
+        $questions = DueDiligenceQuestion::where('client_id', $client_id)
+            ->orderBy('domain')
+            ->orderBy('question')
+            ->get()
+            ->groupBy('domain');
         return response()->json(compact('questions'), 200);
     }
     public function fetchQuestionWithResponse(Request $request)
@@ -24,24 +38,58 @@ class DueDiligenceQuestionsController extends Controller
         ])->get()->groupBy('domain');
         return response()->json(compact('domains'), 200);
     }
+    public function saveImportedQuestions(Request $request)
+    {
 
-
+        $client_id = $this->getClient()->id;
+        $questions = json_decode(json_encode($request->questions));
+        foreach ($questions as $question) {
+            $this->store($client_id, $question);
+        }
+        return response()->json(['message' => 'Successful'], 200);
+    }
+    public function saveQuestions(Request $request)
+    {
+        $client_id = $this->getClient()->id;
+        $this->store($client_id, $request);
+    }
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  $data
+     * @param  $client_id
+     * @return void
      */
-    public function store(Request $request)
+    private function store($client_id, $data)
     {
-        DueDiligenceQuestion::firstOrCreate([
+        DueDiligenceQuestion::updateOrCreate(
+            [
+                'client_id' => $client_id,
+                'question' => $data->question
+            ],
+            [
+                'key' => $data->key,
+                'domain' => $data->domain,
+                'answer_type' => $data->answer_type,
+                'upload_evidence' => $data->upload_evidence
+            ]
+        );
+
+    }
+
+    public function saveDefaultQuestion(Request $request)
+    {
+        DefaultQuestion::updateOrCreate([
             'question' => $request->question,
+
+        ], [
             'key' => $request->key,
             'domain' => $request->domain,
+            'answer_type' => $request->answer_type,
+            'upload_evidence' => $request->upload_evidence,
         ]);
-        return response()->json(['message' => 'Successful'], 200);
     }
-    public function uploadBulk(Request $request)
+    public function uploadBulkDefaultQuestions(Request $request)
     {
         set_time_limit(0);
         $bulk_data = json_decode(json_encode($request->bulk_data));
@@ -52,8 +100,11 @@ class DueDiligenceQuestionsController extends Controller
                 $request->question = trim($csvRow->QUESTION);
                 $request->key = (isset($csvRow->KEY)) ? trim($csvRow->KEY) : NULL;
                 $request->domain = (isset($csvRow->DOMAIN)) ? trim($csvRow->DOMAIN) : NULL;
-                //store the entry for this student
-                $this->store($request);
+                $request->answer_type = (isset($csvRow->ANSWER_TYPE)) ? trim(strtolower($csvRow->ANSWER_TYPE)) : 'both';
+                $upload_evidence = (isset($csvRow->REQUIRES_EVIDENCE)) ? trim(strtolower($csvRow->REQUIRES_EVIDENCE)) : 'yes';
+
+                $request->upload_evidence = ($upload_evidence == 'yes') ? 1 : 0;
+                $this->saveDefaultQuestion($request);
             } catch (\Throwable $th) {
                 $unsaved_data[] = $csvRow;
                 $error[] = $th;
@@ -88,9 +139,24 @@ class DueDiligenceQuestionsController extends Controller
         $question->question = $request->question;
         $question->key = $request->key;
         $question->domain = $request->domain;
+        $question->answer_type = $request->answer_type;
+        $question->upload_evidence = $request->upload_evidence;
         $question->save();
         return response()->json(['message' => 'Successful'], 200);
     }
+
+    public function updateDefaultQuestion(Request $request, DefaultQuestion $question)
+    {
+        //
+        $question->question = $request->question;
+        $question->key = $request->key;
+        $question->domain = $request->domain;
+        $question->answer_type = $request->answer_type;
+        $question->upload_evidence = $request->upload_evidence;
+        $question->save();
+        return response()->json(['message' => 'Successful'], 200);
+    }
+
 
     /**
      * Remove the specified resource from storage.
@@ -103,4 +169,13 @@ class DueDiligenceQuestionsController extends Controller
         $question->delete();
         return response()->json([], 204);
     }
+
+
+    public function destroyDefaultQuestion(DefaultQuestion $question)
+    {
+        $question->delete();
+        return response()->json([], 204);
+    }
+
+
 }

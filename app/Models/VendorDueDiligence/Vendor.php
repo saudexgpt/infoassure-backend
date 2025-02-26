@@ -32,4 +32,25 @@ class Vendor extends Model
     {
         return $this->hasMany(DocumentUpload::class);
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
+    protected function firstApproval(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => json_decode($value, true),
+            set: fn($value) => json_encode($value),
+        );
+    }
+
+    protected function secondApproval(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => json_decode($value, true),
+            set: fn($value) => json_encode($value),
+        );
+    }
 }

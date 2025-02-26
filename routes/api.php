@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnswersController;
+use App\Http\Controllers\AppMailingsController;
 use App\Http\Controllers\DPIAController;
 use App\Http\Controllers\GeneralRiskLibrariesController;
 use App\Http\Controllers\PDAController;
@@ -131,9 +132,21 @@ Route::group(['prefix' => 'bia'], function () {
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
+
+    Route::get('search-email-list', [Controller::class, 'searchEmailList']);
+
     Route::get('fetch-client-activated-projects/{client}', [ProjectsController::class, 'fetchClientActivatedProjects']);
 
+    Route::group(['prefix' => 'messages'], function () {
 
+        Route::get('/', [AppMailingsController::class, 'inbox']);
+        Route::get('/inbox', [AppMailingsController::class, 'inbox']);
+        Route::get('/sent', [AppMailingsController::class, 'sent']);
+        Route::post('send-message', [AppMailingsController::class, 'compose']);
+        Route::delete('delete/{message}', [AppMailingsController::class, 'delete']);
+        Route::put('reply/{message}', [AppMailingsController::class, 'reply']);
+        Route::get('/details/{message}', [AppMailingsController::class, 'messageDetails']);
+    });
     Route::group(['prefix' => 'risk-library'], function () {
         Route::get('/', [GeneralRiskLibrariesController::class, 'index']);
         Route::get('fetch-threats', [GeneralRiskLibrariesController::class, 'fetchThreats']);

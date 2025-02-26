@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\SendMail;
 use App\Models\ActivatedModule;
 use App\Models\AvailableModule;
+use App\Models\EmailList;
 use App\Models\Project;
 use App\Notifications\AuditTrail;
 use App\Models\Client;
@@ -12,6 +13,7 @@ use App\Models\Partner;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\VendorDueDiligence\User as VendorUser;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -227,13 +229,32 @@ class Controller extends BaseController
             }
         }
     }
+    public function sendVendorNotification($title, $message, array $userIds)
+    {
+        // $client = $this->getClient();
+        // $notification_channels = ($client->notification_channels) ? $client->notification_channels : ['email', 'in_app'];
+        $notification_channels = ['email', 'in_app'];
+        $recipients = VendorUser::whereIn('id', $userIds)->get();
+
+        foreach ($recipients as $recipient) {
+
+            Mail::to($recipient)->send(new SendMail($title, $message, $recipient));
+        }
+    }
 
     public function fetchAvailableModules()
     {
         $modules = AvailableModule::orderBy('name')->get();
         return response()->json(compact('modules'));
     }
-
+    public function searchEmailList(Request $request)
+    {
+        $string = $request->email_string;
+        $emails = EmailList::where('email', 'LIKE', '%' . $string . '%')
+            ->orWhere('name', 'LIKE', '%' . $string . '%')
+            ->get();
+        return response()->json(compact('emails'), 200);
+    }
     // public function fetchClientActivatedModules(Request $request, Client $client)
     // {
     //     $partner_id = $client->partner_id;

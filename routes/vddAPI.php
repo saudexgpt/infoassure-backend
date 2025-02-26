@@ -1,39 +1,118 @@
 <?php
 
-use App\Http\Controllers\NDPA\ClausesController;
-use App\Http\Controllers\NDPA\QuestionsController;
-use App\Http\Controllers\NDPA\AnswersController;
-use App\Http\Controllers\NDPA\ReportsController;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\VendorDueDiligence\AppMailingsController;
 use App\Http\Controllers\VendorDueDiligence\AuthController;
+use App\Http\Controllers\VendorDueDiligence\DueDiligenceQuestionsController;
+use App\Http\Controllers\VendorDueDiligence\DueDiligenceReportsController;
+use App\Http\Controllers\VendorDueDiligence\DueDiligenceResponsesController;
+use App\Http\Controllers\VendorDueDiligence\InvoicesController;
+use App\Http\Controllers\VendorDueDiligence\ReportsController;
 use App\Http\Controllers\VendorDueDiligence\VendorsController;
 
 Route::group(['prefix' => 'vdd/auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
-    // Route::get('confirm-registration', [AuthController::class, 'confirmRegistration']);
-    // Route::post('recover-password', [AuthController::class, 'recoverPassword']);
-    // Route::get('confirm-password-reset-token/{token}', [AuthController::class, 'confirmPasswordResetToken']);
 
-    // Route::post('reset-password', [AuthController::class, 'resetPassword']);
-    // Route::post('other-user-login', [AuthController::class, 'otherUserLogin']);
-    // Route::put('sent-2fa-code/{user}', [AuthController::class, 'send2FACode']);
-    // Route::put('confirm-2fa-code/{user}', [AuthController::class, 'confirm2FACode']);
-
-    // Route::post('register', [AuthController::class, 'register'])->middleware('permission:create-users');
-
-    Route::group(['middleware' => 'auth:sanctum'], function () {
-        // Route::post('logout', [AuthController::class, 'logout']);
-        // Route::post('login-as', [AuthController::class, 'loginAs']);
-        Route::get('user', [AuthController::class, 'fetchUser']); //->middleware('permission:read-users');
-    });
 });
 
+
+
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::group(['prefix' => 'vdd'], function () {
+
+
+
+        Route::get('vendor-invoices', [InvoicesController::class, 'index']);
+        Route::put('invoices/make-payment/{invoice}', [InvoicesController::class, 'makePayment']);
+        Route::post('invoices/upload-payment-evidence', [InvoicesController::class, 'uploadPaymentEvidence']);
+
+        Route::get('fetch-vendors', [VendorsController::class, 'index']);
+        Route::post('register-vendor', [VendorsController::class, 'store']);
+        Route::post('register-vendor-user', [VendorsController::class, 'registerVendorUser']);
+        Route::put('update-vendor-user/{user}', [VendorsController::class, 'updateVendorUser']);
+        Route::put('send-login-credentials/{user}', [VendorsController::class, 'sendLoginCredentials']);
+        Route::put('approve-vendor/{vendor}', [VendorsController::class, 'approvalAction']);
+
+
+        Route::group(['prefix' => 'questions'], function () {
+            Route::get('/', [DueDiligenceQuestionsController::class, 'index']);
+            Route::get('fetch-default-questions', [DueDiligenceQuestionsController::class, 'fetchDefaultQuestions']);
+            Route::post('upload-default-questions', [DueDiligenceQuestionsController::class, 'uploadBulkDefaultQuestions']);
+            Route::post('save-default-question', [DueDiligenceQuestionsController::class, 'saveDefaultQuestion']);
+            Route::put('update-default-question/{question}', [DueDiligenceQuestionsController::class, 'updateDefaultQuestion']);
+            Route::delete('destroy-default-question/{question}', [DueDiligenceQuestionsController::class, 'destroyDefaultQuestion']);
+
+
+            Route::post('save-imported-questions', [DueDiligenceQuestionsController::class, 'saveImportedQuestions']);
+
+            Route::post('save-questions', [DueDiligenceQuestionsController::class, 'saveQuestions']);
+            Route::put('update/{question}', [DueDiligenceQuestionsController::class, 'update']);
+            Route::delete('destroy/{question}', [DueDiligenceQuestionsController::class, 'destroy']);
+
+        });
+        Route::group(['prefix' => 'responses'], function () {
+            Route::get('fetch', [DueDiligenceResponsesController::class, 'fetchResponses']);
+
+            Route::post('store', [DueDiligenceResponsesController::class, 'store']);
+            Route::put('update/{answer}', [DueDiligenceResponsesController::class, 'update']);
+
+            Route::post('enable-modification', [DueDiligenceResponsesController::class, 'enableModification']);
+            Route::post('change-status', [DueDiligenceResponsesController::class, 'changeStatus']);
+
+        });
+        Route::group(['prefix' => 'reports'], function () {
+            Route::get('fetch', [DueDiligenceReportsController::class, 'index']);
+            Route::get('vendor-onboarding-report', [ReportsController::class, 'vendorOnboardingReport']);
+
+        });
+
+
+
+    });
+
+});
 Route::group(['middleware' => 'vendor'], function () {
     Route::group(['prefix' => 'vdd'], function () {
+        Route::get('search-email-list', [Controller::class, 'searchEmailList']);
         Route::get('show-vendor/{vendor}', [VendorsController::class, 'showVendor']);
         Route::post('update-vendor', [VendorsController::class, 'updateVendor']);
         Route::delete('delete-uploaded-document/{document}', [VendorsController::class, 'deleteUploadedDocument']);
 
+        Route::group(['prefix' => 'answers'], function () {
+            Route::get('fetch', [DueDiligenceResponsesController::class, 'fetchResponses']);
+            Route::put('update/{answer}', [DueDiligenceResponsesController::class, 'update']);
+            // Route::delete('destroy/{answer}', [DueDiligenceResponsesController::class, 'destroy']);
 
+            Route::post('submit', [DueDiligenceResponsesController::class, 'submitDueDiligenceResponses']);
+
+            Route::post('upload-due-diligence-evidence', [DueDiligenceResponsesController::class, 'uploadDueDiligenceEvidence']);
+            Route::delete('destroy-evidence/{evidence}', [DueDiligenceResponsesController::class, 'destroyDueDiligenceEvidence']);
+        });
+
+        Route::group(['prefix' => 'messages'], function () {
+
+            Route::get('/', [AppMailingsController::class, 'inbox']);
+            Route::get('/inbox', [AppMailingsController::class, 'inbox']);
+            Route::get('/sent', [AppMailingsController::class, 'sent']);
+            Route::post('send-message', [AppMailingsController::class, 'compose']);
+            Route::delete('delete/{message}', [AppMailingsController::class, 'delete']);
+            Route::put('reply/{message}', [AppMailingsController::class, 'reply']);
+            Route::get('/details/{message}', [AppMailingsController::class, 'messageDetails']);
+        });
+
+        Route::group(['prefix' => 'invoices'], function () {
+
+            Route::get('/', [InvoicesController::class, 'index']);
+            Route::post('store', [InvoicesController::class, 'store']);
+            Route::post('upload-invoice', [InvoicesController::class, 'uploadInvoice']);
+
+            Route::put('update/{invoice}', [InvoicesController::class, 'update']);
+            Route::delete('destroy/{invoice}', [InvoicesController::class, 'destroy']);
+            Route::delete('destroy-invoice-item/{invoice_item}', [InvoicesController::class, 'destroyInvoiceItem']);
+
+            Route::put('confirm-payment/{invoice}', [InvoicesController::class, 'confirmPayment']);
+
+        });
 
     });
 });

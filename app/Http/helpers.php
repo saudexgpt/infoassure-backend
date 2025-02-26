@@ -562,7 +562,7 @@ function mainDomainPublicPath($folder = null)
 }
 function subdomainPublicPath($folder = null)
 {
-    return "/home/decompa1/public_html/storage/" . $folder;
+    return "/var/www/decompass.com/storage/" . $folder;
 }
 
 function portalPulicPath($folder = null)

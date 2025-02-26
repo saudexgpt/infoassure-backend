@@ -10,7 +10,7 @@ class DueDiligenceResponse extends Model
 {
     use HasFactory;
     protected $connection = 'vdd';
-    protected $fillable = ['client_id', 'due_diligence_question_id', 'is_submitted'];
+    protected $fillable = ['client_id', 'vendor_id', 'due_diligence_question_id', 'is_submitted'];
     public function client()
     {
         return $this->belongsTo(Client::class);
