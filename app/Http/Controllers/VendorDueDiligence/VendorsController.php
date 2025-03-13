@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Country;
 use App\Models\VendorDueDiligence\BankDetail;
+use App\Models\VendorDueDiligence\Category;
 use App\Models\VendorDueDiligence\DocumentUpload;
 use App\Models\VendorDueDiligence\User;
 use App\Models\VendorDueDiligence\Vendor;
@@ -15,6 +16,11 @@ use Illuminate\Support\Facades\Mail;
 
 class VendorsController extends Controller
 {
+    public function fetchVendorCategories()
+    {
+        $categories = Category::orderBy('slug')->get();
+        return response()->json(compact('categories'), 200);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -29,12 +35,12 @@ class VendorsController extends Controller
 
             $id = $this->getClient()->id;
             if (isset($request->all) && $request->all == true) {
-                $vendors = Vendor::with('users', 'bankDetail', 'documentUploads')
+                $vendors = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')
                     ->where(['client_id' => $id])
                     ->orderBy('name')
                     ->get();
             } else {
-                $vendors = Vendor::with('users', 'bankDetail', 'documentUploads')
+                $vendors = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')
                     ->where(['client_id' => $id])
                     ->orderBy('name')
                     ->paginate($request->limit);
@@ -45,10 +51,29 @@ class VendorsController extends Controller
         return response()->json(['message' => 'Permission Denied'], 403);
     }
 
+    public function fetchApprovedVendors(Request $request)
+    {
+        $user = $this->getUser();
+        $condition = [];
+
+        if ($user->haRole('client') || $user->haRole('admin')) {
+
+            $id = $this->getClient()->id;
+            $vendors = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')
+                ->where(['client_id' => $id])
+                ->where('second_approval', 'LIKE', '%Approve%')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json(compact('vendors'), 200);
+        }
+        return response()->json(['message' => 'Permission Denied'], 403);
+    }
+
 
     public function showVendor(Request $request, Vendor $vendor)
     {
-        $vendor = Vendor::with('bankDetail', 'documentUploads')->find($vendor->id);
+        $vendor = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')->find($vendor->id);
         $business_types = $this->businessTypes();
         $countries = Country::get();
         return response()->json(compact('vendor', 'business_types', 'countries'), 200);
@@ -187,6 +212,13 @@ class VendorsController extends Controller
         $data = $request->toArray();
         $vendor_id = $request->id;
         Vendor::find($vendor_id)->update($data);
+
+        $vendor = Vendor::find($vendor_id);
+        if ($vendor->stores_sentivite_information == 1 || $vendor->has_access_to_critical_systems == 1 || $vendor->has_impact_on_business_operations == 1) {
+            $vendor->inherent_risk_rating = 3;
+            $vendor->save();
+        }
+
         BankDetail::updateOrCreate([
             'vendor_id' => $request->id,
         ], [
@@ -199,25 +231,28 @@ class VendorsController extends Controller
         $titles = [];
         $counter = 0;
         $extra_message = '';
-        foreach ($files as $file) {
-            $title = $file_titles[$counter]; //$file->getClientOriginalName();
-            if ($file->isValid()) {
-                $formated_name = str_replace(' ', '_', ucwords($title));
-                $file_name = $formated_name . '_' . $vendor_id . "." . $file->guessClientExtension();
-                $link = $file->storeAs('vendors/' . $vendor_id . '/documents', $file_name, 'public');
-                DocumentUpload::updateOrCreate([
-                    'vendor_id' => $vendor_id,
-                    'title' => $title
-                ], ['link' => $link]);
+        if ($files != null) {
+            # code...
 
-                $extra_message = 'Some required documents were also uploaded.';
+            foreach ($files as $file) {
+                $title = $file_titles[$counter]; //$file->getClientOriginalName();
+                if ($file->isValid()) {
+                    $formated_name = str_replace(' ', '_', ucwords($title));
+                    $file_name = $formated_name . '_' . $vendor_id . "." . $file->guessClientExtension();
+                    $link = $file->storeAs('vendors/' . $vendor_id . '/documents', $file_name, 'public');
+                    DocumentUpload::updateOrCreate([
+                        'vendor_id' => $vendor_id,
+                        'title' => $title
+                    ], ['link' => $link]);
 
-                // $this->auditTrailEvent($title, $description, $users);
+                    $extra_message = 'Some required documents were also uploaded.';
+
+                    // $this->auditTrailEvent($title, $description, $users);
+                }
+
+                $counter++;
             }
-
-            $counter++;
         }
-        $vendor = Vendor::find($vendor_id);
         $client = Client::with('users')->find($vendor->client_id);
         $token = $request->bearerToken();
         $user = User::where('api_token', $token)->first();
@@ -230,6 +265,14 @@ class VendorsController extends Controller
 
         return 'success';
     }
+
+    public function categorizeVendor(Request $request, Vendor $vendor)
+    {
+        $vendor->category_id = $request->category_id;
+        $vendor->save();
+        $vendor = $vendor->with('users', 'bankDetail', 'documentUploads', 'category')->find($vendor->id);
+        return response()->json(compact('vendor'), 200);
+    }
     public function approvalAction(Request $request, Vendor $vendor)
     {
         $user = $this->getUser();
@@ -239,10 +282,11 @@ class VendorsController extends Controller
             'action' => $request->action,
             'details' => ($request->details) ? $request->details : null,
             'approved_by' => $user->name,
+            'date' => date('Y-m-d H:i:s', strtotime('now')),
         ];
         $vendor->$field = $approval;
         $vendor->save();
-        $vendor = $vendor->with('users', 'bankDetail', 'documentUploads')->find($vendor->id);
+        $vendor = $vendor->with('users', 'bankDetail', 'documentUploads', 'category')->find($vendor->id);
 
         //  send notifications accordingly after the final approval action
         if ($field == 'second_approval') {

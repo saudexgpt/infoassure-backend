@@ -135,12 +135,20 @@ class DueDiligenceResponsesController extends Controller
                     //     $evidence_links_array[] = env('APP_URL') . '/storage/' . $evidence->link;
                     // }
                     $evidence_link = implode(',', $evidence_links_array);
+                    try {
+                        $ai_response = $this->analyzeWithOpenAI($quest, $ans, $details, $evidence_link);
+                        $answer->risk_score = $ai_response->score;
+                        $answer->observation = $ai_response->observation;
+                        $answer->impact = $ai_response->impacts;
+                        $answer->recommendations = $ai_response->recommendations;
+                    } catch (\Throwable $th) {
+                        //throw $th;
+                        $answer->risk_score = 3; // the high risk by default
+                        $answer->observation = NULL;
+                        $answer->impact = NULL;
+                        $answer->recommendations = NULL;
+                    }
 
-                    $ai_response = $this->analyzeWithOpenAI($quest, $ans, $details, $evidence_link);
-                    $answer->risk_score = $ai_response->score;
-                    $answer->observation = $ai_response->observation;
-                    $answer->impact = $ai_response->impacts;
-                    $answer->recommendations = $ai_response->recommendations;
                 }
                 $answer->is_submitted = 1;
                 $answer->save();

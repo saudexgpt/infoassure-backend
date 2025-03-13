@@ -16,14 +16,33 @@ class InvoicesController extends Controller
     public function index(Request $request)
     {
         $vendor_id = $request->vendor_id;
+        $invoices = Invoice::query();
         $condition = [];
+        if (isset($request->invoice_no) && $request->invoice_no != '') {
+            $invoice_no = $request->invoice_no;
+            $invoices->where('invoice_no', $invoice_no);
+        }
+        if (isset($request->amount) && $request->amount != '') {
+            $amount = $request->amount;
+            $invoices->where('amount', $amount);
+        }
+        if (isset($request->due_date) && $request->due_date != '') {
+            $due_date = $request->due_date;
+            $invoices->where('due_date', $due_date);
+        }
         if (isset($request->status) && $request->status != '') {
             $status = $request->status;
-            $condition = ['status' => $status];
+            $invoices->where('status', $status);
         }
-        $invoices = Invoice::with('invoiceItems')
+
+        if (isset($request->invoice_approval) && $request->invoice_approval != '') {
+            $invoice_approval = $request->invoice_approval;
+            $invoices->where('invoice_approval', 'LIKE', '%"' . $invoice_approval . '"%');
+        }
+
+
+        $invoices = $invoices->with('invoiceItems')
             ->where('vendor_id', $vendor_id)
-            ->where($condition)
             ->orderBy('due_date')
             ->orderBy('status')
             ->paginate($request->limit);
@@ -167,6 +186,39 @@ class InvoicesController extends Controller
         }
         // notify the client
     }
+    public function approvalAction(Request $request, Invoice $invoice)
+    {
+        $user = $this->getUser();
+        $client = $this->getClient();
+        $field = $request->field;
+        $approval = [
+            'action' => $request->action,
+            'details' => ($request->details) ? $request->details : null,
+            'approved_by' => $user->name,
+            'date' => date('Y-m-d H:i:s', strtotime('now')),
+        ];
+        $invoice->invoice_approval = $approval;
+        $invoice->save();
+        $vendor = Vendor::find($invoice->vendor_id);
+
+        //  send notifications accordingly after the final approval action
+        $actioned = ($request->action === 'Approve') ? 'Approved' : 'Rejected';
+        $details = ($request->details) ? 'Reasons: ' . $request->details : '';
+        $vendorUserIds = User::where('vendor_id', $vendor->id)->pluck('id')->toArray();
+
+
+        $title = "Invoice $actioned";
+        //log this event
+        $description = "$user->name from $client->name has reviewed and " . strtolower($actioned) . " invoice with number $invoice->invoice_no. <br>" .
+            $details;
+        //log this event
+        // $description = "The vendor profile for $vendor->name was updated by $name. <br>" . $extra_message;
+        $this->sendVendorNotification($title, $description, $vendorUserIds);
+
+
+        $invoice = $invoice->with('invoiceItems')->find($invoice->id);
+        return response()->json(compact('invoice'), 200);
+    }
     public function uploadPaymentEvidence(Request $request)
     {
         $invoice_id = $request->invoice_id;
@@ -180,8 +232,8 @@ class InvoicesController extends Controller
             $invoice->save();
 
             // $this->auditTrailEvent($title, $description, $users);
-
-            return response()->json(['message' => "success"], 200);
+            $invoice = $invoice->with('invoiceItems')->find($invoice->id);
+            return response()->json(compact('invoice'), 200);
         }
     }
     public function makePayment(Request $request, Invoice $invoice)
@@ -203,6 +255,8 @@ class InvoicesController extends Controller
         // $description = "The vendor profile for $vendor->name was updated by $name. <br>" . $extra_message;
         $this->sendVendorNotification($title, $description, $vendorUserIds);
 
+        $invoice = $invoice->with('invoiceItems')->find($invoice->id);
+        return response()->json(compact('invoice'), 200);
         // notify the vendor
     }
 
@@ -223,6 +277,9 @@ class InvoicesController extends Controller
         $this->sendNotification($title, $description, $userIds);
 
         // notify the client
+
+        $invoice = $invoice->with('invoiceItems')->find($invoice->id);
+        return response()->json(compact('invoice'), 200);
     }
     public function destroyInvoiceItem(Request $request, InvoiceItem $invoice_item)
     {

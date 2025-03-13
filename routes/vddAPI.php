@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\VendorDueDiligence\AppMailingsController;
 use App\Http\Controllers\VendorDueDiligence\AuthController;
+use App\Http\Controllers\VendorDueDiligence\ContractsAndSLAController;
 use App\Http\Controllers\VendorDueDiligence\DueDiligenceQuestionsController;
 use App\Http\Controllers\VendorDueDiligence\DueDiligenceReportsController;
 use App\Http\Controllers\VendorDueDiligence\DueDiligenceResponsesController;
@@ -25,13 +26,19 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('vendor-invoices', [InvoicesController::class, 'index']);
         Route::put('invoices/make-payment/{invoice}', [InvoicesController::class, 'makePayment']);
         Route::post('invoices/upload-payment-evidence', [InvoicesController::class, 'uploadPaymentEvidence']);
+        Route::put('approve-invoice/{invoice}', [InvoicesController::class, 'approvalAction']);
 
         Route::get('fetch-vendors', [VendorsController::class, 'index']);
+        Route::get('fetch-vendor-categories', [VendorsController::class, 'fetchVendorCategories']);
+
+        Route::get('fetch-approved-vendors', [VendorsController::class, 'fetchApprovedVendors']);
+
         Route::post('register-vendor', [VendorsController::class, 'store']);
         Route::post('register-vendor-user', [VendorsController::class, 'registerVendorUser']);
         Route::put('update-vendor-user/{user}', [VendorsController::class, 'updateVendorUser']);
         Route::put('send-login-credentials/{user}', [VendorsController::class, 'sendLoginCredentials']);
         Route::put('approve-vendor/{vendor}', [VendorsController::class, 'approvalAction']);
+        Route::put('categorize-vendor/{vendor}', [VendorsController::class, 'categorizeVendor']);
 
 
         Route::group(['prefix' => 'questions'], function () {
@@ -45,7 +52,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
             Route::post('save-imported-questions', [DueDiligenceQuestionsController::class, 'saveImportedQuestions']);
 
-            Route::post('save-questions', [DueDiligenceQuestionsController::class, 'saveQuestions']);
+            Route::post('save', [DueDiligenceQuestionsController::class, 'saveQuestions']);
             Route::put('update/{question}', [DueDiligenceQuestionsController::class, 'update']);
             Route::delete('destroy/{question}', [DueDiligenceQuestionsController::class, 'destroy']);
 
@@ -62,11 +69,21 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         });
         Route::group(['prefix' => 'reports'], function () {
             Route::get('fetch', [DueDiligenceReportsController::class, 'index']);
+            Route::get('vendor-onboarding-count', [ReportsController::class, 'vendorOnboardingCount']);
             Route::get('vendor-onboarding-report', [ReportsController::class, 'vendorOnboardingReport']);
+            Route::get('vendor-invoices-analysis', [ReportsController::class, 'vendorInvoicesAnalysis']);
+
 
         });
 
+        Route::group(['prefix' => 'client-contracts'], function () {
 
+            Route::get('fetch', [ContractsAndSLAController::class, 'fetchContracts']);
+            Route::post('save-performance-score', [ContractsAndSLAController::class, 'saveVendorPerformanceScore']);
+            Route::post('upload-contract', [ContractsAndSLAController::class, 'uploadContract']);
+            Route::post('save-sla', [ContractsAndSLAController::class, 'saveSLAConfig']);
+
+        });
 
     });
 
@@ -111,6 +128,19 @@ Route::group(['middleware' => 'vendor'], function () {
             Route::delete('destroy-invoice-item/{invoice_item}', [InvoicesController::class, 'destroyInvoiceItem']);
 
             Route::put('confirm-payment/{invoice}', [InvoicesController::class, 'confirmPayment']);
+
+        });
+        Route::group(['prefix' => 'vendor-reports'], function () {
+            Route::get('vendor-invoices-analysis', [ReportsController::class, 'vendorInvoicesAnalysis']);
+
+
+        });
+        Route::group(['prefix' => 'vendor-contracts'], function () {
+
+            Route::get('fetch', [ContractsAndSLAController::class, 'fetchContracts']);
+            Route::post('upload', [ContractsAndSLAController::class, 'uploadContract']);
+            Route::post('save-sla', [ContractsAndSLAController::class, 'saveSLAConfig']);
+
 
         });
 
