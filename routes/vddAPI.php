@@ -72,6 +72,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::get('vendor-onboarding-count', [ReportsController::class, 'vendorOnboardingCount']);
             Route::get('vendor-onboarding-report', [ReportsController::class, 'vendorOnboardingReport']);
             Route::get('vendor-invoices-analysis', [ReportsController::class, 'vendorInvoicesAnalysis']);
+            Route::get('vendor-risk-assessment-analysis', [ReportsController::class, 'vendorRiskAssessmentAnalysis']);
 
 
         });
@@ -138,7 +139,7 @@ Route::group(['middleware' => 'vendor'], function () {
         Route::group(['prefix' => 'vendor-contracts'], function () {
 
             Route::get('fetch', [ContractsAndSLAController::class, 'fetchContracts']);
-            Route::post('upload', [ContractsAndSLAController::class, 'uploadContract']);
+            Route::post('upload-contract', [ContractsAndSLAController::class, 'uploadContract']);
             Route::post('save-sla', [ContractsAndSLAController::class, 'saveSLAConfig']);
 
 

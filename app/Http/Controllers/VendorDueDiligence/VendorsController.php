@@ -163,7 +163,7 @@ class VendorsController extends Controller
         $request->phone = $request->admin_phone;
         $user_obj = new User();
         $user = $user_obj->createUser($request);
-
+        $this->sendLoginCredentials($user);
         $title = "New Vendor User Registered";
         //log this event
         $description = "$request->name was registered under $vendor->name  by $actor->name";

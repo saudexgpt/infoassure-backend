@@ -119,6 +119,41 @@ class ReportsController extends Controller
         $vendor_id = $request->vendor_id;
         $vendor = Vendor::find($vendor_id);
         $client_id = $vendor->client_id;
-        // $responses = DueDiligenceResponse::
+        $groupedResponses = DueDiligenceResponse::join('due_diligence_questions', 'due_diligence_questions.id', '=', 'due_diligence_responses.due_diligence_question_id')
+            ->groupBy('due_diligence_questions.domain')
+            ->where(['due_diligence_responses.vendor_id' => $vendor_id, 'due_diligence_responses.client_id' => $client_id])
+            ->select(
+                'domain',
+                \DB::raw('COUNT(CASE WHEN risk_score = 1 THEN due_diligence_responses.id END ) as lows'),
+                \DB::raw('COUNT(CASE WHEN risk_score = 2 THEN due_diligence_responses.id END ) as mediums'),
+                \DB::raw('COUNT(CASE WHEN risk_score = 3 THEN due_diligence_responses.id END ) as highs'),
+            )
+            ->get()
+            ->groupBy('domain');
+        $risk_categories = [];
+        $lows = [];
+        $mediums = [];
+        $highs = [];
+        foreach ($groupedResponses as $domain => $riskScores) {
+            $risk_categories[] = $domain;
+            $highs[] = $riskScores[0]->highs;
+            $mediums[] = $riskScores[0]->mediums;
+            $lows[] = $riskScores[0]->lows;
+        }
+        $series = [
+            [
+                'name' => 'Low',
+                'data' => $lows
+            ],
+            [
+                'name' => 'Medium',
+                'data' => $mediums
+            ],
+            [
+                'name' => 'High',
+                'data' => $highs
+            ],
+        ];
+        return response()->json(compact('risk_categories', 'series'), 200);
     }
 }

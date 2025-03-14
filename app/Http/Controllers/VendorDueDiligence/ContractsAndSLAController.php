@@ -5,6 +5,7 @@ namespace App\Http\Controllers\VendorDueDiligence;
 use App\Http\Controllers\Controller;
 use App\Models\VendorDueDiligence\Contract;
 use App\Models\VendorDueDiligence\SlaConfig;
+use App\Models\VendorDueDiligence\Vendor;
 use App\Models\VendorDueDiligence\VendorPerformanceScorecard;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,8 @@ class ContractsAndSLAController extends Controller
     public function fetchContracts(Request $request)
     {
         $vendor_id = $request->vendor_id;
-        $client_id = $request->client_id;
+        $vendor = Vendor::find($vendor_id);
+        $client_id = $vendor->client_id;
         $contracts = Contract::with('sla', 'score', 'vendor', 'client')
             ->where([
                 'vendor_id' => $vendor_id,
@@ -27,7 +29,8 @@ class ContractsAndSLAController extends Controller
     public function fetchSLA(Request $request)
     {
         $vendor_id = $request->vendor_id;
-        $client_id = $request->client_id;
+        $vendor = Vendor::find($vendor_id);
+        $client_id = $vendor->client_id;
         $contract_id = $request->contract_id;
         $slas = SlaConfig::where([
             'vendor_id' => $vendor_id,
@@ -39,11 +42,13 @@ class ContractsAndSLAController extends Controller
 
     public function uploadContract(Request $request)
     {
+
         $vendor_id = $request->vendor_id;
-        $client_id = $request->client_id;
+        $vendor = Vendor::find($vendor_id);
+        $client_id = $vendor->client_id;
         $title = $request->title;
         $start_date = date('Y-m-d', strtotime($request->start_date));
-        $expiry_data = date('Y-m-d', strtotime($request->expiry_data));
+        $expiry_date = date('Y-m-d', strtotime($request->expiry_date));
         $file = $request->file('file_uploaded');
         if ($file != null && $file->isValid()) {
 
@@ -51,13 +56,26 @@ class ContractsAndSLAController extends Controller
             $file_name = $formated_name . '_' . $vendor_id . "." . $file->guessClientExtension();
 
             $link = $file->storeAs('vendors/' . $vendor_id . '/documents', $file_name, 'public');
-            Contract::updateOrCreate([
-                'vendor_id' => $vendor_id,
-                'client_id' => $client_id,
-                'title' => $title
-            ], ['file_link' => $link, 'start_date' => $start_date, 'expiry_date' => $expiry_data]);
+            if (isset($request->id) && $request->id !== null) {
+                Contract::updateOrCreate([
+                    'id' => $request->id
+                ], ['title' => $title, 'file_link' => $link, 'start_date' => $start_date, 'expiry_date' => $expiry_date]);
+            } else {
+                Contract::updateOrCreate([
+                    'vendor_id' => $vendor_id,
+                    'client_id' => $client_id,
+                    'title' => $title
+                ], ['file_link' => $link, 'start_date' => $start_date, 'expiry_date' => $expiry_date]);
+            }
+
 
             // Log this action
+        } else {
+            if (isset($request->id) && $request->id !== null) {
+                Contract::updateOrCreate([
+                    'id' => $request->id
+                ], ['title' => $title, 'start_date' => $start_date, 'expiry_date' => $expiry_date]);
+            }
         }
 
     }
@@ -65,7 +83,8 @@ class ContractsAndSLAController extends Controller
     public function saveSLAConfig(Request $request)
     {
         $vendor_id = $request->vendor_id;
-        $client_id = $request->client_id;
+        $vendor = Vendor::find($vendor_id);
+        $client_id = $vendor->client_id;
         $contract_id = $request->contract_id;
         $data = $request->toArray();
         SlaConfig::updateOrCreate([
@@ -82,7 +101,8 @@ class ContractsAndSLAController extends Controller
     public function saveVendorPerformanceScore(Request $request)
     {
         $vendor_id = $request->vendor_id;
-        $client_id = $request->client_id;
+        $vendor = Vendor::find($vendor_id);
+        $client_id = $vendor->client_id;
         $contract_id = $request->contract_id;
         $sla_config_id = $request->sla_config_id;
         $data = $request->toArray();

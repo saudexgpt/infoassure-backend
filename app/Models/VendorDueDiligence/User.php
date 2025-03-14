@@ -101,7 +101,7 @@ class User extends Authenticatable implements LaratrustUser
         }
         $user->vendor_id = $data->vendor_id;
         $user->name = $data->name;
-        $user->email = $data->email;
+        $user->email = strtolower($data->email);
         $user->phone = $data->phone;
         $user->password = $data->password;
         $user->is_client_admin = (isset($data->is_client_admin)) ? $data->is_client_admin : 0;
