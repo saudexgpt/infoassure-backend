@@ -72,7 +72,7 @@ class ContractsAndSLAController extends Controller
 
             // Log this action
         } else {
-            if (isset($request->id) && $request->id !== null) {
+            if (isset($request->id) && $request->id !== 'undefined' && $request->id !== null) {
                 Contract::updateOrCreate([
                     'id' => $request->id
                 ], ['title' => $title, 'start_date' => $start_date, 'expiry_date' => $expiry_date]);
