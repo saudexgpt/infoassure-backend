@@ -58,8 +58,9 @@ class ContractsAndSLAController extends Controller
             $link = $file->storeAs('vendors/' . $vendor_id . '/documents', $file_name, 'public');
             if (isset($request->id) && $request->id !== 'undefined' && $request->id !== null) {
                 Contract::updateOrCreate([
-                    'id' => $request->id
-
+                    'id' => $request->id,
+                    'vendor_id' => $vendor_id,
+                    'client_id' => $client_id,
                 ], ['title' => $title, 'file_link' => $link, 'start_date' => $start_date, 'expiry_date' => $expiry_date]);
             } else {
                 Contract::updateOrCreate([
@@ -74,7 +75,9 @@ class ContractsAndSLAController extends Controller
         } else {
             if (isset($request->id) && $request->id !== 'undefined' && $request->id !== null) {
                 Contract::updateOrCreate([
-                    'id' => $request->id
+                    'id' => $request->id,
+                    'vendor_id' => $vendor_id,
+                    'client_id' => $client_id,
                 ], ['title' => $title, 'start_date' => $start_date, 'expiry_date' => $expiry_date]);
             }
         }
