@@ -108,6 +108,8 @@ class VendorsController extends Controller
             $vendor->contact_phone = $request->contact_phone;
             $vendor->contact_address = $request->contact_address;
             if ($vendor->save()) {
+                $request->vendor_id = $vendor->id;
+                $this->registerVendorUser($request);
                 $actor = $this->getUser();
                 $title = "New Vendor Registered";
                 //log this event
@@ -218,14 +220,16 @@ class VendorsController extends Controller
             $vendor->inherent_risk_rating = 3;
             $vendor->save();
         }
+        if (isset($request->account_name) && $request->account_name !== null) {
+            BankDetail::updateOrCreate([
+                'vendor_id' => $request->id,
+            ], [
+                'bank_name' => $request->bank_name,
+                'account_name' => $request->account_name,
+                'account_no' => $request->account_no,
+            ]);
+        }
 
-        BankDetail::updateOrCreate([
-            'vendor_id' => $request->id,
-        ], [
-            'bank_name' => $request->bank_name,
-            'account_name' => $request->account_name,
-            'account_no' => $request->account_no,
-        ]);
         $files = $request->file('uploadable_files');
         $file_titles = $request->uploadable_files_titles;
         $titles = [];

@@ -56,9 +56,10 @@ class ContractsAndSLAController extends Controller
             $file_name = $formated_name . '_' . $vendor_id . "." . $file->guessClientExtension();
 
             $link = $file->storeAs('vendors/' . $vendor_id . '/documents', $file_name, 'public');
-            if (isset($request->id) && $request->id !== null) {
+            if (isset($request->id) && $request->id !== 'undefined' && $request->id !== null) {
                 Contract::updateOrCreate([
                     'id' => $request->id
+
                 ], ['title' => $title, 'file_link' => $link, 'start_date' => $start_date, 'expiry_date' => $expiry_date]);
             } else {
                 Contract::updateOrCreate([
