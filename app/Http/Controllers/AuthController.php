@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\ReCaptcha;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -81,7 +82,8 @@ class AuthController extends Controller
             'phone' => 'required|string|unique:users',
             'email' => 'required|string|unique:users',
             'password' => 'required|string',
-            'c_password' => 'required|same:password'
+            'c_password' => 'required|same:password',
+            'g-recaptcha-response' => ['required', new ReCaptcha]
         ]);
 
         $user = new User([

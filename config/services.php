@@ -34,6 +34,10 @@ return [
         'beams_instance_id' => env('PUSHER_BEAM_INSTANCE_ID'),
         'beams_secret_key' => env('PUSHER_BEAM_SECRET_KEY'),
     ],
+    'recaptcha' => [
+        'key' => env('RECAPTCHA_SITE_KEY'),
+        'secret' => env('RECAPTCHA_SITE_SECRET'),
+    ]
 
 
 ];

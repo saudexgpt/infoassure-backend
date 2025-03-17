@@ -24,7 +24,7 @@ class ContactController extends Controller
             'first_name' => 'required',
             'last_name' => 'required',
             'phone_no' => 'required',
-            // 'g-recaptcha-response' => ['required', new ReCaptcha]
+            'g-recaptcha-response' => ['required', new ReCaptcha]
         ]);
         $company_email = $request->company_email;
         $full_name = $request->first_name . ' ' . $request->last_name;
@@ -33,7 +33,7 @@ class ContactController extends Controller
         }
         $data = request()->all();
         ContactForm::updateOrCreate(['company_email' => $company_email], $data);
-        Mail::to('info@decompass.com')->send(new ContactFormMessage($request));
+        // Mail::to('info@decompass.com')->send(new ContactFormMessage($request));
         return redirect()->back()->with('status', 'Your message was sent. Thank you for contacting us');
     }
     public function submitConsultationForm(Request $request)
@@ -43,13 +43,13 @@ class ContactController extends Controller
             'first_name' => 'required',
             'last_name' => 'required',
             'phone_no' => 'required',
-            // 'g-recaptcha-response' => ['required', new ReCaptcha]
+            'g-recaptcha-response' => ['required', new ReCaptcha]
         ]);
         $company_email = $request->company_email;
         $full_name = $request->first_name . ' ' . $request->last_name;
         $data = request()->all();
         ConsultationForm::updateOrCreate(['company_email' => $company_email], $data);
-        Mail::to('info@decompass.com')->send(new ConsultationFormMessage($request));
+        // Mail::to('info@decompass.com')->send(new ConsultationFormMessage($request));
         return redirect()->back()->with('status', 'Your schedule was sent. Thank you for contacting us');
     }
 
@@ -60,13 +60,13 @@ class ContactController extends Controller
             'name' => 'required',
             'course_of_interest' => 'required',
             'phone_no' => 'required',
-            // 'g-recaptcha-response' => ['required', new ReCaptcha]
+            'g-recaptcha-response' => ['required', new ReCaptcha]
         ]);
 
         $data = request()->all();
         $data['course_of_interest'] = implode(', ', $request->course_of_interest);
         TrainingForm::create($data);
-        Mail::to('info@decompass.com')->send(new TrainingFormMessage($request));
+        // Mail::to('info@decompass.com')->send(new TrainingFormMessage($request));
         return redirect()->back()->with('status', 'Form Submitted Successfully.');
     }
     public function subscribeToNewsletter(Request $request)
