@@ -3,6 +3,7 @@
 namespace App\Models\VendorDueDiligence;
 
 use App\Models\Client;
+use App\Models\User as ClientUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -42,7 +43,18 @@ class Vendor extends Model
     {
         return $this->hasMany(User::class);
     }
+    public function reviewMeetings()
+    {
+        return $this->hasMany(ReviewMeeting::class);
+    }
 
+    protected function clientUsers(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => json_decode($value, true),
+            set: fn($value) => json_encode($value),
+        );
+    }
     protected function firstApproval(): Attribute
     {
         return Attribute::make(

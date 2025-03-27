@@ -22,7 +22,23 @@ use PHPUnit\Framework\Constraint\Operator;
 class RiskAssessmentsController extends Controller
 {
 
+    public function fetchRiskAppetite(Request $request)
+    {
+        $impacts = [];
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $risk_appetite = null;
+        if ($risk_matrix) {
 
+            $risk_appetite = $risk_matrix->risk_appetite;
+        }
+
+        return response()->json(compact('risk_appetite'), 200);
+    }
     /**
      * Display a listing of the resource.
      *

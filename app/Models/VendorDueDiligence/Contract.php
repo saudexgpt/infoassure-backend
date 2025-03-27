@@ -6,12 +6,13 @@ use App\Models\Client;
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 class Contract extends Model
 {
     use SoftDeletes;
     //
     protected $connection = 'vdd';
-    protected $fillable = ['client_id', 'vendor_id', 'title', 'file_link', 'start_date', 'expiry_date'];
+    protected $fillable = ['contract_no', 'client_id', 'vendor_id', 'title', 'file_link', 'start_date', 'expiry_date'];
     public function client()
     {
         return $this->belongsTo(Client::class);
@@ -30,4 +31,14 @@ class Contract extends Model
     {
         return $this->hasOne(VendorPerformanceScorecard::class, 'contract_id', 'id');
     }
+
+    protected function renewalDetails(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => json_decode($value, true),
+            set: fn($value) => json_encode($value),
+        );
+    }
+
+
 }

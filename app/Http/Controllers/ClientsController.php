@@ -34,15 +34,15 @@ class ClientsController extends Controller
         }
 
         if ($user->haRole('super')) {
-            $partner_with_clients = Partner::with('clients')->get();
+            $partner_with_clients = Partner::with('clients', 'matrix')->get();
         }
 
         if (isset($request->option) && $request->option === 'all') {
-            $clients = Client::where($condition)->orderBy('name')->get();
+            $clients = Client::with('matrix')->where($condition)->orderBy('name')->get();
 
         } else {
 
-            $clients = Client::with('users')->where($condition)->orderBy('name')->paginate($request->limit);
+            $clients = Client::with('users', 'matrix')->where($condition)->orderBy('name')->paginate($request->limit);
             return response()->json(compact('clients'), 200);
         }
         return response()->json(compact('clients', 'partner_with_clients'), 200);

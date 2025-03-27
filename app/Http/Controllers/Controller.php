@@ -7,6 +7,7 @@ use App\Models\ActivatedModule;
 use App\Models\AvailableModule;
 use App\Models\EmailList;
 use App\Models\Project;
+use App\Models\VendorDueDiligence\Vendor;
 use App\Notifications\AuditTrail;
 use App\Models\Client;
 use App\Models\Partner;
@@ -269,4 +270,14 @@ class Controller extends BaseController
 
     //     return response()->json(compact('modules'));
     // }
+
+    public function getVendorClientUserIds($vendorId)
+    {
+        $vendor = Vendor::find($vendorId);
+        $ids = [];
+        foreach ($vendor->client_users as $value) {
+            $ids[] = $value->id;
+        }
+        return $ids;
+    }
 }

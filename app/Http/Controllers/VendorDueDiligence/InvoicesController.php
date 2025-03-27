@@ -71,12 +71,12 @@ class InvoicesController extends Controller
                 $this->saveInvoiceItems($invoice, $invoice_items);
 
                 // notify the client
-                $client = Client::with('users')->find($vendor->client_id);
                 $token = $request->bearerToken();
                 $user = User::where('api_token', $token)->first();
                 $name = $user->name;// . ' (' . $user->email . ')';
                 $title = "Invoice generated for payment";
-                $userIds = $client->users()->pluck('id')->toArray();
+                // $userIds = $client->users()->pluck('id')->toArray();
+                $userIds = $this->getVendorClientUserIds($vendor_id);
                 //log this event
                 $description = "$name generated an invoice with number $invoice_no for payment. <br>";
                 $this->sendNotification($title, $description, $userIds);
@@ -115,12 +115,12 @@ class InvoicesController extends Controller
                     $invoice->save();
 
                     // notify the client
-                    $client = Client::with('users')->find($vendor->client_id);
                     $token = $request->bearerToken();
                     $user = User::where('api_token', $token)->first();
                     $name = $user->name;// . ' (' . $user->email . ')';
                     $title = "Invoice generated for payment";
-                    $userIds = $client->users()->pluck('id')->toArray();
+                    // $userIds = $client->users()->pluck('id')->toArray();
+                    $userIds = $this->getVendorClientUserIds($vendor_id);
                     //log this event
                     $description = "$name generated an invoice with number $invoice_no for payment. <br>";
                     $this->sendNotification($title, $description, $userIds);
@@ -174,12 +174,12 @@ class InvoicesController extends Controller
         if ($invoice->save()) {
             $this->saveInvoiceItems($invoice, $invoice_items);
 
-            $client = Client::with('users')->find($vendor->client_id);
             $token = $request->bearerToken();
             $user = User::where('api_token', $token)->first();
             $name = $user->name;// . ' (' . $user->email . ')';
             $title = "Invoice $invoice->invoice_no modified";
-            $userIds = $client->users()->pluck('id')->toArray();
+            // $userIds = $client->users()->pluck('id')->toArray();
+            $userIds = $this->getVendorClientUserIds($vendor->id);
             //log this event
             $description = "$name modified the details of invoice with number $invoice->invoice_no. <br>";
             $this->sendNotification($title, $description, $userIds);
@@ -266,12 +266,13 @@ class InvoicesController extends Controller
         $invoice->save();
 
         $vendor = Vendor::find($invoice->vendor_id);
-        $client = Client::with('users')->find($vendor->client_id);
+        // $client = Client::with('users')->find($vendor->client_id);
         $token = $request->bearerToken();
         $user = User::where('api_token', $token)->first();
         $name = $user->name;// . ' (' . $user->email . ')';
         $title = "Payment for invoice $invoice->invoice_no confirmed";
-        $userIds = $client->users()->pluck('id')->toArray();
+        // $userIds = $client->users()->pluck('id')->toArray();
+        $userIds = $this->getVendorClientUserIds($vendor->id);
         //log this event
         $description = "$name confirmed the receipt of payment made for invoice with number $invoice->invoice_no. <br>";
         $this->sendNotification($title, $description, $userIds);
@@ -305,12 +306,13 @@ class InvoicesController extends Controller
         if ($invoice->status == 'Pending') {
 
             $vendor = Vendor::find($invoice->vendor_id);
-            $client = Client::with('users')->find($vendor->client_id);
+            // $client = Client::with('users')->find($vendor->client_id);
             $token = $request->bearerToken();
             $user = User::where('api_token', $token)->first();
             $name = $user->name;// . ' (' . $user->email . ')';
             $title = "Pending invoice $invoice->invoice_no deleted";
-            $userIds = $client->users()->pluck('id')->toArray();
+            // $userIds = $client->users()->pluck('id')->toArray();
+            $userIds = $this->getVendorClientUserIds($vendor->id);
             //log this event
             $description = "$name deleted a pending invoice with number $invoice->invoice_no. <br>";
             $this->sendNotification($title, $description, $userIds);

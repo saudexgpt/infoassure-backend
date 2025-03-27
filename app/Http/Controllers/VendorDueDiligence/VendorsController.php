@@ -16,6 +16,16 @@ use Illuminate\Support\Facades\Mail;
 
 class VendorsController extends Controller
 {
+    public function fetchClientUsers(Request $request)
+    {
+        $client = Client::with([
+            'users' => function ($q) {
+                $q->select('id', 'name', 'email')->get();
+            }
+        ])->find($request->client_id);
+        $client_users = $client->users;
+        return response()->json(compact('client_users'), 200);
+    }
     public function fetchVendorCategories()
     {
         $categories = Category::orderBy('slug')->get();
@@ -37,12 +47,12 @@ class VendorsController extends Controller
             if (isset($request->all) && $request->all == true) {
                 $vendors = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')
                     ->where(['client_id' => $id])
-                    ->orderBy('name')
+                    ->orderBy('id')
                     ->get();
             } else {
                 $vendors = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')
                     ->where(['client_id' => $id])
-                    ->orderBy('name')
+                    ->orderBy('id')
                     ->paginate($request->limit);
             }
 
@@ -62,7 +72,7 @@ class VendorsController extends Controller
             $vendors = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')
                 ->where(['client_id' => $id])
                 ->where('second_approval', 'LIKE', '%Approve%')
-                ->orderBy('name')
+                ->orderBy('id')
                 ->get();
 
             return response()->json(compact('vendors'), 200);
@@ -257,12 +267,11 @@ class VendorsController extends Controller
                 $counter++;
             }
         }
-        $client = Client::with('users')->find($vendor->client_id);
         $token = $request->bearerToken();
         $user = User::where('api_token', $token)->first();
         $name = $user->name;// . ' (' . $user->email . ')';
         $title = "Vendor profile updated";
-        $userIds = $client->users()->pluck('id')->toArray();
+        $userIds = $this->getVendorClientUserIds($vendor_id);
         //log this event
         $description = "The vendor profile for $vendor->name was updated by $name. <br>" . $extra_message;
         $this->sendNotification($title, $description, $userIds);
@@ -296,16 +305,23 @@ class VendorsController extends Controller
         if ($field == 'second_approval') {
             $actioned = ($request->action === 'Approve') ? 'Approved' : 'Rejected';
             $details = ($request->details) ? 'Reasons: ' . $request->details : '';
-            $vendorUserIds = User::where('vendor_id', $vendor->id)->pluck('id')->toArray();
 
+
+            $vendorUserIds = User::where('vendor_id', $vendor->id)->pluck('id')->toArray();
 
             $title = "Application Reviewed and $actioned";
             //log this event
             $description = "$user->name from $client->name has reviewed and " . strtolower($actioned) . " your application. <br>" .
                 $details;
             //log this event
-            // $description = "The vendor profile for $vendor->name was updated by $name. <br>" . $extra_message;
             $this->sendVendorNotification($title, $description, $vendorUserIds);
+            //log this event
+            $description2 = "Vendor onboarding application by $vendor->name has been reviewd and " . strtolower($actioned) . ". <br>" . $details;
+
+            // Log this action
+
+            $userIds = $this->getVendorClientUserIds($vendor_id);
+            $this->sendNotification($title, $description2, $userIds);
         }
 
 
@@ -360,12 +376,12 @@ class VendorsController extends Controller
 
     }
 
-    public function assignUserAsClientAdmin(Request $request, Client $client)
+    public function assignUserAsVendorAdmin(Request $request, Vendor $vendor)
     {
-        $client->admin_user_id = $request->user_id;
-        $client->save();
-        $client = $client->with('users')->find($client->id);
-        return response()->json(compact('client'), 200);
+        $vendor->client_users = $request->client_users;
+        $vendor->save();
+        $vendor = $vendor->find($vendor->id);
+        return response()->json(compact('vendor'), 200);
     }
 
     public function removeClientUser(Request $request, Client $client)
@@ -387,6 +403,8 @@ class VendorsController extends Controller
         // $partner->roles()->sync($role->id); // role id 3 is partner
 
     }
+
+
     // public function deleteClientUser(Request $request, User $user)
     // {
     //     $actor = $this->getUser();
@@ -409,7 +427,6 @@ class VendorsController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  \App\Models\Client  $client
-     * @return \Illuminate\Http\Response
      */
     public function toggleClientSuspension(Request $request, Client $client)
     {

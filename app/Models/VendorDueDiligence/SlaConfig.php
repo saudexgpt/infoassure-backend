@@ -11,7 +11,7 @@ class SlaConfig extends Model
     use SoftDeletes;
     //
     protected $connection = 'vdd';
-    protected $fillable = ['contract_id', 'client_id', 'vendor_id', 'service_name', 'service_description', 'performance_metrics', 'uptime_guarantee', 'response_time', 'resolution_time', 'vendor_responsibilities', 'client_responsibilities', 'report_frequency', 'performance_monitoring_method', 'penalty_type', 'penalty_amount', 'start_date', 'expiry_date', 'renewal_terms', 'approval_workflow'];
+    protected $fillable = ['contract_id', 'client_id', 'vendor_id', 'service_name', 'service_description', 'vendor_responsibilities', 'client_responsibilities', 'report_frequency', 'performance_monitoring_method', 'penalty_type', 'penalty_amount', 'start_date', 'expiry_date', 'renewal_terms', 'approval_workflow'];
     public function client()
     {
         return $this->belongsTo(Client::class);
@@ -25,11 +25,14 @@ class SlaConfig extends Model
     {
         return $this->belongsTo(Contract::class);
     }
-    protected function performanceMetrics(): Attribute
+    public function performanceMetrics()
     {
-        return Attribute::make(
-            get: fn($value) => json_decode($value, true),
-            set: fn($value) => json_encode($value),
-        );
+        return $this->hasMany(VendorPerformanceMetric::class, 'sla_config_id', 'id');
     }
+
+    public function scoreCards()
+    {
+        return $this->hasMany(VendorPerformanceScorecard::class, 'sla_config_id', 'id');
+    }
+
 }

@@ -332,11 +332,11 @@ function randomPassword()
     }
     return $serial;
 }
-function randomNumber()
+function randomNumber($loop = 6)
 {
     $tokens = '0123456789';
     $serial = '';
-    for ($j = 0; $j < 6; $j++) {
+    for ($j = 0; $j < $loop; $j++) {
         $serial .= $tokens[mt_rand(0, strlen($tokens) - 1)];
     }
     return $serial;

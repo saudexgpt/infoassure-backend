@@ -23,4 +23,9 @@ class DueDiligenceResponse extends Model
     {
         return $this->hasMany(DueDiligenceEvidence::class, 'due_diligence_response_id', 'id');
     }
+
+    public function riskAssessment()
+    {
+        return $this->hasOne(RiskAssessment::class, 'due_diligence_response_id', 'id');
+    }
 }

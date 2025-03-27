@@ -428,6 +428,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::get('fetch-assets', [RiskAssessmentsController::class, 'fetchAssets']);
 
+
+        Route::get('fetch-risk-appetite', [RiskAssessmentsController::class, 'fetchRiskAppetite']);
+
         Route::post('save-risk', [RiskAssessmentsController::class, 'saveRisk']);
         Route::put('update-risk/{risk}', [RiskAssessmentsController::class, 'updateRisk']);
 

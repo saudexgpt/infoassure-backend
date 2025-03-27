@@ -6,14 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\AvailableModule;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\RiskImpact;
+use App\Models\RiskImpactArea;
+use App\Models\RiskImpactOnArea;
+use App\Models\RiskLikelihood;
+use App\Models\RiskMatrix;
 use App\Models\VendorDueDiligence\DueDiligenceEvidence;
 use App\Models\DueDiligenceQuestion;
 use App\Models\VendorDueDiligence\DueDiligenceResponse;
+use App\Models\VendorDueDiligence\RiskAssessment;
 use App\Models\VendorDueDiligence\User;
 use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use OpenAI\Laravel\Facades\OpenAI;
+use Spatie\PdfToText\Pdf;
 
 class DueDiligenceResponsesController extends Controller
 {
@@ -29,7 +36,7 @@ class DueDiligenceResponsesController extends Controller
         $vendor_id = $request->vendor_id;
         $vendor = Vendor::find($vendor_id);
         $client_id = $vendor->client_id;
-        $answers = DueDiligenceResponse::with('evidences')
+        $answers = DueDiligenceResponse::with('evidences', 'riskAssessment')
             ->join('due_diligence_questions', 'due_diligence_questions.id', 'due_diligence_responses.due_diligence_question_id')
             ->where(['due_diligence_responses.client_id' => $client_id, 'due_diligence_responses.vendor_id' => $vendor_id])
             ->select('*', 'due_diligence_responses.id as id')
@@ -78,11 +85,13 @@ class DueDiligenceResponsesController extends Controller
         $message = "Please assess the following vendor due diligence response the the question below:";
         $question = "Question: ### $quest ###";
         $answer = "Response: ### $ans, $details ###";
-        $evidence = "Evidence: ### $evid ###";
+        if ($evid != '') {
+            $evidence = "Evidence: ### $evid ###";
+        }
         $instruction = "
                 Based on the provided information, generate:
                 1. A risk score between 1 and 3 reflecting the risk associated with the response. High score means high risk.
-                2. The various associated impacts with respect to the risk score. 
+                2. The various associated vulnerabilities based on the risk score. 
                 3. A brief observation for the assigned score.
                 4. A good recommendation based on the assigned risk score.
                 Provide the response in a json format for easy extraction in the format below;
@@ -90,9 +99,12 @@ class DueDiligenceResponsesController extends Controller
                 score: {range of 1 to 3}
                 observation: <brief justification in 30 to 50 words>
                 recommendations: <good recommendation in 50 words>
-                impacts: <state the impacts in 50 words>";
+                vulnerabilities: <state the vulnerabilities in 50 words>";
 
-        $content = $message . $question . $answer . $evidence . $instruction;
+        $content = $message . $question . $answer . $instruction;
+        if ($evid != '') {
+            $content = $message . $question . $answer . $evidence . $instruction;
+        }
 
         $result = OpenAI::chat()->create([
             'model' => 'gpt-3.5-turbo',
@@ -106,6 +118,75 @@ class DueDiligenceResponsesController extends Controller
         return $ai_response;
         // print_r($result);
     }
+    // private function fetchClientImpactsSetup($client_id)
+    // {
+    //     $impacts = [];
+    //     $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+    //     if ($risk_matrix) {
+    //         $matrix = $risk_matrix->current_matrix;
+    //         $impacts = RiskImpact::orderBy('value')
+    //             ->where('client_id', $client_id)
+    //             ->where('matrix', $matrix)->get();
+    //     }
+    //     return $impacts;
+    // }
+    // private function fetchClientLikelihoodsSetup($client_id)
+    // {
+    //     $likelihoods = [];
+    //     $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+    //     if ($risk_matrix) {
+    //         $matrix = $risk_matrix->current_matrix;
+    //         $likelihoods = RiskLikelihood::orderBy('value')
+    //             ->where('client_id', $client_id)
+    //             ->where('matrix', $matrix)->get();
+    //     }
+    //     return $likelihoods;
+    // }
+    private function createRiskAssessment($data)
+    {
+        $client_id = $data->client_id;
+        $vendor_id = $data->vendor_id;
+        $due_diligence_response_id = $data->id;
+        $due_diligence_question_id = $data->due_diligence_question_id;
+        // $impact_fields = [
+        //     ['name' => 'Confidentiality', 'slug' => 'C', 'impact_value' => '', 'meaning' => ''],
+        //     ['name' => 'Integrity', 'slug' => 'I', 'impact_value' => '', 'meaning' => ''],
+        //     ['name' => 'Availability', 'slug' => 'A', 'impact_value' => '', 'meaning' => ''],
+        //     ['name' => 'Privacy', 'slug' => 'P', 'impact_value' => '', 'meaning' => ''],
+        // ];
+        // if ($module == 'rcsa') {
+        // $impact_fields = [];
+        $impact_on_areas = [];
+        $impact_areas = RiskImpactArea::where('client_id', $client_id)->orderBy('area')->get();
+        foreach ($impact_areas as $impact_area) {
+            $impact_on_areas[] = [
+                'id' => $impact_area->id,
+                'name' => $impact_area->area,
+                'slug' => $impact_area->area,
+                'impact_value' => '',
+                'meaning' => ''
+            ];
+        }
+        // }
+        RiskAssessment::updateOrCreate(
+            [
+                'client_id' => $client_id,
+                'vendor_id' => $vendor_id,
+                'due_diligence_response_id' => $due_diligence_response_id,
+                'due_diligence_question_id' => $due_diligence_question_id,
+            ],
+            [
+                // 'impact_data' => $impact_fields,
+                // 'revised_impact_data' => $impact_fields,
+                'impact_on_areas' => $impact_on_areas,
+                'revised_impact_on_areas' => $impact_on_areas,
+                // 'impact_on_areas' => $impact_on_areas,
+                // 'revised_impact_on_areas' => $impact_on_areas,
+            ]
+        );
+
+        return 'success';
+    }
     /**
      * Show the form for editing the specified resource.
      *
@@ -116,7 +197,7 @@ class DueDiligenceResponsesController extends Controller
     {
         $value = $request->value;
         $answer_ids = json_decode(json_encode($request->answer_ids));
-        DueDiligenceResponse::with('question')->whereIn('id', $answer_ids)->chunkById(10, function ($answers) use ($answer_ids) {
+        DueDiligenceResponse::with('question')->whereIn('id', $answer_ids)->chunkById(10, function ($answers) {
             foreach ($answers as $answer) {
                 $ans = $answer->answer;
                 if ($ans != NULL) {
@@ -124,45 +205,53 @@ class DueDiligenceResponsesController extends Controller
                     $details = $answer->detailed_explanation;
                     $quest = $answer->question->question;
                     $template_ids_array = $answer->question->expected_document_template_ids;
-                    $uploaded_documents = DueDiligenceEvidence::whereIn('due_diligence_response_id', $answer_ids)
+                    $uploaded_documents = DueDiligenceEvidence::where('due_diligence_response_id', $answer->id)
                         // ->where('is_exception', 0)
                         ->where('link', '!=', NULL)
                         ->get()
-                        ->pluck('full_document_link')->toArray();
+                        ->pluck('link')
+                        // ->pluck('full_document_link')
+                        ->toArray();
                     // $evidences = $uploaded_documents;
                     $evidence_links_array = $uploaded_documents;
-                    // foreach ($evidences as $evidence) {
-                    //     $evidence_links_array[] = env('APP_URL') . '/storage/' . $evidence->link;
-                    // }
-                    $evidence_link = implode(',', $evidence_links_array);
+                    $file_text = '';
+                    $evidence_link = (count($evidence_links_array) > 0) ? implode(',', $evidence_links_array) : '';
+                    if ($evidence_link != '') {
+                        // $file_text = Pdf::getText(
+                        //     portalPulicPath($evidence_link),
+                        //     'C:\xampp\htdocs\3core-projects\infoassure-backend\xpdf-tools-win-4.05\bin64\pdftotext.exe'
+                        // );
+                    }
+
+
                     try {
-                        $ai_response = $this->analyzeWithOpenAI($quest, $ans, $details, $evidence_link);
+                        $ai_response = $this->analyzeWithOpenAI($quest, $ans, $details, $file_text);
                         $answer->risk_score = $ai_response->score;
                         $answer->observation = $ai_response->observation;
-                        $answer->impact = $ai_response->impacts;
+                        $answer->impact = $ai_response->vulnerabilities;
                         $answer->recommendations = $ai_response->recommendations;
                     } catch (\Throwable $th) {
                         //throw $th;
                         $answer->risk_score = 3; // the high risk by default
                         $answer->observation = NULL;
                         $answer->impact = NULL;
-                        $answer->recommendations = NULL;
                     }
 
                 }
                 $answer->is_submitted = 1;
                 $answer->save();
-
+                $this->createRiskAssessment($answer);
             }
         }, $column = 'id');
+
         //send notification
         $answer = DueDiligenceResponse::with('question')->find($answer_ids[0]);
         $question = $answer->question;
         $vendor = Vendor::find($answer->vendor_id);
 
-        $project = Project::with('users')->where('available_module_id', $this->module->id)->first();
-        $userIds = $project->users()->pluck('id')->toArray();
-
+        // $project = Project::with('users')->where('available_module_id', $this->module->id)->first();
+        // $userIds = $project->users()->pluck('id')->toArray();
+        $userIds = $this->getVendorClientUserIds($vendor->id);
         $token = $request->bearerToken();
         $user = User::where('api_token', $token)->first();
         $name = $user->name;// . ' (' . $user->email . ')';

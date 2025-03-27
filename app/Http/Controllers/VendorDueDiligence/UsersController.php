@@ -131,24 +131,6 @@ class UsersController extends Controller
     }
 
 
-
-
-    public function show(User $user)
-    {
-    }
-
-    public function editPhoto(Request $request)
-    {
-
-        if (isset($request->user_id) && $request->user_id != '') {
-            $user_id = $request->user_id;
-            $edit_user = User::find($user_id);
-        } else {
-            $edit_user = $this->getUser();
-        }
-
-        return $this->render('core::users.edit_photo', compact('edit_user'));
-    }
     /**
      * Update the specified resource in storage.
      *

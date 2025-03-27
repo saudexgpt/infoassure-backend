@@ -9,7 +9,7 @@ class VendorPerformanceScorecard extends Model
 {
     //
     protected $connection = 'vdd';
-    protected $fillable = ['contract_id', 'client_id', 'vendor_id', 'sla_config_id', 'kpi_metrics', 'service_quality_rating', 'sla_compliance_status', 'overall_performance_score', 'action_required', 'comments', 'approval_status', 'start_date', 'end_date'];
+    protected $fillable = ['contract_id', 'client_id', 'vendor_id', 'sla_config_id', 'vendor_performance_metric_id', 'scores', 'comments', 'approval_status'];
     public function client()
     {
         return $this->belongsTo(Client::class);
@@ -28,8 +28,11 @@ class VendorPerformanceScorecard extends Model
     {
         return $this->belongsTo(SlaConfig::class, 'sla_config_id', 'id');
     }
-
-    protected function kpiMetrics(): Attribute
+    public function kpiMetrics()
+    {
+        return $this->belongsTo(VendorPerformanceMetric::class, 'vendor_performance_metric_id', 'id');
+    }
+    protected function scores(): Attribute
     {
         return Attribute::make(
             get: fn($value) => json_decode($value, true),
