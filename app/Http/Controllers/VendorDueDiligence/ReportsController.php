@@ -208,7 +208,7 @@ class ReportsController extends Controller
         $vendor_categories_series = [
             [
                 'name' => 'Count',
-                'colorByPoint' => true,
+                'colorByPoint' => false,
                 'data' => $data
             ]
         ];

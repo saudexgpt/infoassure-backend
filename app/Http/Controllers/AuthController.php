@@ -353,6 +353,10 @@ class AuthController extends Controller
     }
     public function recoverPassword(Request $request)
     {
+        $request->validate([
+            'email' => 'required',
+            'g-recaptcha-response' => ['required', new ReCaptcha]
+        ]);
 
         $user = User::where('email', $request->email)->first();
         if ($user) {
