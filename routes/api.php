@@ -52,7 +52,7 @@ Route::get('set-admin-role', [Controller::class, 'setAdminRole']);
 Route::get('countries', [Controller::class, 'fetchCountries']);
 Route::get('fetch-available-modules', [Controller::class, 'fetchAvailableModules']);
 
-
+Route::get('generate-captcha', [Controller::class, 'fetchCaptcha']);
 
 // Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
 // Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);

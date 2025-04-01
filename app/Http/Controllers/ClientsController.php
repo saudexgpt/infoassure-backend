@@ -11,6 +11,7 @@ use App\Jobs\SendQueuedConfirmationEmailJob;
 use App\Mail\ConfirmNewRegistration;
 use App\Models\Role;
 use Illuminate\Support\Facades\Mail;
+use App\Rules\ReCaptcha;
 
 class ClientsController extends Controller
 {
@@ -104,7 +105,13 @@ class ClientsController extends Controller
 
     public function registerClient(Request $request)
     {
-
+        $request->validate([
+            'organization_name' => 'required|string',
+            'admin_first_name' => 'required|string',
+            'phone' => 'required|string|unique:users',
+            'email' => 'required|string|unique:users',
+            'g_recaptcha_response' => ['required', new ReCaptcha]
+        ]);
         $contact_email = $request->contact_email;
         $client = Client::where('contact_email', $contact_email)->first();
         if (!$client) {
@@ -136,9 +143,9 @@ class ClientsController extends Controller
     {
         $client = Client::find($request->client_id);
         $request->name = $request->admin_first_name . ' ' . $request->admin_last_name;
-        $request->email = $request->admin_email;
-        $request->password = $request->admin_email;
-        $request->phone = $request->admin_phone;
+        // $request->email = $request->admin_email;
+        $request->password = $request->email;
+        // $request->phone = $request->admin_phone;
         $user_obj = new User();
         $user = $user_obj->createUser($request);
         // make this user the client admin
