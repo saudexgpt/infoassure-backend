@@ -20,6 +20,7 @@ use App\Models\UserPassword;
 use App\Models\BusinessUnit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
@@ -83,7 +84,7 @@ class AuthController extends Controller
             'email' => 'required|string|unique:users',
             'password' => 'required|string',
             'c_password' => 'required|same:password',
-            'g_recaptcha_response' => ['required', new ReCaptcha]
+            'g-recaptcha-response' => ['required', new ReCaptcha]
         ]);
 
         $user = new User([
@@ -353,9 +354,19 @@ class AuthController extends Controller
     }
     public function recoverPassword(Request $request)
     {
+        // $value = $request->recaptcha;
+        // return $response = Http::post("https://www.google.com/recaptcha/api/siteverify", [
+
+        //     'secret' => config('services.recaptcha.secret'),
+
+        //     'response' => $value,
+
+        //     'remoteip' => request()->ip()
+
+        // ]);
         $request->validate([
             'email' => 'required',
-            'g_recaptcha_response' => [new ReCaptcha]
+            'recaptcha' => ['required', new ReCaptcha]
         ]);
 
         $user = User::where('email', $request->email)->first();

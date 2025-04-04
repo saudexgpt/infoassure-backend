@@ -110,7 +110,7 @@ class ClientsController extends Controller
             'admin_first_name' => 'required|string',
             'phone' => 'required|string|unique:users',
             'email' => 'required|string|unique:users',
-            'g_recaptcha_response' => ['required', new ReCaptcha]
+            'recaptcha' => ['required', new ReCaptcha]
         ]);
         $contact_email = $request->contact_email;
         $client = Client::where('contact_email', $contact_email)->first();
