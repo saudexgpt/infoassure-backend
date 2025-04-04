@@ -354,7 +354,6 @@ class AuthController extends Controller
     }
     public function recoverPassword(Request $request)
     {
-        echo env('RECAPTCHA_SITE_SECRET');
         $request->validate([
             'email' => 'required',
             'recaptcha' => ['required', new ReCaptcha]
