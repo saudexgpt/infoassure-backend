@@ -47,7 +47,7 @@ class ReCaptcha implements Rule
 
             'response' => $value,
 
-            // 'remoteip' => \request()->ip()
+            'remoteip' => request()->ip()
 
         ]);
 
