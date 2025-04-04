@@ -41,7 +41,7 @@ class ReCaptcha implements Rule
 
     public function passes($attribute, $value)
     {
-
+        dd($value);
         $response = Http::post("https://www.google.com/recaptcha/api/siteverify", [
 
             'secret' => config('services.recaptcha.secret'),
