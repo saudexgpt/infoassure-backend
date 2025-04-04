@@ -43,7 +43,7 @@ class ReCaptcha implements Rule
     {
         $response = Http::asForm()->post("https://www.google.com/recaptcha/api/siteverify", [
 
-            'secret' => env('RECAPTCHA_SITE_SECRET'), // config('services.recaptcha.secret'),
+            'secret' => '6Leh8wkrAAAAABoldut5NjRkc8H_VFaRFhwjkAv_', // env('RECAPTCHA_SITE_SECRET'), // config('services.recaptcha.secret'),
 
             'response' => $value,
 
