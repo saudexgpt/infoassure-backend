@@ -353,6 +353,7 @@ class AuthController extends Controller
     }
     public function recoverPassword(Request $request)
     {
+        $request['g-recaptcha-response'] = $request->g_recaptcha_response;
         $request->validate([
             'email' => 'required',
             'g_recaptcha_response' => ['required', new ReCaptcha]
