@@ -356,7 +356,7 @@ class AuthController extends Controller
         $request['g-recaptcha-response'] = $request->g_recaptcha_response;
         $request->validate([
             'email' => 'required',
-            'g_recaptcha_response' => ['required', new ReCaptcha]
+            'g-recaptcha-response' => ['required', new ReCaptcha]
         ]);
 
         $user = User::where('email', $request->email)->first();
