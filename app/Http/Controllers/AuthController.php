@@ -354,17 +354,6 @@ class AuthController extends Controller
     }
     public function recoverPassword(Request $request)
     {
-        // $value = $request->recaptcha;
-        // return $response = Http::post("https://www.google.com/recaptcha/api/siteverify", [
-
-        //     'secret' => config('services.recaptcha.secret'),
-
-        //     'response' => $value,
-
-        //     'remoteip' => request()->ip()
-
-        // ]);
-        echo config('services.recaptcha.secret');
         $request->validate([
             'email' => 'required',
             'recaptcha' => ['required', new ReCaptcha]
