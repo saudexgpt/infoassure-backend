@@ -364,6 +364,7 @@ class AuthController extends Controller
         //     'remoteip' => request()->ip()
 
         // ]);
+        echo config('services.recaptcha.secret');
         $request->validate([
             'email' => 'required',
             'recaptcha' => ['required', new ReCaptcha]
