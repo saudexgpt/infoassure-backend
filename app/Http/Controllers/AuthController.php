@@ -354,24 +354,25 @@ class AuthController extends Controller
     public function recoverPassword(Request $request)
     {
         $request['g-recaptcha-response'] = $request->g_recaptcha_response;
-        $request->validate([
-            'email' => 'required',
-            'g-recaptcha-response' => ['required', new ReCaptcha]
-        ]);
+        return $request;
+        // $request->validate([
+        //     'email' => 'required',
+        //     'g-recaptcha-response' => ['required', new ReCaptcha]
+        // ]);
 
-        $user = User::where('email', $request->email)->first();
-        if ($user) {
-            $token = hash('sha256', time() . $user->email);
-            DB::table('password_resets')->updateOrInsert(
-                ['email' => $user->email, 'token' => $token]
-            );
+        // $user = User::where('email', $request->email)->first();
+        // if ($user) {
+        //     $token = hash('sha256', time() . $user->email);
+        //     DB::table('password_resets')->updateOrInsert(
+        //         ['email' => $user->email, 'token' => $token]
+        //     );
 
-            // SendQueuedPasswordResetEmailJob::dispatch($user, $token);
-            Mail::to($user)->send(new ResetPassword($user, $token));
-            return response()->json(['message' => 'A password reset link has been sent to your email'], 200);
-        }
+        //     // SendQueuedPasswordResetEmailJob::dispatch($user, $token);
+        //     Mail::to($user)->send(new ResetPassword($user, $token));
+        //     return response()->json(['message' => 'A password reset link has been sent to your email'], 200);
+        // }
 
-        return response()->json(['message' => 'Email Not Found'], 500);
+        // return response()->json(['message' => 'Email Not Found'], 500);
     }
     public function confirmPasswordResetToken($token)
     {
