@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnswersController;
 use App\Http\Controllers\AppMailingsController;
+use App\Http\Controllers\AssetsController;
 use App\Http\Controllers\DPIAController;
 use App\Http\Controllers\GeneralRiskLibrariesController;
 use App\Http\Controllers\PDAController;
@@ -419,14 +420,33 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::delete('destroy-template/{template}', [UploadsController::class, 'destroyTemplate']);
         Route::put('remark-on-upload/{upload}', [UploadsController::class, 'remarkOnUpload']);
     });
+    ///////////////////////////////////RISK MANAGEMENT////////////////////////////////////////////////
+    Route::group(['prefix' => 'assets'], function () {
+        Route::get('fetch-asset-types', [AssetsController::class, 'fetchAssetTypes']);
+
+        Route::get('fetch-assets', [AssetsController::class, 'fetchAssets']);
+
+        Route::post('save-asset-types', [AssetsController::class, 'saveAssetTypes']);
+        Route::post('save-assets', [AssetsController::class, 'saveAssets']);
+
+        Route::put('update-asset-type/{asset_type}', [AssetsController::class, 'updateAssetType']);
+        Route::put('update-asset/{asset}', [AssetsController::class, 'updateAsset']);
+
+        Route::put('set-asset-owner/{asset}', [AssetsController::class, 'setAssetOwner']);
+
+        Route::delete('delete-asset-type/{value}', [AssetsController::class, 'deleteAssetType']);
+    });
+    ///////////////////////////////////ASSESSMENT MANAGEMENT////////////////////////////////////////////////
+
+
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
     Route::group(['prefix' => 'risk-assessment'], function () {
-        Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
+        // Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
         Route::get('fetch-asset-types-with-asset-assessment', [RiskAssessmentsController::class, 'fetchAssetTypesWithAssetAssessments']);
         Route::get('fetch-asset-types-with-risk-registers', [RiskAssessmentsController::class, 'fetchAssetTypesWithRiskRegisters']);
         Route::get('fetch-business-units-with-risk-assessments', [RiskAssessmentsController::class, 'fetchBusinessUnitsWithRiskAssessments']);
 
-        Route::get('fetch-assets', [RiskAssessmentsController::class, 'fetchAssets']);
+        // Route::get('fetch-assets', [RiskAssessmentsController::class, 'fetchAssets']);
 
 
         Route::get('fetch-risk-appetite', [RiskAssessmentsController::class, 'fetchRiskAppetite']);
@@ -435,19 +455,19 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update-risk/{risk}', [RiskAssessmentsController::class, 'updateRisk']);
 
         // Route::post('save-impacts', [RiskAssessmentsController::class, 'saveImpacts']);
-        Route::post('save-asset-types', [RiskAssessmentsController::class, 'saveAssetTypes']);
-        Route::post('save-assets', [RiskAssessmentsController::class, 'saveAssets']);
+        // Route::post('save-asset-types', [RiskAssessmentsController::class, 'saveAssetTypes']);
+        // Route::post('save-assets', [RiskAssessmentsController::class, 'saveAssets']);
         Route::post('save-categories', [RiskAssessmentsController::class, 'saveCategories']);
         Route::put('update-category/{riskCategory}', [RiskAssessmentsController::class, 'updateCategory']);
 
         // Route::post('save-likelihoods', [RiskAssessmentsController::class, 'saveLikelihoods']);
 
-        Route::put('update-asset-type/{asset_type}', [RiskAssessmentsController::class, 'updateAssetType']);
-        Route::put('update-asset/{asset}', [RiskAssessmentsController::class, 'updateAsset']);
+        // Route::put('update-asset-type/{asset_type}', [RiskAssessmentsController::class, 'updateAssetType']);
+        // Route::put('update-asset/{asset}', [RiskAssessmentsController::class, 'updateAsset']);
 
 
         Route::delete('delete-impact/{value}', [RiskAssessmentsController::class, 'deleteImpact']);
-        Route::delete('delete-asset-type/{value}', [RiskAssessmentsController::class, 'deleteAssetType']);
+        // Route::delete('delete-asset-type/{value}', [RiskAssessmentsController::class, 'deleteAssetType']);
         Route::delete('delete-category{value}', [RiskAssessmentsController::class, 'deleteCategory']);
         Route::delete('delete-likelihood/{value}', [RiskAssessmentsController::class, 'deleteLikelihood']);
 

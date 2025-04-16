@@ -176,6 +176,7 @@ class ClientsController extends Controller
     {
         $password = $user->email; // randomPassword();
         $user->password = $password;
+        $user->password_status = 'default';
         $user->save();
         //email will be sent later containing login credentials
         // SendQueuedConfirmationEmailJob::dispatch($user, $password);

@@ -273,8 +273,13 @@ class VendorsController extends Controller
         $title = "Vendor profile updated";
         $userIds = $this->getVendorClientUserIds($vendor_id);
         //log this event
-        $description = "The vendor profile for $vendor->name was updated by $name. <br>" . $extra_message;
-        $this->sendNotification($title, $description, $userIds);
+        try {
+
+            $description = "The vendor profile for $vendor->name was updated by $name. <br>" . $extra_message;
+            $this->sendNotification($title, $description, $userIds);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
 
         return 'success';
     }

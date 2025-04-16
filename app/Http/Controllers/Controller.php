@@ -275,8 +275,13 @@ class Controller extends BaseController
     {
         $vendor = Vendor::find($vendorId);
         $ids = [];
-        foreach ($vendor->client_users as $value) {
-            $ids[] = $value->id;
+        try {
+
+            foreach ($vendor->client_users as $value) {
+                $ids[] = $value->id;
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
         }
         return $ids;
     }

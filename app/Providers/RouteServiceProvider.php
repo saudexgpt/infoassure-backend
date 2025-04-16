@@ -44,6 +44,7 @@ class RouteServiceProvider extends ServiceProvider
                 ->group([
                     base_path('routes/api.php'),
                     base_path('routes/ndpaAPI.php'),
+                    base_path('routes/ismsAPI.php'),
                     base_path('routes/vddAPI.php')
                 ]);
 

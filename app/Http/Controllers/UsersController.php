@@ -43,6 +43,11 @@ class UsersController extends Controller
     {
         $user = $this->getUser();
         $staff = [];
+        if ($user->haRole('admin')) {
+            $client = $this->getClient();
+            $staff = $client->users()->with('roles', 'permissions')->get();
+        }
+
         if ($user->haRole('partner')) {
             $partner = $this->getPartner();
             $staff = $partner->users()->with('roles', 'permissions')->get();

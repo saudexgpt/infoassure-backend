@@ -256,11 +256,6 @@ class RiskAssessmentsController extends Controller
         $value->delete();
         return response()->json([], 204);
     }
-    public function deleteAssetType(AssetType $value)
-    {
-        $value->delete();
-        return response()->json([], 204);
-    }
     public function deleteCategory(RiskCategory $value)
     {
         $value->delete();

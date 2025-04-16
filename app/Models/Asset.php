@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class Asset extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'client_id', 'asset_type_id'];
+    protected $fillable = ['name', 'client_id', 'asset_type_id', 'description', 'purpose', 'classification', 'information_stored', 'location'];
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id', 'id');
     }
 
     public function assetType()
