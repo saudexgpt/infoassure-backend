@@ -215,31 +215,41 @@ class Controller extends BaseController
     {
         // $client = $this->getClient();
         // $notification_channels = ($client->notification_channels) ? $client->notification_channels : ['email', 'in_app'];
-        $notification_channels = ['email', 'in_app'];
-        $recipients = User::whereIn('id', $userIds)->get();
+        try {
+            $notification_channels = ['email', 'in_app'];
+            $recipients = User::whereIn('id', $userIds)->get();
 
-        if (in_array('in_app', $notification_channels)) {
-            $notification = new AuditTrail($title, $message);
-            Notification::send($recipients, $notification);
-        }
-
-        if (in_array('email', $notification_channels)) {
-            foreach ($recipients as $recipient) {
-
-                Mail::to($recipient)->send(new SendMail($title, $message, $recipient));
+            if (in_array('in_app', $notification_channels)) {
+                $notification = new AuditTrail($title, $message);
+                Notification::send($recipients, $notification);
             }
+
+            if (in_array('email', $notification_channels)) {
+                foreach ($recipients as $recipient) {
+
+                    Mail::to($recipient)->send(new SendMail($title, $message, $recipient));
+                }
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
         }
+
     }
     public function sendVendorNotification($title, $message, array $userIds)
     {
         // $client = $this->getClient();
         // $notification_channels = ($client->notification_channels) ? $client->notification_channels : ['email', 'in_app'];
         $notification_channels = ['email', 'in_app'];
-        $recipients = VendorUser::whereIn('id', $userIds)->get();
+        try {
 
-        foreach ($recipients as $recipient) {
+            $recipients = VendorUser::whereIn('id', $userIds)->get();
 
-            Mail::to($recipient)->send(new SendMail($title, $message, $recipient));
+            foreach ($recipients as $recipient) {
+
+                Mail::to($recipient)->send(new SendMail($title, $message, $recipient));
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
         }
     }
 
