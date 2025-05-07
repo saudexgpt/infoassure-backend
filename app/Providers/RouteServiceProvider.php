@@ -43,8 +43,8 @@ class RouteServiceProvider extends ServiceProvider
                 ->namespace($this->namespace)
                 ->group([
                     base_path('routes/api.php'),
-                    base_path('routes/ndpaAPI.php'),
                     base_path('routes/ismsAPI.php'),
+                    base_path('routes/ndpaAPI.php'),
                     base_path('routes/vddAPI.php')
                 ]);
 

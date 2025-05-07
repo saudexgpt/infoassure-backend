@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\ISMS;
 
-use App\Models\Answer;
+use App\Http\Controllers\Controller;
 use App\Models\AssetType;
 use App\Models\BusinessImpactAnalysis;
 use App\Models\Client;
+use App\Models\ISMS\ComplianceResponse;
 use App\Models\RiskMatrix;
 use App\Models\RiskRegister;
 use App\Models\Upload;
@@ -43,8 +44,8 @@ class ReportsController extends Controller
         $my_projects = $this->getMyProjects($client->id);
         // $uploaded_documents = Upload::where(['client_id' => $client->id, 'is_exception' => 0])->where('link', '!=', NULL)->count();
         // $expected_documents = Upload::where(['client_id' => $client->id])->count();
-        // $answered_questions = Answer::where(['client_id' => $client->id, 'is_exception' => 0])->where('is_submitted', 1)->count();
-        // $all_questions = Answer::where(['client_id' => $client->id])->count();
+        // $ComplianceResponseed_questions = ComplianceResponse::where(['client_id' => $client->id, 'is_exception' => 0])->where('is_submitted', 1)->count();
+        // $all_questions = ComplianceResponse::where(['client_id' => $client->id])->count();
         // $exceptions = Exception::where('client_id', $client->id)->count();
         $all_projects_count = $my_projects->count();
         $completed_projects = $my_projects->where('is_completed', 1)
@@ -80,16 +81,16 @@ class ReportsController extends Controller
                 ->count();
 
             $expected_documents = Upload::where($condition)->whereIn('project_id', $expectedDocumentProjectIds)->count();
-            $answered_questions = Answer::where($condition)
+            $ComplianceResponseed_questions = ComplianceResponse::where($condition)
                 ->whereIn('project_id', $projectIds)
                 ->where('is_exception', 0)
                 ->where(function ($q) {
                     $q->where('yes_or_no', '!=', NULL);
-                    $q->orWhere('open_ended_answer', '!=', NULL);
+                    $q->orWhere('open_ended_ComplianceResponse', '!=', NULL);
                 })
                 // ->where('status', 'Closed')
                 ->count();
-            $all_questions = Answer::where($condition)->whereIn('project_id', $projectIds)->count();
+            $all_questions = ComplianceResponse::where($condition)->whereIn('project_id', $projectIds)->count();
             $exceptions = Exception::where($condition)->whereIn('project_id', $projectIds)->count();
 
             $my_projects = $this->getUser()->projects()->where($condition)->groupBy('client_id')->select(\DB::raw('AVG(progress) as project_progress'))->first();
@@ -107,31 +108,32 @@ class ReportsController extends Controller
                 $expected_documents = Upload::where($condition)->count();
             }
 
-            $answered_questions = Answer::where($condition)
+            $ComplianceResponseed_questions = ComplianceResponse::where($condition)
                 ->where('is_exception', 0)
                 ->where(function ($q) {
                     $q->where('yes_or_no', '!=', NULL);
-                    $q->orWhere('open_ended_answer', '!=', NULL);
+                    $q->orWhere('open_ended_ComplianceResponse', '!=', NULL);
                 })
                 // ->where('status', 'Closed')
                 ->count();
-            $all_questions = Answer::where($condition)->count();
+            $all_questions = ComplianceResponse::where($condition)->count();
             $exceptions = Exception::where($condition)->count();
         }
 
 
-        return response()->json(compact('uploaded_documents', 'expected_documents', 'answered_questions', 'all_questions', 'exceptions', 'project_progress'), 200);
+        return response()->json(compact('uploaded_documents', 'expected_documents', 'ComplianceResponseed_questions', 'all_questions', 'exceptions', 'project_progress'), 200);
     }
 
     public function clientProjectAssessmentSummaryReport(Request $request)
     {
         $client_id = $request->client_id;
         $project_id = $request->project_id;
-        $reports = Answer::join('clauses', 'clauses.id', '=', 'answers.clause_id')
-            ->where(['client_id' => $client_id, 'project_id' => $project_id])
+        $reports = ComplianceResponse::join('clauses', 'clauses.id', '=', 'compliance_responses.clause_id')
+            ->join('compliance_response_monitors', 'compliance_response_monitors.id', '=', 'compliance_responses.compliance_response_monitor_id')
+            ->where(['compliance_responses.client_id' => $client_id, 'compliance_response_monitors.project_id' => $project_id])
             // ->where('is_submitted', 1)
             ->orderBy('clauses.sort_by')
-            ->select(\DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
+            ->select(\DB::raw('COUNT(CASE WHEN status = "Compliant" THEN compliance_responses.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN status = "Non-Compliant" THEN compliance_responses.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN status = "Not Applicable" THEN compliance_responses.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN status = "Opportunity For Improvement" THEN compliance_responses.id END ) as open_for_imporvement'))
             ->first();
         return response()->json(compact('reports'), 200);
     }
@@ -139,12 +141,13 @@ class ReportsController extends Controller
     {
         $client_id = $request->client_id;
         $project_id = $request->project_id;
-        $reports = Answer::join('clauses', 'clauses.id', '=', 'answers.clause_id')
-            ->groupBy('clause_id')
-            ->where(['client_id' => $client_id, 'project_id' => $project_id])
+        $reports = ComplianceResponse::join('clauses', 'clauses.id', '=', 'compliance_responses.clause_id')
+            ->join('compliance_response_monitors', 'compliance_response_monitors.id', '=', 'compliance_responses.compliance_response_monitor_id')
+            ->groupBy('compliance_responses.clause_id')
+            ->where(['compliance_responses.client_id' => $client_id, 'compliance_response_monitors.project_id' => $project_id])
             // ->where('is_submitted', 1)
             ->orderBy('clauses.sort_by')
-            ->select('clauses.name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
+            ->select('clauses.description as name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN status = "Compliant" THEN compliance_responses.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN status = "Non-Compliant" THEN compliance_responses.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN status = "Not Applicable" THEN compliance_responses.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN status = "Opportunity For Improvement" THEN compliance_responses.id END ) as open_for_imporvement'))
             ->get();
         $categories = [];
         $conformity = [];
@@ -175,7 +178,7 @@ class ReportsController extends Controller
         }
         $series = [
             [
-                'name' => 'Conformity',
+                'name' => 'Compliant',
                 'data' => $conformity, //array format
                 'color' => '#00A65A',
                 'stack' => 'Management Clause',
@@ -184,7 +187,7 @@ class ReportsController extends Controller
                 ],
             ],
             [
-                'name' => 'Non Conformity',
+                'name' => 'Non Compliant',
                 'data' => $non_conformity, //array format
                 'color' => '#F00C12',
                 'stack' => 'Management Clause',
@@ -219,12 +222,12 @@ class ReportsController extends Controller
     // {
     //     $client_id = $request->client_id;
     //     $project_id = $request->project_id;
-    //     $reports = Answer::join('clauses', 'clauses.id', '=', 'answers.clause_id')
+    //     $reports = ComplianceResponse::join('clauses', 'clauses.id', '=', 'compliance_responses.clause_id')
     //         ->groupBy('clause_id')
     //         ->where(['client_id' => $client_id, 'project_id' => $project_id])
     //         // ->where('is_submitted', 1)
     //         ->orderBy('clauses.sort_by')
-    //         ->select('clauses.name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'), \DB::raw('COUNT(CASE WHEN status = "Closed" AND is_exception = 0 THEN answers.id END ) as answered_questions'), \DB::raw('COUNT(*) as all_questions'))
+    //         ->select('clauses.name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN status = "Compliant" THEN compliance_responses.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN status = "Non-Compliant" THEN compliance_responses.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN status = "Not Applicable" THEN compliance_responses.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN status = "Opportunity For Improvement" THEN compliance_responses.id END ) as open_for_imporvement'), \DB::raw('COUNT(CASE WHEN status = "Closed" AND is_exception = 0 THEN compliance_responses.id END ) as ComplianceResponseed_questions'), \DB::raw('COUNT(*) as all_questions'))
     //         ->get();
     //     $categories = [];
     //     $conformity_count = 0;
@@ -264,7 +267,7 @@ class ReportsController extends Controller
     //             'y' => ($report->open_for_imporvement > 0) ? $report->open_for_imporvement : 0
     //         ];
 
-    //         $total_response = $report->answered_questions;
+    //         $total_response = $report->ComplianceResponseed_questions;
     //         $total_task = $report->all_questions;
 
     //         $percentage_progress = 0;
@@ -280,7 +283,7 @@ class ReportsController extends Controller
     //     $series = [
     //         [
     //             'type' => 'column',
-    //             'name' => 'Conformity',
+    //             'name' => 'Compliant',
     //             'data' => $conformity, //array format
     //             'color' => '#00a65a',
     //             'stack' => 'Management Clause',
@@ -290,7 +293,7 @@ class ReportsController extends Controller
     //         ],
     //         [
     //             'type' => 'column',
-    //             'name' => 'Non Conformity',
+    //             'name' => 'Non Compliant',
     //             'data' => $non_conformity, //array format
     //             'color' => '#f00c12',
     //             'stack' => 'Management Clause',
@@ -331,12 +334,12 @@ class ReportsController extends Controller
     //             'showInLegend' => false,
     //             'data' => [
     //                 [
-    //                     'name' => 'Conformity',
+    //                     'name' => 'Compliant',
     //                     'y' => $conformity_count,
     //                     'color' => '#00a65a',
     //                 ],
     //                 [
-    //                     'name' => 'Non Conformity',
+    //                     'name' => 'Non Compliant',
     //                     'y' => $non_conformity_count,
     //                     'color' => '#f00c12',
     //                 ],
@@ -361,11 +364,11 @@ class ReportsController extends Controller
     {
         $client_id = $request->client_id;
         $project_id = $request->project_id;
-        $clauses = Answer::groupBy('clause_id')
-            ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
+        $clauses = ComplianceResponse::groupBy('clause_id')
+            ->join('clauses', 'clauses.id', '=', 'compliance_responses.clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
             ->orderBy('clauses.sort_by')
-            ->select('clauses.name', 'clauses.id', \DB::raw('COUNT(CASE WHEN status = "Closed" AND is_exception = 0 THEN answers.id END ) as answered_questions'), \DB::raw('COUNT(*) as all_questions'), )
+            ->select('clauses.name', 'clauses.id', \DB::raw('COUNT(CASE WHEN status = "Closed" AND is_exception = 0 THEN compliance_responses.id END ) as ComplianceResponseed_questions'), \DB::raw('COUNT(*) as all_questions'), )
             ->get();
 
         $data = [];
@@ -375,7 +378,7 @@ class ReportsController extends Controller
         foreach ($clauses as $clause) {
             $clause_id = $clause->id;
 
-            $total_response = $clause->answered_questions;
+            $total_response = $clause->ComplianceResponseed_questions;
             $total_task = $clause->all_questions;
 
             $cumulative_task += $total_task;
@@ -413,10 +416,10 @@ class ReportsController extends Controller
         $client = $this->getClient();
         // $uploaded_documents = Upload::where('is_exception', 0)->where('link', '!=', NULL)->count();
         // $expected_documents = Upload::count();
-        // $answered_questions = Answer::where('is_exception', 0)->where('is_submitted', 1)->count();
-        // $all_questions = Answer::count();
+        // $ComplianceResponseed_questions = ComplianceResponse::where('is_exception', 0)->where('is_submitted', 1)->count();
+        // $all_questions = ComplianceResponse::count();
         // $exceptions = Exception::count();
-        // return response()->json(compact('uploaded_documents', 'expected_documents', 'answered_questions', 'all_questions', 'exceptions', 'clients', 'projects', 'standards'), 200);
+        // return response()->json(compact('uploaded_documents', 'expected_documents', 'ComplianceResponseed_questions', 'all_questions', 'exceptions', 'clients', 'projects', 'standards'), 200);
         $users = $client->users()->count();
         $projects = Project::where('client_id', $client->id)->count();
         $uploads = Upload::where('client_id', $client->id)
@@ -503,17 +506,17 @@ class ReportsController extends Controller
             ->get();
         return response()->json(compact('summary'), 200);
     }
-    public function fetchProjectAnswers(Request $request)
+    public function fetchProjectcompliance_responses(Request $request)
     {
         $project_id = $request->project_id;
         $standard_id = $request->standard_id;
-        $assessment_answers = Answer::with(['client', 'clause', 'standard', 'question'])
-            ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
+        $assessment_compliance_responses = ComplianceResponse::with(['client', 'clause', 'standard', 'question'])
+            ->join('clauses', 'clauses.id', '=', 'compliance_responses.clause_id')
             ->where(['project_id' => $project_id])
             ->orderBy('clauses.sort_by')
-            ->select('answers.*')
+            ->select('compliance_responses.*')
             ->get();
-        return response()->json(compact('assessment_answers'), 200);
+        return response()->json(compact('assessment_compliance_responses'), 200);
     }
 
     public function assetRiskAnalysis(Request $request)

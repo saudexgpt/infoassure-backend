@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Website;
 
+use App\Http\Controllers\Controller;
 use App\Models\ContactForm;
 use App\Models\Subscription;
 use Illuminate\Http\Request;

@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Http\Controllers\Website;
-
+use App\Http\Controllers\Controller;
 use App\Models\Website\Resource;
-use App\Models\ResourceMedia;
+use App\Models\Website\ResourceMedia;
 use Illuminate\Http\Request;
 
 class ResourcesController extends Controller
@@ -47,7 +47,7 @@ class ResourcesController extends Controller
         $resources = Resource::with('media')->where('content_type', $type)->where('id', '!=', $resource->id)->paginate(10);
         return view('resources.public.detail', compact('resources', 'resource', 'type', 'formated_type'));
     }
-    private function uploadFile(Request $request, $resource_id)
+    private function uploadNewFile($request, $resource_id)
     {
         if ($request->hasFile('media')) {
             $allowedfileExtension = ['jpg', 'png', 'jpeg'];
@@ -72,7 +72,7 @@ class ResourcesController extends Controller
     }
     public function store(Request $request)
     {
-        // return $this->uploadFile($request, 3);
+        // return $this->uploadNewFile($request, 3);
         $type = $request->type;
         $resource = new Resource();
         $resource->title = $request->title;
@@ -80,7 +80,7 @@ class ResourcesController extends Controller
         $resource->content_type = $type;
         $resource->video_link = $request->video_link;
         $resource->save();
-        $this->uploadFile($request, $resource->id);
+        $this->uploadNewFile($request, $resource->id);
 
         return redirect()->route('resource_index', ['type' => $type])->with('status', 'Action Successful');
         ;
@@ -103,7 +103,7 @@ class ResourcesController extends Controller
         $resource->content_type = $type;
         $resource->video_link = $request->video_link;
         $resource->save();
-        $this->uploadFile($request, $resource->id);
+        $this->uploadNewFile($request, $resource->id);
         return redirect()->route('resource_index', ['type' => $type]);
     }
 
