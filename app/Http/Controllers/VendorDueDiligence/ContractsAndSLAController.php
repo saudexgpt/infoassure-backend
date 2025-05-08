@@ -72,7 +72,7 @@ class ContractsAndSLAController extends Controller
                 ], ['title' => $title, 'file_link' => $link, 'start_date' => $start_date, 'expiry_date' => $expiry_date]);
             } else {
                 $ticket = Contract::orderBy('id', 'DESC')->first();
-                $prepend_id = $ticket->id + 1;
+                $prepend_id = ($ticket != null) ? $ticket->id + 1 : 1;
                 $contract_no = 'CT-' . $prepend_id . randomNumber();
                 $contract = Contract::updateOrCreate([
                     'vendor_id' => $vendor_id,
