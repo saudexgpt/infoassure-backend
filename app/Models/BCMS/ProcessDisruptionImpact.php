@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\BCMS;
+
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

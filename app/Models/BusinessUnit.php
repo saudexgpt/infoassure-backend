@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 class BusinessUnit extends Model
 {
     use HasFactory, SoftDeletes;
+    protected $connection = 'mysql';
     protected $fillable = ['client_id', 'group_name', 'unit_name', 'teams', 'function_performed', 'contact_phone', 'access_code', 'prepend_risk_no_value'];
 
     public function businessProcesses()

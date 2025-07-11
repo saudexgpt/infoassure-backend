@@ -37,7 +37,7 @@ class UserResource extends JsonResource
         }
         $modules = [];
         $partner = '';
-        if ($this->haRole('client')) {
+        if ($this->haRole('client') || $this->hasRole('admin')) {
             $client_id = $this->client_id;
             $client = Client::find($client_id);
             if ($client->admin_user_id == $this->id) {
@@ -65,7 +65,7 @@ class UserResource extends JsonResource
                 $modules[] = $activated_module->availableModule->slug;
             }
         }
-        if ($this->haRole('super') || in_array('admin', $roles)) {
+        if ($this->haRole('super')) {
             $modules = AvailableModule::pluck('slug');
         }
         if (in_array('admin', $roles)) {

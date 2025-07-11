@@ -26,8 +26,11 @@ class AssetsController extends Controller
         } else {
             $client_id = $this->getClient()->id;
         }
-        $asset_type_id = $request->asset_type_id;
-        $assets = Asset::with('owner')->where(['client_id' => $client_id, 'asset_type_id' => $asset_type_id])->orderBy('name')->get();
+        $query = Asset::query()->where('client_id', $client_id);
+        if ($request->has('asset_type_id')) {
+            $query->where('asset_type_id', $request->asset_type_id);
+        }
+        $assets = $query->orderBy('name')->get();
         return response()->json(compact('assets'), 200);
     }
 

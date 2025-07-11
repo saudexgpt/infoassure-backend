@@ -1,7 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\BCMS;
 
+
+use App\Models\BusinessProcess;
+use App\Models\BusinessUnit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

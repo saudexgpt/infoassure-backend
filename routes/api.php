@@ -10,6 +10,7 @@ use App\Http\Controllers\RCSAController;
 use App\Http\Controllers\RiskRegistersController;
 use App\Http\Controllers\RoPAController;
 use App\Http\Controllers\SubscriptionsController;
+use App\Http\Controllers\TasksController;
 use App\Http\Controllers\UploadsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -242,8 +243,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::post('update', [ClientsController::class, 'update']);
         Route::put('update-client-user/{user}', [ClientsController::class, 'updateClientUser']);
+        Route::put('update-theme/{client}', [ClientsController::class, 'updateTheme']);
         Route::put('attach-client-user/{client}', [ClientsController::class, 'attachClientUser']);
         Route::put('delete-client-user/{client}', [ClientsController::class, 'removeClientUser']);
+
 
         // Route::delete('delete-client-user/{user}', [ClientsController::class, 'removeClientUser']);
 
@@ -591,5 +594,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('permissions/index', [PermissionsController::class, 'index']);
         Route::post('permissions/assign-user', [PermissionsController::class, 'assignUserPermissions']);
         Route::post('permissions/assign-role', [PermissionsController::class, 'assignRolePermissions']);
+    });
+
+    Route::group(['prefix' => 'tasks'], function () {
+
+        Route::get('/', [TasksController::class, 'index']);
+        Route::post('store', [TasksController::class, 'store']);
+        Route::put('update/{task}', [TasksController::class, 'update']);
+        Route::delete('destroy/{task}', [TasksController::class, 'destroy']);
+
+
     });
 });

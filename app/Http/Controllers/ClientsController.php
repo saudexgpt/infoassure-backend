@@ -35,7 +35,7 @@ class ClientsController extends Controller
         }
 
         if ($user->haRole('super')) {
-            $partner_with_clients = Partner::with('clients', 'matrix')->get();
+            $partner_with_clients = Partner::with('clients.matrix')->get();
         }
 
         if (isset($request->option) && $request->option === 'all') {
@@ -202,6 +202,13 @@ class ClientsController extends Controller
         $client->sidebar_bg = $request->sidebar_bg;
         $client->save();
         $this->changeClientLogo($request, $client);
+    }
+    public function updateTheme(Request $request, Client $client)
+    {
+        $field = $request->field;
+        $value = $request->value;
+        $client->$field = $value;
+        $client->save();
     }
     private function changeClientLogo($data, $client)
     {

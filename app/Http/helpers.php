@@ -252,63 +252,6 @@ function addSingleElementToString($parent_string, $child_string)
     return implode('~', $string_array);
 }
 
-/**
- * function to save photo path
- * @param String $school details (in json form)
- * @param Array $path array keys (type, file) with their file extension
- * @return String path
- **/
-
-function alternateClassName($name)
-{
-    if ($name == 'J.S.S') {
-        return 'Junior Secondary';
-    }
-    if ($name == 'S.S.S') {
-        return 'Senior Secondary';
-    }
-
-    return $name;
-}
-function scoreOptions($type = 'ca')
-{
-    $options = ['' => 'Select'];
-
-    if ($type == 'exam') {
-        for ($i = 70; $i <= 1; $i--):
-            $options[$i] = $i;
-        endfor;
-        return $options;
-    }
-    for ($i = 10; $i <= 1; $i--):
-        $options[$i] = $i;
-    endfor;
-    return $options;
-}
-
-function resultActions()
-{
-    return $result_action = array(
-        'half' => 'nil',
-        'full' => 'nil'
-    );
-}
-
-function terms($term = null)
-{
-    $arr = [
-        '1' => 'First',
-        '2' => 'Second',
-        '3' => 'Third'
-
-    ];
-
-    if ($term) {
-        return $arr[$term];
-    }
-    return $arr;
-}
-
 function randomColorCode()
 {
     $tokens = 'ABC0123456789'; //'ABCDEF0123456789';
