@@ -17,4 +17,14 @@ class Clause extends Model
     {
         return $this->hasMany(ComplianceQuestion::class, 'clause_id', 'id');
     }
+
+    public function activities()
+    {
+        return $this->hasMany(ModuleActivity::class, 'clause_id', 'id');
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(ModuleActivityTask::class, 'clause_id', 'id');
+    }
 }

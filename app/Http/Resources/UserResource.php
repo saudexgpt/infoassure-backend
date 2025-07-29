@@ -6,6 +6,7 @@ use App\Models\ActivatedModule;
 use App\Models\AvailableModule;
 use App\Models\Client;
 use App\Models\Partner;
+use App\Models\Project;
 use App\Models\Role;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +38,23 @@ class UserResource extends JsonResource
         }
         $modules = [];
         $partner = '';
-        if ($this->haRole('client') || $this->hasRole('admin')) {
+        if ($this->haRole('client')) {
+            $client_id = $this->client_id;
+            $client = Client::find($client_id);
+            $partner_id = $client->partner_id;
+
+            $projects = $this->projects()
+                ->with('availableModule')
+                ->where(['client_id' => $client_id, 'year' => $this_year])
+                ->orderBy('id', 'DESC')
+                ->get();
+            foreach ($projects as $project) {
+
+                $modules[] = $project->availableModule->slug;
+            }
+            $partner = Partner::find($partner_id);
+        }
+        if ($this->isAdmin()) {
             $client_id = $this->client_id;
             $client = Client::find($client_id);
             if ($client->admin_user_id == $this->id) {
@@ -45,8 +62,7 @@ class UserResource extends JsonResource
             }
             $partner_id = $client->partner_id;
 
-            $projects = $this->projects()
-                ->with('availableModule')
+            $projects = Project::with('availableModule')
                 ->where(['client_id' => $client_id, 'year' => $this_year])
                 ->orderBy('id', 'DESC')
                 ->get();
