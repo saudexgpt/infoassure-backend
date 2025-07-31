@@ -270,7 +270,7 @@ class RiskRegistersController extends Controller
         $type = 'Personal Data Asset';
         $pdas = PersonalDataAssessment::where('client_id', $client_id)->get();
         foreach ($pdas as $pda) {
-            $asset_name = implode(',', $pda->personal_data_item);
+            $asset_name = $pda->personal_data_item; // implode(',', $pda->personal_data_item);
             $riskRegister = RiskRegister::where([
                 'client_id' => $client_id,
                 'module' => $module,
