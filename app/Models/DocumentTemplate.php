@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class DocumentTemplate extends Model
 {
     use HasFactory;
-    protected $fillable = ['title', 'link'];
+    protected $connection = 'mysql';
+    protected $fillable = ['title', 'link', 'external_link'];
 
 
     // public function getFullLinkAttribute()

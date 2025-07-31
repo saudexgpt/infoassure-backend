@@ -212,6 +212,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     Route::get('format-doc-to-sfdt', [DocumentsController::class, 'formatDocToSFDT']);
     Route::post('save-blob-doc', [DocumentsController::class, 'saveBlobToDoc']);
+    Route::get('fetch-excel-doc', [DocumentsController::class, 'fetchExcelDocument']);
+
 
     Route::get('user-notifications', [UsersController::class, 'userNotifications']);
     Route::get('notification/mark-as-read', [UsersController::class, 'markNotificationAsRead']);
@@ -350,6 +352,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::get('fetch', [DocumentsController::class, 'fetchDocumentTemplates']);
         Route::post('upload', [DocumentsController::class, 'uploadDocumentTemplate']);
+        Route::post('update', [DocumentsController::class, 'updateDocumentTemplate']);
+        Route::delete('delete/{document}', [DocumentsController::class, 'destroy']);
 
         // Route::post('upload-document-template', [UploadsController::class, 'uploadDocumentTemplate']);
     });

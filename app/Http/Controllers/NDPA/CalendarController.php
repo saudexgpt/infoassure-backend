@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\ISMS;
+namespace App\Http\Controllers\NDPA;
 
 use App\Http\Controllers\Controller;
-use App\Models\ISMS\AssignedTask;
-use App\Models\ISMS\Clause;
-use App\Models\ISMS\ModuleActivity;
-use App\Models\ISMS\ModuleActivityTask;
+use App\Models\NDPA\AssignedTask;
+use App\Models\NDPA\Clause;
+use App\Models\NDPA\ModuleActivity;
+use App\Models\NDPA\ModuleActivityTask;
 use Illuminate\Http\Request;
 use PhpParser\Node\Expr\Assign;
 
@@ -156,7 +156,7 @@ class CalendarController extends Controller
             );
         // send notification to the assignee
         $title = "Task Assigned";
-        $description = "$user->name assigned you a task on the ISMS module.";
+        $description = "$user->name assigned you a task on the NDPA module.";
         $this->sendNotification($title, $description, [$assignee_id]);
 
         $assignedTask = $assignedTask->with('assignee')->find($assignedTask->id);

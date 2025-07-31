@@ -11,13 +11,7 @@ class Clause extends Model
 {
     use HasFactory, SoftDeletes;
     protected $connection = 'ndpa';
-    protected $fillable = [
-        'name',
-        'description',
-        'standard_id',
-        'will_have_audit_questions',
-        'requires_document_upload'
-    ];
+    protected $fillable = ['sort_by', 'name', 'description'];
     public function standard()
     {
         return $this->belongsTo(Standard::class);
@@ -33,5 +27,15 @@ class Clause extends Model
     public function sections()
     {
         return $this->hasMany(ClauseSection::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(ModuleActivity::class, 'clause_id', 'id');
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(ModuleActivityTask::class, 'clause_id', 'id');
     }
 }

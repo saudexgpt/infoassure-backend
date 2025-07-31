@@ -31,16 +31,51 @@ class DocumentsController extends Controller
         if (!$template) {
             $template = new DocumentTemplate();
 
+            $template->title = $title;
+            $template->first_letter = substr($title, 0, 1);
+
             if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
-                $file_name = 'template_for_' . str_replace(' ', '-', strtolower($title)) . "." . $request->file('file_uploaded')->guessClientExtension();
+                $file_name = str_replace(' ', '-', strtolower($title)) . '_template' . "." . $request->file('file_uploaded')->guessClientExtension();
                 $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
-                $template->title = $title;
                 $template->link = $link;
-                $template->first_letter = substr($title, 0, 1);
-                $template->save();
             }
+            if (isset($request->external_link) && $request->external_link != '') {
+                $template->external_link = $request->external_link;
+            }
+            $template->save();
         }
     }
+    public function updateDocumentTemplate(Request $request)
+    {
+        $id = $request->id;
+        $title = $request->title;
+        $template = DocumentTemplate::find($id);
+
+        $template->title = $title;
+        $template->first_letter = substr($title, 0, 1);
+
+        if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
+            $file_name = str_replace(' ', '-', strtolower($title)) . '_template' . "." . $request->file('file_uploaded')->guessClientExtension();
+            $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
+            $template->link = $link;
+        }
+        if (isset($request->external_link) && $request->external_link != '') {
+            $template->external_link = $request->external_link;
+        }
+        $template->save();
+
+    }
+
+    public function destroy(Request $request, DocumentTemplate $document)
+    {
+        if ($document->link != null) {
+            \Storage::disk('public')->delete($document->link);
+        }
+        $document->delete();
+        return response()->json([], 204);
+    }
+
+
     //
     // public function formatDocToSFDTOlderImplementation(Request $request)
     // {
@@ -94,33 +129,60 @@ class DocumentsController extends Controller
         define('FORM_FIELD', 'files');
 
         $filename = portalPulicPath($document_path);
-        $file_contents = file_get_contents($filename);
-        // $base64 = base64_encode($file_contents);
-        // return response()->json(['sfdt' => $base64], 200);
-        $content = "--" . MULTIPART_BOUNDARY . "\r\n" .
-            "Content-Disposition: form-data; name=\"" . FORM_FIELD . "\"; filename=\"" . basename($filename) . "\"\r\n" .
-            "Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n" .
-            $file_contents . "\r\n";
+        try {
+            $file_contents = file_get_contents($filename);
+            // $base64 = base64_encode($file_contents);
+            // return response()->json(['sfdt' => $base64], 200);
+            $content = "--" . MULTIPART_BOUNDARY . "\r\n" .
+                "Content-Disposition: form-data; name=\"" . FORM_FIELD . "\"; filename=\"" . basename($filename) . "\"\r\n" .
+                "Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n" .
+                $file_contents . "\r\n";
 
-        // add some POST fields to the request too: $_POST['foo'] = 'bar'
-        $content .= "--" . MULTIPART_BOUNDARY . "\r\n" .
-            "Content-Disposition: form-data; name=\"foo\"\r\n\r\n" .
-            "bar\r\n";
-        // signal end of request (note the trailing "--")
-        $content .= "--" . MULTIPART_BOUNDARY . "--\r\n";
+            // add some POST fields to the request too: $_POST['foo'] = 'bar'
+            $content .= "--" . MULTIPART_BOUNDARY . "\r\n" .
+                "Content-Disposition: form-data; name=\"foo\"\r\n\r\n" .
+                "bar\r\n";
+            // signal end of request (note the trailing "--")
+            $content .= "--" . MULTIPART_BOUNDARY . "--\r\n";
 
-        $context = stream_context_create(
-            array(
-                'http' => array(
-                    'method' => 'POST',
-                    'header' => $header,
-                    'content' => $content,
+            $context = stream_context_create(
+                array(
+                    'http' => array(
+                        'method' => 'POST',
+                        'header' => $header,
+                        'content' => $content,
+                    )
                 )
-            )
-        );
-        $to_url = 'https://ej2services.syncfusion.com/production/web-services/api/documenteditor/Import';
+            );
+            $to_url = 'https://ej2services.syncfusion.com/production/web-services/api/documenteditor/Import';
 
-        return file_get_contents($to_url, false, $context);
+            return file_get_contents($to_url, false, $context);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'An error occurred while processing the document. Please try again.'], 500);
+        }
+
+    }
+    public function fetchExcelDocument(Request $request)
+    {
+        $document_path = $request->path;
+        // file not converted to sfdt, let's convert it
+        // define('MULTIPART_BOUNDARY', '--------------------------' . microtime(true));
+        // $header = 'Content-Type: multipart/form-data; boundary=' . MULTIPART_BOUNDARY;
+        // // equivalent to <input type="file" name="files"/>
+        // define('FORM_FIELD', 'files');
+
+        $filename = portalPulicPath($document_path);
+        try {
+            $file_contents = file_get_contents($filename);
+            $content = "--" . MULTIPART_BOUNDARY . "\r\n" .
+                "Content-Disposition: form-data; name=\"" . FORM_FIELD . "\"; filename=\"" . basename($filename) . "\"\r\n" .
+                "Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n" .
+                $file_contents . "\r\n";
+            return $content;
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'An error occurred while processing the document. Please try again.'], 500);
+        }
+
     }
     public function saveBlobToDoc(Request $request)
     {

@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models\ISMS;
+namespace App\Models\NDPA;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class ModuleActivityTask extends Model
 {
-    protected $connection = 'isms';
+    protected $connection = 'ndpa';
     protected $fillable = [
         'clause_id',
         'module_activity_id',
@@ -40,5 +40,7 @@ class ModuleActivityTask extends Model
             set: fn($value) => json_encode($value),
         );
     }
+
+
 
 }
