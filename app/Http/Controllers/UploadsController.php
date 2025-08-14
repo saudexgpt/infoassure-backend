@@ -5,77 +5,168 @@ namespace App\Http\Controllers;
 use App\Models\Clause;
 use App\Models\Client;
 use App\Models\DocumentTemplate;
+use App\Models\ISMS\AssignedTask;
+use App\Models\NDPA\AssignedTask as NDPAAssignedTask;
 use App\Models\Upload;
 use Illuminate\Http\Request;
 
 class UploadsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function createUploads(Request $request)
+    public function __construct(Request $httpRequest)
     {
-        $last_year = $this->getYear() - 1;
-        $client_id = $request->client_id;
-        $templates = DocumentTemplate::get();
-        // create answer
-        if (!empty($templates)) {
-            foreach ($templates as $template) {
-                $upload = Upload::where([
-                    'client_id' => $client_id,
-                    'is_exception' => 0,
-                ])->where('created_at', 'LIKE', '%' . $last_year . '%')->first();
-                if (!$upload) {
-                    $this->createNewUploads($request, $template);
-                } else {
-                    $this->createUploadsForOldClients($request, $upload);
+        parent::__construct($httpRequest);
+        $this->middleware(function ($request, $next) {
+
+            $this->setExpectedUploadsFromISMSAssignedTasks();
+            $this->setExpectedUploadsFromNDPAAssignedTasks();
+            return $next($request);
+        });
+
+
+    }
+    public function fetchUploads(Request $request)
+    {
+
+        $client_id = $this->getClient()->id;
+        $year = $this->getYear();
+        if (isset($request->year) && $request->year != '') {
+            $year = $request->year;
+        }
+        if (isset($request->title) && $request->title != '') {
+
+            $uploads = Upload::join('document_templates', 'uploads.template_id', '=', 'document_templates.id')
+                ->where('uploads.client_id', $client_id)
+                ->where('title', 'LIKE', "%$request->title%")
+                ->where('uploads.created_at', 'LIKE', '%' . $year . '%')
+                ->orderBy('title')
+                ->select('uploads.*', 'document_templates.first_letter', 'document_templates.title')
+                ->get()
+                ->groupBy('first_letter');
+        } else {
+
+            $uploads = Upload::join('document_templates', 'uploads.template_id', '=', 'document_templates.id')
+                ->where('uploads.client_id', $client_id)
+                ->where('uploads.created_at', 'LIKE', '%' . $year . '%')
+                ->orderBy('title')
+                ->select('uploads.*', 'document_templates.first_letter', 'document_templates.title')
+                ->get()
+                ->groupBy('first_letter');
+        }
+
+        return response()->json(compact('uploads'), 200);
+    }
+    private function setExpectedUploadsFromISMSAssignedTasks()
+    {
+        $client = $this->getClient();
+        $template_ids = AssignedTask::join('module_activity_tasks', 'assigned_tasks.module_activity_task_id', '=', 'module_activity_tasks.id')
+            ->where('assigned_tasks.client_id', $client->id)
+            ->where('document_template_ids', '!=', NULL)
+            ->select(\DB::raw("GROUP_CONCAT(DISTINCT document_template_ids SEPARATOR ', ') as ids"))
+            ->first();
+        if ($template_ids) {
+            $templated_ids_array = [];
+            $ids_array = explode(', ', $template_ids->ids);
+            foreach ($ids_array as $id) {
+                $id_array = json_decode($id);
+                if ($id_array != null && count($id_array) > 0 && is_array($id_array)) {
+                    $templated_ids_array = array_unique(array_merge($templated_ids_array, $id_array));
                 }
+
+            }
+
+            $templates = DocumentTemplate::whereIn('id', $templated_ids_array)->get();
+            if ($templates->count() > 0) {
+
+                $this->uploadTemplates($client->id, $templates);
             }
         }
     }
-    private function createUploadsForOldClients($request, $old_upload)
+    private function setExpectedUploadsFromNDPAAssignedTasks()
     {
-        $user = $this->getUser();
-        $client_id = $request->client_id;
-        $upload = Upload::where([
-            'client_id' => $client_id,
-            'template_id' => $old_upload->template_id,
-        ])->first();
-        if (!$upload) {
-            $upload = new Upload();
+        $client = $this->getClient();
+        $template_ids = NDPAAssignedTask::join('module_activity_tasks', 'assigned_tasks.module_activity_task_id', '=', 'module_activity_tasks.id')
+            ->where('assigned_tasks.client_id', $client->id)
+            ->where('document_template_ids', '!=', NULL)
+            ->select(\DB::raw("GROUP_CONCAT(DISTINCT document_template_ids SEPARATOR ', ') as ids"))
+            ->first();
+        if ($template_ids) {
+            $templated_ids_array = [];
+            $ids_array = explode(', ', $template_ids->ids);
+            foreach ($ids_array as $id) {
+                $id_array = json_decode($id);
+                if ($id_array != null && count($id_array) > 0 && is_array($id_array)) {
+                    $templated_ids_array = array_unique(array_merge($templated_ids_array, $id_array));
+                }
+
+            }
+
+            $templates = DocumentTemplate::whereIn('id', $templated_ids_array)->get();
+            if ($templates->count() > 0) {
+                $this->uploadTemplates($client->id, $templates);
+            }
         }
-        $upload->client_id = $client_id;
-        $upload->created_by = $user->id;
-        $upload->template_id = $old_upload->template_id;
-        $upload->template_title = $old_upload->template_title;
-        $upload->template_link = $old_upload->template_link;
-        $upload->save();
     }
-    private function createNewUploads($request, $template)
+
+    private function uploadTemplates($client_id, $templates)
     {
-        $user = $this->getUser();
-        $client_id = $request->client_id;
-        $upload = Upload::where([
-            'client_id' => $client_id,
-            'template_id' => $template->id,
-        ])->first();
-        if (!$upload) {
-            $upload = new Upload();
+        foreach ($templates as $template) {
+            Upload::updateOrCreate([
+                'client_id' => $client_id,
+                'template_id' => $template->id,
+            ], [
+                'template_link' => $template->link
+            ]);
         }
-        $upload->client_id = $client_id;
-        $upload->created_by = $user->id;
-        $upload->template_id = $template->id;
-        $upload->template_title = $template->title;
-        $upload->template_link = $template->link;
-        $upload->save();
+
     }
+    /**
+     * Display a listing of the resource.
+     */
+    // public function createUploads(Request $request)
+    // {
+    //     $last_year = $this->getYear() - 1;
+    //     $client_id = $request->client_id;
+    //     $templates = DocumentTemplate::orderBy('title')->get();
+    //     // create answer
+    //     if (!empty($templates)) {
+    //         foreach ($templates as $template) {
+    //             $upload = Upload::where([
+    //                 'client_id' => $client_id
+    //             ])->where('created_at', 'LIKE', '%' . $last_year . '%')->first();
+    //             if (!$upload) {
+    //                 $this->uploadTemplate($request, $template);
+    //             } else {
+    //                 $this->uploadTemplate($request, $upload);
+    //             }
+    //         }
+    //     }
+    // }
+    // private function uploadTemplate($request, $template)
+    // {
+    //     $user = $this->getUser();
+    //     $client_id = $request->client_id;
+    //     $upload = Upload::where([
+    //         'client_id' => $client_id,
+    //         'title' => $template->title,
+    //     ])->first();
+    //     if (!$upload) {
+    //         $upload = new Upload();
+    //     }
+    //     $upload->client_id = $client_id;
+    //     $upload->created_by = $user->id;
+    //     $upload->template_id = $template->id;
+    //     $upload->title = $template->title;
+    //     $upload->template_link = $template->link;
+    //     $upload->save();
+    // }
     public function uploadEvidenceFile(Request $request)
     {
         $client = $this->getClient();
         $upload = Upload::find($request->upload_id);
-        $folder_key = $client->id;
+        // $folder_key = $client->id;
+        $folder_key = str_replace(' ', '_', ucwords($client->name));
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
-            $formated_name = str_replace(' ', '_', ucwords($upload->template_title));
+            $formated_name = str_replace(' ', '_', ucwords($upload->title));
             $file_name = 'evidence_for_' . $formated_name . '_' . $client->id . '_template' . $upload->template_id . "." . $request->file('file_uploaded')->guessClientExtension();
             $link = $request->file('file_uploaded')->storeAs('clients/' . $folder_key . '/document', $file_name, 'public');
             $upload->link = $link;
@@ -89,7 +180,7 @@ class UploadsController extends Controller
             $name = $user->name;// . ' (' . $user->email . ')';
             $title = "Document Uploaded";
             //log this event
-            $description = "$name uploaded a document titled: $upload->template_title";
+            $description = "$name uploaded a document titled: $upload->title";
             $this->sendNotification($title, $description, $userIds);
             // $this->auditTrailEvent($title, $description, $users);
 
@@ -109,7 +200,7 @@ class UploadsController extends Controller
         $client = Client::find($upload->client_id);
         $title = "Remark on uploaded document";
         //log this event
-        $description = "Remark was made on document title: $clause->template_title, clause: $clause->name uploaded by $client->name";
+        $description = "Remark was made on document title: $clause->title, clause: $clause->name uploaded by $client->name";
         $this->auditTrailEvent($title, $description);
     }
 }

@@ -94,6 +94,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::put('mark-task-as-done/{task}', [CalendarController::class, 'markTaskAsDone']);
             Route::put('mark-task-as-completed/{task}', [CalendarController::class, 'markTaskAsCompleted']);
 
+            Route::get('set-expected-uploads', [CalendarController::class, 'setExpectedUploadsFromAssignedTasks']);
+
+
         });
 
 

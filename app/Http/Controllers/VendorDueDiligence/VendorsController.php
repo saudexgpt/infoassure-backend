@@ -86,7 +86,8 @@ class VendorsController extends Controller
         $vendor = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')->find($vendor->id);
         $business_types = $this->businessTypes();
         $countries = Country::get();
-        return response()->json(compact('vendor', 'business_types', 'countries'), 200);
+        $industry_certifications = $this->industryCertifications();
+        return response()->json(compact('vendor', 'business_types', 'countries', 'industry_certifications'), 200);
     }
 
     public function businessTypes()

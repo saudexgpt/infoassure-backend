@@ -9,22 +9,22 @@ class Upload extends Model
 {
     use HasFactory;
     protected $connection = 'mysql';
-    protected $fillable = ['client_id', 'standard_id', 'project_id', 'consulting_id', 'clause_id', 'created_by'];
+    protected $fillable = ['client_id', 'created_by', 'last_modified_by', 'template_id', 'template_link', 'link', 'sfdt_format', 'remark', 'status', 'is_exception'];
     public function client()
     {
         return $this->belongsTo(Client::class);
     }
-    public function clause()
+    public function template()
     {
-        return $this->belongsTo(Clause::class);
-    }
-    public function standard()
-    {
-        return $this->belongsTo(Standard::class);
+        return $this->belongsTo(DocumentTemplate::class, 'template_id', 'id');
     }
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+    public function lastModifier()
+    {
+        return $this->belongsTo(User::class, 'last_modified_by ', 'id');
     }
     public function getFullDocumentLinkAttribute()
     {

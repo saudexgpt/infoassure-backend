@@ -21,4 +21,14 @@ class ClauseSection extends Model
     {
         return $this->hasMany(Question::class, 'section_id', 'id');
     }
+
+    public function activities()
+    {
+        return $this->hasMany(ModuleActivity::class, 'clause_id', 'id');
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(ModuleActivityTask::class, 'clause_id', 'id');
+    }
 }

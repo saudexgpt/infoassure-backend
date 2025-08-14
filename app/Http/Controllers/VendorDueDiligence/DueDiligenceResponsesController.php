@@ -363,7 +363,9 @@ class DueDiligenceResponsesController extends Controller
         $answer_id = $request->answer_id;
         $answer = DueDiligenceResponse::find($answer_id);
         $client_id = $answer->client_id;
-        $folder_key = $client_id;
+        $client = Client::find($client_id);
+        // $folder_key = $client_id;
+        $folder_key = str_replace(' ', '_', ucwords($client->name));
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
             $file = $request->file('file_uploaded');
             $name = $file->hashName();

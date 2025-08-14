@@ -151,7 +151,8 @@ class AnswersController extends Controller
         $title = $request->title;
         $answer_id = $request->answer_id;
         $client_id = $client->id;
-        $folder_key = $client_id;
+        // $folder_key = $client_id;
+        $folder_key = str_replace(' ', '_', ucwords($client->name));
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
 
             $name = $request->file('file_uploaded')->getClientOriginalName();

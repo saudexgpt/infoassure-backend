@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentTemplate;
+use App\Models\Upload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class DocumentsController extends Controller
 {
@@ -26,16 +29,17 @@ class DocumentsController extends Controller
 
     public function uploadDocumentTemplate(Request $request)
     {
-        $title = $request->title;
+        $title = ucwords($request->title);
         $template = DocumentTemplate::where('title', $title)->first();
         if (!$template) {
             $template = new DocumentTemplate();
 
             $template->title = $title;
             $template->first_letter = substr($title, 0, 1);
+            $template->applicable_modules = isset($request->applicable_modules) ? json_encode($request->applicable_modules) : null;
 
             if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
-                $file_name = str_replace(' ', '-', strtolower($title)) . '_template' . "." . $request->file('file_uploaded')->guessClientExtension();
+                $file_name = str_replace(' ', '_', strtolower($title)) . '_template' . "." . $request->file('file_uploaded')->guessClientExtension();
                 $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
                 $template->link = $link;
             }
@@ -55,7 +59,7 @@ class DocumentsController extends Controller
         $template->first_letter = substr($title, 0, 1);
 
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
-            $file_name = str_replace(' ', '-', strtolower($title)) . '_template' . "." . $request->file('file_uploaded')->guessClientExtension();
+            $file_name = str_replace(' ', '_', strtolower($title)) . '_template' . "." . $request->file('file_uploaded')->guessClientExtension();
             $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
             $template->link = $link;
         }
@@ -166,29 +170,37 @@ class DocumentsController extends Controller
     {
         $document_path = $request->path;
         // file not converted to sfdt, let's convert it
-        // define('MULTIPART_BOUNDARY', '--------------------------' . microtime(true));
-        // $header = 'Content-Type: multipart/form-data; boundary=' . MULTIPART_BOUNDARY;
+        define('MULTIPART_BOUNDARY', '--------------------------' . microtime(true));
+        $header = 'Content-Type: multipart/form-data; boundary=' . MULTIPART_BOUNDARY;
         // // equivalent to <input type="file" name="files"/>
-        // define('FORM_FIELD', 'files');
+        define('FORM_FIELD', 'files');
 
         $filename = portalPulicPath($document_path);
-        try {
-            $file_contents = file_get_contents($filename);
-            $content = "--" . MULTIPART_BOUNDARY . "\r\n" .
-                "Content-Disposition: form-data; name=\"" . FORM_FIELD . "\"; filename=\"" . basename($filename) . "\"\r\n" .
-                "Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n" .
-                $file_contents . "\r\n";
-            return $content;
-        } catch (\Throwable $th) {
-            return response()->json(['message' => 'An error occurred while processing the document. Please try again.'], 500);
-        }
+        //try {
+        $file_contents = file_get_contents($filename);
+        return base64_encode($file_contents);
 
     }
-    public function saveBlobToDoc(Request $request)
+    public function fetchJsonFormattedExcelDocument(Request $request)
+    {
+        $document_path = $request->path;
+        // file not converted to sfdt, let's convert it
+        define('MULTIPART_BOUNDARY', '--------------------------' . microtime(true));
+        $header = 'Content-Type: multipart/form-data; boundary=' . MULTIPART_BOUNDARY;
+        // // equivalent to <input type="file" name="files"/>
+        define('FORM_FIELD', 'files');
+
+        $filename = portalPulicPath($document_path);
+        //try {
+        return $file_contents = file_get_contents($filename);
+
+    }
+
+
+    public function saveDocTemplate(Request $request)
     {
         $document_path = $request->path;
         if ($request->file('file_to_be_saved') != null && $request->file('file_to_be_saved')->isValid()) {
-            // return $request;
 
             $temp_path = $request->file('file_to_be_saved')->getRealPath();
             $file = file_get_contents($temp_path);
@@ -199,5 +211,92 @@ class DocumentsController extends Controller
             return response()->json(['message' => 'Saved Successfully'], 200);
         }
         return response()->json(['message' => 'An error occured. Please try again'], 500);
+    }
+
+    public function saveClientCopy(Request $request)
+    {
+        $client = $this->getClient();
+        $document_path = $request->path;
+        $folder_key = str_replace(' ', '_', ucwords($client->name));
+        if ($request->file('file_to_be_saved') != null && $request->file('file_to_be_saved')->isValid()) {
+            $upload = Upload::find($request->id);
+            // return $request;
+            $formated_name = str_replace(' ', '_', ucwords($request->title));
+            $file_name = 'evidence_for_' . $formated_name . '_template_' . $upload->template_id . "." . $request->file('file_to_be_saved')->guessClientExtension();
+            $link = $request->file('file_to_be_saved')->storeAs('clients/' . $folder_key . '/document', $file_name, 'public');
+            $upload->link = $link;
+            $upload->last_modified_by = $this->getUser()->id;
+            $upload->save();
+
+            return response()->json(['message' => 'Saved Successfully'], 200);
+        }
+        return response()->json(['message' => 'An error occured. Please try again'], 500);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        // Syncfusion sends the spreadsheet data in "json" field
+        $data = json_decode($request->JSONData, 1);
+        // return $data['sheets'];
+        if (!isset($data['sheets']) || !is_array($data['sheets'])) {
+            return response()->json(['error' => 'Invalid spreadsheet data'], 400);
+        }
+
+        // Create new PhpSpreadsheet instance
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->removeSheetByIndex(0); // remove default sheet
+
+        foreach ($data['sheets'] as $sheetIndex => $sheetData) {
+            $sheetTitle = $sheetData['name'] ?? 'Sheet' . ($sheetIndex + 1);
+            $worksheet = $spreadsheet->createSheet($sheetIndex);
+            $worksheet->setTitle($sheetTitle);
+
+            if (isset($sheetData['rows']) && is_array($sheetData['rows'])) {
+                foreach ($sheetData['rows'] as $rowIndex => $row) {
+                    if (!isset($row['cells']))
+                        continue;
+
+                    foreach ($row['cells'] as $cellIndex => $cell) {
+                        $value = $cell['value'] ?? '';
+                        $col = $this->columnLetter($cellIndex + 1); // 1-based
+                        $worksheet->setCellValue($col . ($rowIndex + 1), $value);
+                    }
+                }
+            }
+        }
+
+        // Remove default empty sheet if extra
+        if ($spreadsheet->getSheetCount() > count($data['sheets'])) {
+            $spreadsheet->removeSheetByIndex(count($data['sheets']));
+        }
+
+        // Save file
+        $fileName = 'spreadsheet_' . time() . '.xlsx';
+        $filePath = storage_path('app/spreadsheets/' . $fileName);
+
+        // Ensure directory exists
+        if (!is_dir(storage_path('app/spreadsheets'))) {
+            mkdir(storage_path('app/spreadsheets'), 0777, true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->json([
+            'status' => 'success',
+            'file' => $fileName,
+            'path' => $filePath
+        ]);
+    }
+
+    private function columnLetter($c)
+    {
+        $letter = '';
+        while ($c > 0) {
+            $p = ($c - 1) % 26;
+            $c = intval(($c - $p) / 26);
+            $letter = chr(65 + $p) . $letter;
+        }
+        return $letter;
     }
 }

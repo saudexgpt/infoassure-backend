@@ -10,6 +10,7 @@ class ModuleActivityTask extends Model
     protected $connection = 'ndpa';
     protected $fillable = [
         'clause_id',
+        'section_id',
         'module_activity_id',
         'document_template_ids',
         'dependency',
@@ -22,6 +23,10 @@ class ModuleActivityTask extends Model
     public function clause()
     {
         return $this->belongsTo(Clause::class);
+    }
+    public function section()
+    {
+        return $this->belongsTo(ClauseSection::class, 'section_id', 'id');
     }
     public function activity()
     {

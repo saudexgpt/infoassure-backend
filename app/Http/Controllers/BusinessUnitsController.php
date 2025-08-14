@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BusinessProcess;
 use App\Models\BusinessUnit;
 use App\Models\BCMS\BiaTimeRecoveryRequirement;
+use App\Models\Client;
 use App\Models\OtherUnitsUser;
 use App\Models\RiskImpactArea;
 use Illuminate\Http\Request;
@@ -243,7 +244,8 @@ class BusinessUnitsController extends Controller
         ]);
         // $client = $this->getClient();
         $business_process = BusinessProcess::find($request->id);
-        $folder_key = $business_process->client_id;
+        $client = Client::find($business_process->client_id);
+        $folder_key = str_replace(' ', '_', ucwords($client->name));
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
             if ($business_process->flow_chart_diagram !== null) {
 

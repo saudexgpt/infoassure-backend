@@ -55,6 +55,7 @@ Route::get('countries', [Controller::class, 'fetchCountries']);
 Route::get('fetch-available-modules', [Controller::class, 'fetchAvailableModules']);
 
 Route::get('generate-captcha', [Controller::class, 'fetchCaptcha']);
+Route::post('spreadsheet/export-excel', [DocumentsController::class, 'exportExcel']);
 
 // Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
 // Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
@@ -211,8 +212,14 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
 
     Route::get('format-doc-to-sfdt', [DocumentsController::class, 'formatDocToSFDT']);
-    Route::post('save-blob-doc', [DocumentsController::class, 'saveBlobToDoc']);
-    Route::get('fetch-excel-doc', [DocumentsController::class, 'fetchExcelDocument']);
+    Route::post('save-doc-template', [DocumentsController::class, 'saveDocTemplate']);
+    Route::post('save-excel-doc-template', [DocumentsController::class, 'saveExcelDocTemplate']);
+
+
+
+    Route::post('save-client-copy', [DocumentsController::class, 'saveClientCopy']);
+    Route::post('fetch-excel-doc', [DocumentsController::class, 'fetchExcelDocument']);
+    Route::post('fetch-json-formatted-excel-doc', [DocumentsController::class, 'fetchJsonFormattedExcelDocument']);
 
 
     Route::get('user-notifications', [UsersController::class, 'userNotifications']);
@@ -422,6 +429,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::delete('destroy-client-evidence/{client_evidence}', [EvidenceController::class, 'destroyClientEvidence']);
     });
     Route::group(['prefix' => 'uploads'], function () {
+        Route::get('fetch-uploads', [UploadsController::class, 'fetchUploads']);
         Route::post('save', [UploadsController::class, 'createUploads']);
         Route::post('upload-file', [UploadsController::class, 'uploadEvidenceFile']);
         Route::delete('destroy-template/{template}', [UploadsController::class, 'destroyTemplate']);

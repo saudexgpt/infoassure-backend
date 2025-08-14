@@ -44,8 +44,12 @@ class Controller extends BaseController
 
     public function __construct(Request $httpRequest)
     {
+
         //->paginate(10);
         $this->middleware(function ($request, $next) {
+
+            $this->setUser();
+            $this->setClient();
             return $next($request);
         });
     }
@@ -112,12 +116,12 @@ class Controller extends BaseController
 
     public function setUser()
     {
-        $this->user = User::find(Auth::user()->id);
+        $this->user = Auth::user(); //User::find(Auth::user()->id);
     }
 
     public function getUser()
     {
-        $this->setUser();
+        // $this->setUser();
 
         return $this->user;
     }
@@ -154,8 +158,11 @@ class Controller extends BaseController
         $user = $this->getUser();
         // $client_user = DB::table('client_user')->where('user_id', $user->id)->first();
         // $client_id = $client_user->client_id;
-        $client = Client::with('users')->find($user->client_id);
-        $this->client = $client;
+        if ($user) {
+            $client = Client::with('users')->find($user->client_id);
+            $this->client = $client;
+        }
+
     }
 
     public function getClient()
@@ -329,5 +336,9 @@ class Controller extends BaseController
         header('Content-type: image/png');
         imagepng($im);
         imagedestroy($im);
+    }
+    public function industryCertifications()
+    {
+        return ['ISO 27001', 'SOC 2', 'GDPR', 'PCI-DSS'];
     }
 }

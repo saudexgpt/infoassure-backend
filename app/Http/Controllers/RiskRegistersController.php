@@ -413,7 +413,9 @@ class RiskRegistersController extends Controller
     }
     private function uploadRiskEvidenceDocument(Request $request)
     {
-        $folder_key = $request->client_id;
+        $client = Client::find($request->client_id);
+        // $folder_key = $request->client_id;
+        $folder_key = str_replace(' ', '_', ucwords($client->name));
         $file = $request->file('link_to_evidence');
         if ($file != null && $file->isValid()) {
 

@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\NDPA;
 
 use App\Http\Controllers\Controller;
+use App\Models\DocumentTemplate;
 use App\Models\NDPA\AssignedTask;
 use App\Models\NDPA\Clause;
 use App\Models\NDPA\ModuleActivity;
 use App\Models\NDPA\ModuleActivityTask;
 use Illuminate\Http\Request;
-use PhpParser\Node\Expr\Assign;
 
 class CalendarController extends Controller
 {
     //
+
 
     public function fetchAllTasks(Request $request)
     {
@@ -29,7 +30,7 @@ class CalendarController extends Controller
         // This could involve querying the database for tasks, activities, etc.
         // and returning them in a format suitable for the calendar view.
         // Example:
-        $clause_tasks = Clause::with('activities.tasks')->get();
+        $clause_tasks = Clause::with('sections', 'activities.tasks')->get();
         return response()->json(compact('clause_tasks'), 200);
     }
     public function fetchClientAssignedTasks(Request $request)
@@ -52,15 +53,18 @@ class CalendarController extends Controller
     public function storeClauseActivities(Request $request)
     {
         $request->validate([
+            'section_id' => 'required|integer|exists:isms.clauses,id',
             'clause_id' => 'required|integer|exists:isms.clauses,id',
             'details' => 'required|array',
         ]);
         $clause_id = $request->clause_id;
+        $section_id = $request->section_id;
         $details = json_decode(json_encode($request->details));
 
         foreach ($details as $detail) {
             ModuleActivity::updateOrCreate([
                 'clause_id' => $clause_id,
+                'section_id' => $section_id,
                 'activity_no' => $detail->activity_no,
                 'name' => $detail->name,
             ], [
@@ -81,17 +85,20 @@ class CalendarController extends Controller
     public function storeClauseActivityTasks(Request $request)
     {
         $request->validate([
+            'section_id' => 'required|integer|exists:isms.clauses,id',
             'clause_id' => 'required|integer|exists:isms.clauses,id',
             'module_activity_id' => 'required|integer|exists:isms.module_activities,id',
             'details' => 'required|array',
         ]);
         $clause_id = $request->clause_id;
+        $section_id = $request->section_id;
         $module_activity_id = $request->module_activity_id;
         $details = json_decode(json_encode($request->details));
 
         foreach ($details as $detail) {
             ModuleActivityTask::updateOrCreate([
                 'clause_id' => $clause_id,
+                'section_id' => $section_id,
                 'module_activity_id' => $module_activity_id,
                 'name' => $detail->name,
             ], [
@@ -145,6 +152,7 @@ class CalendarController extends Controller
                     'module_activity_task_id' => $module_activity_task_id,
                     'client_id' => $client_id,
                     'clause_id' => $task->clause_id,
+                    'section_id' => $task->section_id,
                     'module_activity_id' => $task->module_activity_id
                 ],
                 [
@@ -312,4 +320,6 @@ class CalendarController extends Controller
         $assignedTask = $task->with('assignee')->find($task->id);
         return response()->json(['message' => 'Task marked as done successfully', 'task' => $assignedTask], 200);
     }
+
+
 }

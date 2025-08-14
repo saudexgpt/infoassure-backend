@@ -30,9 +30,11 @@ class EvidenceController extends Controller
         $client_id = $request->client_id;
         $standard_id = $request->standard_id;
         $consulting_id = $request->consulting_id;
-        $evidence = Evidence::with(['clientEvidences' => function ($q) use ($client_id, $standard_id) {
-            $q->where(['standard_id' => $standard_id, 'client_id' => $client_id]);
-        }])->where(['consulting_id' => $consulting_id])->orderBy('title')->get();
+        $evidence = Evidence::with([
+            'clientEvidences' => function ($q) use ($client_id, $standard_id) {
+                $q->where(['standard_id' => $standard_id, 'client_id' => $client_id]);
+            }
+        ])->where(['consulting_id' => $consulting_id])->orderBy('title')->get();
         return response()->json(compact('evidence'), 200);
     }
 
@@ -99,7 +101,8 @@ class EvidenceController extends Controller
         $client_id = $request->client_id;
         $standard_id = $request->standard_id;
         $client = $this->getClient();
-        $folder_key =  $client->id;
+        // $folder_key =  $client->id;
+        $folder_key = str_replace(' ', '_', ucwords($client->name));
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
 
             $client_evidence->client_id = $client_id;
