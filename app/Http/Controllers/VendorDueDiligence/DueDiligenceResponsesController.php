@@ -25,10 +25,16 @@ use Spatie\PdfToText\Pdf;
 class DueDiligenceResponsesController extends Controller
 {
     protected $module;
-    public function __construct()
+    public function __construct(Request $httpRequest)
     {
-        //->paginate(10);
-        $this->module = AvailableModule::where('slug', 'vdd')->first();
+        parent::__construct($httpRequest);
+        $this->middleware(function ($request, $next) {
+
+            $this->module = AvailableModule::where('slug', 'vdd')->first();
+            return $next($request);
+        });
+
+
     }
     public function fetchResponses(Request $request)
     {

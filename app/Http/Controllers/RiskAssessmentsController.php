@@ -83,20 +83,7 @@ class RiskAssessmentsController extends Controller
         ])->where('client_id', $client_id)->orderBy('unit_name')->get();
         return response()->json(compact('business_units'), 200);
     }
-    public function fetchAssetTypesWithRiskRegisters(Request $request)
-    {
-        if (isset($request->client_id)) {
-            $client_id = $request->client_id;
-        } else {
-            $client_id = $this->getClient()->id;
-        }
-        $asset_types = AssetType::with([
-            'assets.riskRegisters' => function ($q) use ($client_id) {
-                $q->where('client_id', $client_id);
-            }
-        ])->where('client_id', $client_id)->orderBy('name')->get();
-        return response()->json(compact('asset_types'), 200);
-    }
+
 
     public function fetchAssets(Request $request)
     {
@@ -135,6 +122,29 @@ class RiskAssessmentsController extends Controller
         $categories = RiskCategory::where('client_id', $client_id)->orderBy('name')->get();
         return response()->json(compact('categories'), 200);
     }
+    public function generateRiskCategories(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $filename = portalPulicPath('risk_categories.json');
+        $file_content = file_get_contents($filename);
+        $risk_categories = json_decode($file_content);
+        foreach ($risk_categories as $data) {
+            $category = $data->category;
+            $risk_category = RiskCategory::firstOrCreate([
+                'client_id' => $client_id,
+                'name' => $data->category
+            ], [
+                'sub_categories' => $data->sub_categories
+            ]);
+        }
+        $categories = RiskCategory::where('client_id', $client_id)->orderBy('name')->get();
+        return response()->json(compact('categories'), 200);
+    }
+
     public function fetchLikelihoods(Request $request)
     {
         $likelihoods = [];
@@ -166,54 +176,54 @@ class RiskAssessmentsController extends Controller
     //     }
     //     return response()->json(['message' => 'Successful'], 200);
     // }
-    public function saveAssetTypes(Request $request)
-    {
-        if (isset($request->client_id)) {
-            $client_id = $request->client_id;
-        } else {
-            $client_id = $this->getClient()->id;
-        }
-        $names_array = $request->names;
-        foreach ($names_array as $name) {
-            AssetType::firstOrCreate([
-                'client_id' => $client_id,
-                'name' => trim($name)
-            ]);
-        }
-        return response()->json(['message' => 'Successful'], 200);
-    }
+    // public function saveAssetTypes(Request $request)
+    // {
+    //     if (isset($request->client_id)) {
+    //         $client_id = $request->client_id;
+    //     } else {
+    //         $client_id = $this->getClient()->id;
+    //     }
+    //     $names_array = $request->names;
+    //     foreach ($names_array as $name) {
+    //         AssetType::firstOrCreate([
+    //             'client_id' => $client_id,
+    //             'name' => trim($name)
+    //         ]);
+    //     }
+    //     return response()->json(['message' => 'Successful'], 200);
+    // }
 
-    public function saveAssets(Request $request)
-    {
-        if (isset($request->client_id)) {
-            $client_id = $request->client_id;
-        } else {
-            $client_id = $this->getClient()->id;
-        }
-        $asset_type_id = $request->asset_type_id;
-        $names_array = $request->names;
-        foreach ($names_array as $name) {
-            Asset::firstOrCreate([
-                'client_id' => $client_id,
-                'asset_type_id' => $asset_type_id,
-                'name' => trim($name)
-            ]);
-        }
-        return response()->json(['message' => 'Successful'], 200);
-    }
-    public function updateAssetType(Request $request, AssetType $asset_type)
-    {
-        $asset_type->name = $request->name;
-        $asset_type->save();
-        return response()->json(['message' => 'Successful'], 200);
-    }
-    public function updateAsset(Request $request, Asset $asset)
-    {
-        $asset->name = $request->name;
-        // $asset->asset_type_id = $request->asset_type_id;
-        $asset->save();
-        return response()->json(['message' => 'Successful'], 200);
-    }
+    // public function saveAssets(Request $request)
+    // {
+    //     if (isset($request->client_id)) {
+    //         $client_id = $request->client_id;
+    //     } else {
+    //         $client_id = $this->getClient()->id;
+    //     }
+    //     $asset_type_id = $request->asset_type_id;
+    //     $names_array = $request->names;
+    //     foreach ($names_array as $name) {
+    //         Asset::firstOrCreate([
+    //             'client_id' => $client_id,
+    //             'asset_type_id' => $asset_type_id,
+    //             'name' => trim($name)
+    //         ]);
+    //     }
+    //     return response()->json(['message' => 'Successful'], 200);
+    // }
+    // public function updateAssetType(Request $request, AssetType $asset_type)
+    // {
+    //     $asset_type->name = $request->name;
+    //     $asset_type->save();
+    //     return response()->json(['message' => 'Successful'], 200);
+    // }
+    // public function updateAsset(Request $request, Asset $asset)
+    // {
+    //     $asset->name = $request->name;
+    //     // $asset->asset_type_id = $request->asset_type_id;
+    //     $asset->save();
+    //     return response()->json(['message' => 'Successful'], 200);
+    // }
     public function saveCategories(Request $request)
     {
         $client_id = $request->client_id;
@@ -231,12 +241,12 @@ class RiskAssessmentsController extends Controller
     }
     public function updateCategory(Request $request, RiskCategory $riskCategory)
     {
-        $sub_categories = [];
-        foreach ($request->sub_categories as $sub_category) {
-            $sub_categories[] = ['name' => $sub_category];
-        }
+        // $sub_categories = [];
+        // foreach ($request->sub_categories as $sub_category) {
+        //     $sub_categories[] = ['name' => $sub_category];
+        // }
         $riskCategory->name = $request->name;
-        $riskCategory->sub_categories = $sub_categories;
+        $riskCategory->sub_categories = $request->sub_categories;
         $riskCategory->save();
         return response()->json(['message' => 'Successful'], 200);
     }

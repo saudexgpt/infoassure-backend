@@ -330,49 +330,5 @@ class AnswersController extends Controller
         return response()->json([], 204);
     }
 
-    public function generativeThreatIntelligence()
-    {
-        //
-        $message = "What are the 10 latest cyber security threat intelligence feeds from reputable sources";
-        $question = "Let the responses also cover the following standards: Standards: ### ISO 27001, ISO 27017, ISO 27018 and PCI DSS ###";
-        // $answer = "Response: ### $ans, $details ###";
-        // $evidence = "Evidence: ### $evid ###";
-        $instruction = "
-Provide the responses as an array of objects in json format for easy extraction in the format below:
-
-threat: <threat>
-vulnerabilities: <vulnerabilities>
-source: <source>
-solutions: <solutions>";
-
-        $content = $message . $question . $instruction;
-
-        $result = OpenAI::chat()->create([
-            'model' => 'gpt-3.5-turbo',
-            'messages' => [
-                ['role' => 'user', 'content' => $content],
-            ],
-        ]);
-
-        // response is score and justification
-        $feeds = json_decode($result->choices[0]->message->content);
-        if ($feeds) {
-
-            foreach ($feeds as $feed) {
-                $threat = $feed->threat;
-                $threat_library = GeneralRiskLibrary::where('threats', 'LIKE', $threat)->first();
-                if (!$threat_library) {
-                    $threat_library = new GeneralRiskLibrary();
-                }
-                $threat_library->threats = $threat;
-                $threat_library->vulnerabilities = $feed->vulnerabilities;
-                $threat_library->source = $feed->source;
-                $threat_library->solutions = $feed->solutions;
-                $threat_library->save();
-            }
-            return response()->json(compact('feeds'), 200);
-        }
-        // print_r($result);
-    }
 
 }

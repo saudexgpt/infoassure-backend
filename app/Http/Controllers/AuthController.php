@@ -131,7 +131,7 @@ class AuthController extends Controller
      * @param  [string] password
      * @param  [boolean] remember_me
      */
-    public function login(Request $request)
+    public function loginNo2FA(Request $request)
     {
         $this->username = $this->findUsername();
 
@@ -157,7 +157,7 @@ class AuthController extends Controller
         // }
         return $this->generateAuthorizationKey($user);
     }
-    public function login2FA(Request $request)
+    public function login(Request $request)
     {
         $this->username = $this->findUsername();
 

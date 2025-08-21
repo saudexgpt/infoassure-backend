@@ -56,6 +56,8 @@ Route::get('fetch-available-modules', [Controller::class, 'fetchAvailableModules
 
 Route::get('generate-captcha', [Controller::class, 'fetchCaptcha']);
 Route::post('spreadsheet/export-excel', [DocumentsController::class, 'exportExcel']);
+Route::get('generate-threat-intelligence', [GeneralRiskLibrariesController::class, 'generativeThreatIntelligence']);
+
 
 // Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
 // Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
@@ -88,6 +90,8 @@ Route::group(['prefix' => 'risk-assessment'], function () {
     Route::get('fetch-risks', [RiskAssessmentsController::class, 'fetchRisks']);
     Route::get('fetch-impacts', [RiskAssessmentsController::class, 'fetchImpacts']);
     Route::get('fetch-categories', [RiskAssessmentsController::class, 'fetchCategories']);
+    Route::post('generate-risk-categories', [RiskAssessmentsController::class, 'generateRiskCategories']);
+
     Route::get('fetch-likelihoods', [RiskAssessmentsController::class, 'fetchLikelihoods']);
 });
 Route::group(['prefix' => 'business-units'], function () {
@@ -208,7 +212,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('update-risk-impact-on-area/{riskImpactOnArea}', [RiskRegistersController::class, 'updateRiskImpactOnArea']);
     Route::delete('delete-risk-impact-on-area/{riskImpactOnArea}', [RiskRegistersController::class, 'deleteRiskImpactOnArea']);
 
-
+    Route::post('generate-auto-risk-registers', [RiskRegistersController::class, 'autoGenerateAndSaveAssetRiskRegisters']);
+    Route::get('fetch-asset-risk-registers', [RiskRegistersController::class, 'fetchAssetRiskRegisters']);
 
 
     Route::get('format-doc-to-sfdt', [DocumentsController::class, 'formatDocToSFDT']);
@@ -458,7 +463,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'risk-assessment'], function () {
         // Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
         Route::get('fetch-asset-types-with-asset-assessment', [RiskAssessmentsController::class, 'fetchAssetTypesWithAssetAssessments']);
-        Route::get('fetch-asset-types-with-risk-registers', [RiskAssessmentsController::class, 'fetchAssetTypesWithRiskRegisters']);
         Route::get('fetch-business-units-with-risk-assessments', [RiskAssessmentsController::class, 'fetchBusinessUnitsWithRiskAssessments']);
 
         // Route::get('fetch-assets', [RiskAssessmentsController::class, 'fetchAssets']);

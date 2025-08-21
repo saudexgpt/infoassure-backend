@@ -16,12 +16,120 @@ use App\Models\RiskLikelihood;
 use App\Models\RiskMatrix;
 use App\Models\RiskRegister;
 use Illuminate\Http\Request;
+use OpenAI\Laravel\Facades\OpenAI;
 
 class RiskRegistersController extends Controller
 {
+    // public function __construct(Request $httpRequest)
+    // {
+    //     parent::__construct($httpRequest);
+    //     $this->middleware(function ($request, $next) {
+
+    //         $this->setupRiskMatrices($request);
+    //         // $this->autoGenerateAndSaveAssetRiskRegisters($request);
+    //         return $next($request);
+    //     });
+
+    private function loadAutoRiskRegisterData($generatedThreats, $asset, $asset_type, $client)
+    {
+        foreach ($generatedThreats as $generated_threat) {
+            $threat = $generated_threat->threat;
+            $vulnerabilities = $generated_threat->vulnerabilities;
+            $riskRegister = RiskRegister::firstOrCreate([
+                'client_id' => $asset->client_id,
+                'module' => 'isms',
+                'business_unit_id' => null,
+                'business_process_id' => null,
+                'asset_type_id' => $asset->asset_type_id,
+                'asset_type_name' => $asset_type->name,
+                'asset_id' => $asset->id,
+                'asset_name' => $asset->name,
+                'sub_unit' => '',
+                'type' => 'General',
+                'threat' => $threat,
+                'vulnerability_description' => implode(', ', $vulnerabilities),
+
+            ], [
+
+            ]);
+            if ($riskRegister->risk_id == null) {
+                $riskRegister->risk_id = 'RSK' . generateNumber($client->next_general_risk_id);
+
+                $riskRegister->control_no = 'CTRL' . generateNumber($client->next_general_risk_id);
+                $riskRegister->save();
+                $client->next_general_risk_id += 1;
+                $client->save();
+            }
+
+        }
+    }
+    // }
+    public function autoGenerateAndSaveAssetRiskRegisters(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $client = Client::find($client_id);
+        if (isset($request->asset_id) && $request->asset_id != '') {
+            $asset = Asset::with('assetType')->find($request->asset_id);
+            $risk_register_count = RiskRegister::where('asset_id', $asset->id)->count();
+            if ($risk_register_count < 1) {
+                $asset_type = $asset->assetType;
+                $generated_threats = $this->generativeThreatIntelligence($asset->name, $asset_type->name);
+                if ($generated_threats !== null && count($generated_threats) > 0) {
+                    $this->loadAutoRiskRegisterData($generated_threats, $asset, $asset_type, $client);
+                }
+
+
+            }
+        } else {
+            $assets = Asset::with('assetType')->where('client_id', $client_id)->get();
+            foreach ($assets as $asset) {
+
+                $risk_register_count = RiskRegister::where('asset_id', $asset->id)->count();
+                if ($risk_register_count < 1) {
+                    $asset_type = $asset->assetType;
+                    $generated_threats = $this->generativeThreatIntelligence($asset->name, $asset_type->name);
+                    if ($generated_threats !== null && count($generated_threats) > 0) {
+                        $this->loadAutoRiskRegisterData($generated_threats, $asset, $asset_type, $client);
+                    }
+
+
+                }
+            }
+        }
+    }
+    private function generativeThreatIntelligence($item, $category)
+    {
+        $message = "Generate at least 5 cyber security threats associated with ###$item### under ###$category###.";
+        $instruction = "
+            Also provide the vulnerabilities for each of the threats in an array format.
+            Format the responses as an array of objects in json format for easy extraction in the format below:
+            
+            threat: <threat>
+            vulnerabilities: <vulnerabilities>";
+
+        $content = $message . $instruction;
+
+        $result = OpenAI::chat()->create([
+            'model' => 'gpt-3.5-turbo',
+            //'model' => 'gpt-4o-mini',
+            'messages' => [
+                ['role' => 'user', 'content' => $content],
+            ],
+        ]);
+        $ai_response = json_decode($result->choices[0]->message->content);
+        return $ai_response;
+    }
     public function setupRiskMatrices(Request $request)
     {
-        $client_id = $request->client_id;
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
         $impact_matrices = riskImpactMatrix();
         $likelihood_matrices = riskLikelihoodMatrix();
         foreach ($impact_matrices as $matrix => $matrix_array) {
@@ -97,10 +205,30 @@ class RiskRegistersController extends Controller
 
         }
     }
+    public function fetchAssetRiskRegisters(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+
+        $asset_types = Asset::with([
+            'riskRegisters' => function ($q) use ($client_id) {
+                $q->where('client_id', $client_id);
+            }
+        ])
+            ->join('asset_types', 'asset_types.id', '=', 'assets.asset_type_id')
+            ->where('assets.client_id', $client_id)
+            ->select('assets.*', 'assets.id as id', 'assets.name as name', 'asset_types.name as asset_type_name')
+            ->get()
+            ->groupBy('asset_type_name');
+        return response()->json(compact('asset_types'), 200);
+    }
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function fetchRiskMatrix(Request $request)
     {
