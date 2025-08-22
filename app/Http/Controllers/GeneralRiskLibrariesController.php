@@ -119,8 +119,18 @@ class GeneralRiskLibrariesController extends Controller
     }
     public function fetchThreats(Request $request)
     {
-        // $search = $request->search;
-        $threats = GeneralRiskLibrary::orderBy('threats')->get();
+        $query = GeneralRiskLibrary::query();
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $query->where('client_id', $client_id)->orWhere('client_id', NULL);
+        if (isset($request->asset_type) && $request->asset_type != '') {
+            $asset_type = $request->asset_type;
+            $query->where('asset_types', 'LIKE', "%$asset_type%")->orderBy('threats')->get();
+        }
+        $threats = $query->orderBy('threats')->get();
         return response()->json(compact('threats'), 200);
     }
 
@@ -132,12 +142,28 @@ class GeneralRiskLibrariesController extends Controller
      */
     public function store(Request $request)
     {
-        GeneralRiskLibrary::firstOrCreate([
-            'threats' => $request->threats
-        ], [
-            'vulnerabilities' => $request->vulnerabilities,
-            'solutions' => $request->solutions
-        ]);
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $formData = $request->validate(
+            [
+                'data' => 'required|array',
+                'asset_type' => 'required|string',
+            ]
+        );
+        $entries = json_decode(json_encode($formData['data']));
+        foreach ($entries as $entry) {
+            GeneralRiskLibrary::firstOrCreate([
+                'client_id' => $client_id,
+                'threats' => $entry->threat
+            ], [
+                'asset_types' => $formData['asset_type'],
+                'vulnerabilities' => explode(',', $entry->vulnerabilities)
+            ]);
+        }
+
     }
 
     public function storeBulk(Request $request)

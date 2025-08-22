@@ -197,6 +197,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     Route::get('fetch-module-risk-registers', [RiskRegistersController::class, 'fetchModuleRiskRegisters']);
     Route::get('fetch-business-units-with-risk-registers', [RiskRegistersController::class, 'fetchBusinessUnitsWithRiskRegisters']);
+
+    Route::get('fetch-pending-registers', [RiskRegistersController::class, 'fetchPendingRiskRegister']);
     Route::get('fetch-risk-registers', [RiskRegistersController::class, 'fetchRiskRegisters']);
     Route::post('store-risk-registers', [RiskRegistersController::class, 'storeRiskRegister']);
     Route::put('update-risk-register/{riskRegister}', [RiskRegistersController::class, 'updateRiskRegister']);
@@ -461,11 +463,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////
     Route::group(['prefix' => 'risk-assessment'], function () {
-        // Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
+        Route::get('fetch-asset-types', [RiskAssessmentsController::class, 'fetchAssetTypes']);
         Route::get('fetch-asset-types-with-asset-assessment', [RiskAssessmentsController::class, 'fetchAssetTypesWithAssetAssessments']);
         Route::get('fetch-business-units-with-risk-assessments', [RiskAssessmentsController::class, 'fetchBusinessUnitsWithRiskAssessments']);
 
-        // Route::get('fetch-assets', [RiskAssessmentsController::class, 'fetchAssets']);
+        Route::get('fetch-assets', [RiskAssessmentsController::class, 'fetchAssets']);
 
 
         Route::get('fetch-risk-appetite', [RiskAssessmentsController::class, 'fetchRiskAppetite']);

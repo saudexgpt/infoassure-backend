@@ -42,7 +42,7 @@ class RiskAssessmentsController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function fetchAssetTypes(Request $request)
     {
@@ -51,7 +51,7 @@ class RiskAssessmentsController extends Controller
         } else {
             $client_id = $this->getClient()->id;
         }
-        $asset_types = AssetType::with('assets')->where('client_id', $client_id)->orderBy('name')->get();
+        $asset_types = AssetType::with('assets')->orderBy('name')->get();
         return response()->json(compact('asset_types'), 200);
     }
     public function fetchAssetTypesWithAssetAssessments(Request $request)
@@ -114,7 +114,7 @@ class RiskAssessmentsController extends Controller
     }
     public function fetchCategories(Request $request)
     {
-        if (isset($request->client_id)) {
+        if (isset($request->client_id) && $request->client_id != '') {
             $client_id = $request->client_id;
         } else {
             $client_id = $this->getClient()->id;
@@ -411,7 +411,7 @@ class RiskAssessmentsController extends Controller
      * Display the specified resource.
      *
      * @param  \App\Models\RiskAssessment  $riskAssessment
-     * @return \App\Models\RiskAssessment  $riskAssessment
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateRiskAssessmentFields(Request $request, RiskAssessment $riskAssessment)
     {
@@ -448,7 +448,7 @@ class RiskAssessmentsController extends Controller
         $this->updateImpactRationale($riskAssessment, $matrix);
         $this->updateReversedRiskCategory($riskAssessment, $matrix);
         $this->updateRevisedImpactRationale($riskAssessment, $matrix);
-        return $riskAssessment;
+        return response()->json(['data' => $riskAssessment], 200);
     }
     private function updateLikelihoodRationale($riskAssessment, $matrix)
     {

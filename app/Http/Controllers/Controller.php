@@ -61,21 +61,6 @@ class Controller extends BaseController
         //print_r($data['class']->class->name);exit;*/
         return response()->json($this->data, 200);
     }
-    // public function toggleStudentNonPaymentSuspension(Request $request)
-    // {
-    //     $student_ids = $request->student_ids;
-    //     foreach ($student_ids as $student_id) {
-    //         $student = Student::find($student_id);
-    //         $status = $student->studentship_status;
-    //         if ($status == 1) {
-    //             $student->studentship_status = 0;
-    //         } else {
-    //             $student->studentship_status = 1;
-    //         }
-    //         $student->save();
-    //     }
-    //     return 'success';
-    // }
 
     public function setYear()
     {
@@ -86,19 +71,6 @@ class Controller extends BaseController
     {
         $this->setYear();
         return $this->this_year;
-    }
-    public function setRoles()
-    {
-        $school_id = $this->getSchool()->id;
-        $roles = Role::where('school_id', 0)->orWhere('school_id', $school_id)->get();
-        foreach ($roles as $role) {
-            $role_permissions = [];
-            foreach ($role->permissions as $permission) {
-                $role_permissions[] = $permission->id;
-            }
-            $role->role_permissions = $role_permissions;
-        }
-        $this->roles = $roles;
     }
     public function getRoles()
     {
@@ -160,7 +132,7 @@ class Controller extends BaseController
         // $client_user = DB::table('client_user')->where('user_id', $user->id)->first();
         // $client_id = $client_user->client_id;
         if ($user) {
-            $client = Client::with('users')->find($user->client_id);
+            $client = Client::find($user->client_id);
             $this->client = $client;
         }
 

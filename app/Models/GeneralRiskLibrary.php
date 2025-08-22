@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 class GeneralRiskLibrary extends Model
 {
     use HasFactory;
-    protected $fillable = ['asset_types', 'items', 'threats', 'vulnerabilities', 'solutions'];
+    protected $fillable = ['client_id', 'asset_types', 'items', 'threats', 'vulnerabilities', 'solutions'];
 
     protected function assetTypes(): Attribute
     {

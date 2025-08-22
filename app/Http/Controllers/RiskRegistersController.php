@@ -243,7 +243,7 @@ class RiskRegistersController extends Controller
      * Display the specified resource in storage.
      *
      * @param  \App\Models\RiskMatrix  $riskMatrix
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(RiskMatrix $riskMatrix)
     {
@@ -254,7 +254,7 @@ class RiskRegistersController extends Controller
      * Propose a specific matrix
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function proposeMatrix(Request $request)
     {
@@ -275,7 +275,7 @@ class RiskRegistersController extends Controller
      * Approve a proposed matrix
      *
      * @param  \App\Models\RiskMatrix  $riskMatrix
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function approveMatrix(RiskMatrix $riskMatrix)
     {
@@ -290,7 +290,7 @@ class RiskRegistersController extends Controller
      * Set the Client Risk Appetite
      *
      * @param  \App\Models\RiskMatrix  $riskMatrix
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function setRiskAppetite(Request $request, RiskMatrix $riskMatrix)
     {
@@ -429,15 +429,21 @@ class RiskRegistersController extends Controller
             $business_unit->save();
         }
     }
-    public function storeRiskRegister(Request $request)
+    public function fetchPendingRiskRegister(Request $request)
     {
-        // if ($request->file('link_to_evidence') == null) {
-        //     return response()->json(['message' => 'Please uplaod a document as evidence'], 500);
-        // }
-        // if ($request->business_unit_id == 0) {
-        //     $riskRegister = $this->storeGeneralRiskRegister($request);
-        //     return response()->json(['id' => $riskRegister->id], 200);
-        // }
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $riskRegister = RiskRegister::firstOrCreate([
+            'client_id' => $client_id,
+            'submit_mode' => 'pending'
+        ])->first();
+        return response()->json(compact('riskRegister'), 200);
+    }
+    private function saveNewRiskRegister(Request $request)
+    {
         if (isset($request->client_id)) {
             $client_id = $request->client_id;
         } else {
@@ -455,27 +461,21 @@ class RiskRegistersController extends Controller
                 'asset_id' => $request->asset_id,
                 'sub_unit' => $request->sub_unit,
                 'type' => $request->type,
-                'threat' => $request->threat,
-                'vulnerability_description' => trim($request->vulnerability_description)
+                'threat' => $request->threat
             ])->first();
         }
         if (!$riskRegister) {
             $riskRegister = new RiskRegister();
         }
-        $asset_type = AssetType::find($request->asset_type_id);
-        $asset = Asset::find($request->asset_id);
         $riskRegister->module = $request->module;
         $riskRegister->client_id = $client_id;
         $riskRegister->business_unit_id = $request->business_unit_id;
         $riskRegister->business_process_id = $request->business_process_id;
-        if ($asset_type) {
-            $riskRegister->asset_type_id = $request->asset_type_id;
-            $riskRegister->asset_type_name = $asset_type->name;
-        }
-        if ($asset) {
-            $riskRegister->asset_id = $request->asset_id;
-            $riskRegister->asset_name = $asset->name;
-        }
+        $riskRegister->asset_type_id = $request->asset_type_id;
+        $riskRegister->asset_type_name = $request->asset_type_name;
+
+        $riskRegister->asset_id = $request->asset_id;
+        $riskRegister->asset_name = $request->asset_name;
         $riskRegister->sub_unit = $request->sub_unit;
         $riskRegister->type = $request->type;
         $riskRegister->sub_type = $request->sub_type;
@@ -512,7 +512,7 @@ class RiskRegistersController extends Controller
 
 
 
-            if ($request->business_unit_id != 0) {
+            if ($request->business_unit_id != null) {
                 $business_unit = BusinessUnit::find($request->business_unit_id);
                 $riskRegister->risk_id = $business_unit->prepend_risk_no_value . generateNumber($business_unit->next_risk_id);
 
@@ -532,6 +532,25 @@ class RiskRegistersController extends Controller
 
         }
         return response()->json(['id' => $riskRegister->id], 200);
+    }
+    public function storeRiskRegister(Request $request)
+    {
+        $formData = $request->validate(
+            [
+                'threats' => 'required|string'
+            ]
+        );
+        $threats = json_decode($request->threats);
+        if (count($threats) < 1) {
+            return response()->json(['message' => 'No threats provided'], 400);
+        }
+        foreach ($threats as $threat) {
+            $request->threat = $threat->threat;
+            $request->vulnerability_description = implode(',', $threat->vulnerabilities);
+            $request->control_description = implode(', ', $threat->control_descriptions);
+            $this->saveNewRiskRegister($request);
+        }
+
     }
     private function saveNewThreat($threat)
     {
