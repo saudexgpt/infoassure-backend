@@ -46,11 +46,11 @@ return [
             'provider' => 'users',
             'hash' => false,
         ],
-        'vendor' => [
-            'driver' => 'session',
-            'provider' => 'vendor_users',
-            'hash' => false,
-        ],
+        // 'vendor' => [
+        //     'driver' => 'session',
+        //     'provider' => 'vendor_users',
+        //     'hash' => false,
+        // ],
     ],
 
     /*
@@ -75,10 +75,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],
-        'vendor_users' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\VendorDueDiligence\User::class,
-        ],
+        // 'vendor_users' => [
+        //     'driver' => 'eloquent',
+        //     'model' => App\Models\VendorDueDiligence\User::class,
+        // ],
 
         // 'users' => [
         //     'driver' => 'database',
@@ -108,12 +108,12 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
-        'vendor_users' => [
-            'provider' => 'vendor_users',
-            'table' => 'password_resets',
-            'expire' => 60,
-            'throttle' => 60,
-        ],
+        // 'vendor_users' => [
+        //     'provider' => 'vendor_users',
+        //     'table' => 'password_resets',
+        //     'expire' => 60,
+        //     'throttle' => 60,
+        // ],
     ],
 
     /*

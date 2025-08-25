@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Partner;
 use App\Models\Project;
 use App\Models\Role;
+use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -98,6 +99,7 @@ class UserResource extends JsonResource
             'login_as' => $this->login_as,
             'partner_id' => $this->partner_id,
             'client_id' => $this->client_id,
+            'vendor_id' => $this->vendor_id,
             'modules' => $modules,
             // 'activity_logs' => $this->notifications()->orderBy('created_at', 'DESC')->get(),
             'roles' => $roles,

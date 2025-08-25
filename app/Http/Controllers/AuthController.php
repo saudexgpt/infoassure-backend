@@ -326,6 +326,8 @@ class AuthController extends Controller
             if ($user) {        //hash is confirmed and valid
                 if ($user->email_verified_at === NULL) {
                     $user->email_verified_at = date('Y-m-d H:i:s', strtotime('now'));
+                    $user->last_login = date('Y-m-d H:i:s', strtotime('now'));
+                    $user->system_mac_address = $this->macAddr;
                     $user->save();
                     $message = 'Account Activated Successfully';
                 } else {
@@ -338,6 +340,8 @@ class AuthController extends Controller
             if ($confirm_hash) {        //hash is confirmed and valid
                 if ($confirm_hash->email_verified_at === NULL) {
                     $confirm_hash->email_verified_at = date('Y-m-d H:i:s', strtotime('now'));
+                    $confirm_hash->last_login = date('Y-m-d H:i:s', strtotime('now'));
+                    $confirm_hash->system_mac_address = $this->macAddr;
                     $confirm_hash->save();
                     $message = 'Account Activated Successfully';
                 } else {

@@ -221,7 +221,7 @@
                                     <div
                                         style="color: #4b4a4a; line-height: 190%; text-align: left; word-wrap: break-word;">
                                         <div>
-                                            Hi {{ $user->name }},
+                                            Dear {{ $user->name }},
                                         </div>
                                         <p />
                                         <div>
@@ -230,8 +230,13 @@
                                         <p />
                                         <p />
                                         <div>
-                                            You can <a href="{{ env('FRONTEND_URL') }}/vdd" target="_blank">Sign
-                                                In</a> to continue.
+                                            You would need to activate your account by
+                                            clicking or copying the link below to your
+                                            browser.<br />
+                                            <a href="{{ env('FRONTEND_URL') }}/confirm-registration/{{ $user->confirm_hash }}"
+                                                target="_blank">{{ env('FRONTEND_URL') }}/confirm-registration/{{ $user->confirm_hash }}
+                                            </a>
+                                            <!--[if mso]></center></v:roundrect><![endif]-->
                                         </div>
                                     </div>
                                 </div>

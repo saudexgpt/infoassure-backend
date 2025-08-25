@@ -21,17 +21,103 @@ use App\Http\Controllers\VendorDueDiligence\TicketsController;
 use App\Http\Controllers\VendorDueDiligence\VendorAuditsController;
 use App\Http\Controllers\VendorDueDiligence\VendorsController;
 
-Route::group(['prefix' => 'vdd/auth'], function () {
-    Route::post('login', [AuthController::class, 'login']);
+// Route::group(['prefix' => 'vdd/auth'], function () {
+//     Route::post('login', [AuthController::class, 'login']);
 
-});
+// });
 
 
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'vdd'], function () {
 
+        //VENDORS ENDPOINTS///
+        Route::post('pdf-to-text', [ContractsAndSLAController::class, 'pdfToText']);
+        Route::get('search-email-list', [Controller::class, 'searchEmailList']);
+        Route::get('show-vendor/{vendor}', [VendorsController::class, 'showVendor']);
+        Route::post('update-vendor', [VendorsController::class, 'updateVendor']);
+        Route::delete('delete-uploaded-document/{document}', [VendorsController::class, 'deleteUploadedDocument']);
 
+        Route::group(['prefix' => 'answers'], function () {
+            Route::get('fetch', [DueDiligenceResponsesController::class, 'fetchResponses']);
+            Route::put('update/{answer}', [DueDiligenceResponsesController::class, 'update']);
+            // Route::delete('destroy/{answer}', [DueDiligenceResponsesController::class, 'destroy']);
+
+            Route::post('submit', [DueDiligenceResponsesController::class, 'submitDueDiligenceResponses']);
+
+            Route::post('upload-due-diligence-evidence', [DueDiligenceResponsesController::class, 'uploadDueDiligenceEvidence']);
+            Route::delete('destroy-evidence/{evidence}', [DueDiligenceResponsesController::class, 'destroyDueDiligenceEvidence']);
+        });
+
+        Route::group(['prefix' => 'messages'], function () {
+
+            Route::get('/', [AppMailingsController::class, 'inbox']);
+            Route::get('/inbox', [AppMailingsController::class, 'inbox']);
+            Route::get('/sent', [AppMailingsController::class, 'sent']);
+            Route::post('send-message', [AppMailingsController::class, 'compose']);
+            Route::delete('delete/{message}', [AppMailingsController::class, 'delete']);
+            Route::put('reply/{message}', [AppMailingsController::class, 'reply']);
+            Route::get('/details/{message}', [AppMailingsController::class, 'messageDetails']);
+        });
+
+        Route::group(['prefix' => 'invoices'], function () {
+
+            Route::get('/', [InvoicesController::class, 'index']);
+            Route::post('store', [InvoicesController::class, 'store']);
+            Route::post('upload-invoice', [InvoicesController::class, 'uploadInvoice']);
+
+            Route::put('update/{invoice}', [InvoicesController::class, 'update']);
+            Route::delete('destroy/{invoice}', [InvoicesController::class, 'destroy']);
+            Route::delete('destroy-invoice-item/{invoice_item}', [InvoicesController::class, 'destroyInvoiceItem']);
+
+            Route::put('confirm-payment/{invoice}', [InvoicesController::class, 'confirmPayment']);
+
+        });
+        Route::group(['prefix' => 'vendor-reports'], function () {
+            Route::get('vendor-invoices-analysis', [ReportsController::class, 'vendorInvoicesAnalysis']);
+            Route::get('vendor-tickets-analysis', [ReportsController::class, 'vendorTicketsAnalysis']);
+
+        });
+        Route::group(['prefix' => 'vendor-contracts'], function () {
+
+            Route::get('fetch', [ContractsAndSLAController::class, 'fetchContracts']);
+            Route::get('show-sla/{sla}', [ContractsAndSLAController::class, 'showSLA']);
+            Route::post('upload-contract', [ContractsAndSLAController::class, 'uploadContract']);
+            Route::post('save-sla', [ContractsAndSLAController::class, 'saveSLAConfig']);
+            Route::delete('destroy-metrics/{metrics}', [ContractsAndSLAController::class, 'destroyMetrics']);
+
+        });
+
+        Route::group(['prefix' => 'vendor-tickets'], function () {
+
+            Route::get('/', [TicketsController::class, 'index']);
+            Route::get('show/{ticket}', [TicketsController::class, 'show']);
+            Route::post('store', [TicketsController::class, 'store']);
+            Route::post('save-response', [TicketsController::class, 'saveTicketResponse']);
+            Route::put('update/{ticket}', [TicketsController::class, 'updateField']);
+
+
+        });
+
+        Route::group(['prefix' => 'vendor-review-meetings'], function () {
+
+            Route::apiResource('/', ReviewMeetingController::class);
+            Route::put('update-status/{reviewMeeting}', [ReviewMeetingController::class, 'updateStatus']);
+            Route::get('get-vendor-meetings/{vendor}', [ReviewMeetingController::class, 'getVendorMeetings']);
+
+            // Meeting Attendee Routes
+            Route::apiResource('attendees', MeetingAttendeeController::class);
+            Route::put('review-meetings/{reviewMeeting}/attendees/{attendee}/confirmation', [MeetingAttendeeController::class, 'updateConfirmation']);
+
+            // Meeting Action Item Routes
+            Route::apiResource('action-items', MeetingActionItemController::class);
+            Route::put('review-meetings/{reviewMeeting}/action-items/{actionItem}/status', [MeetingActionItemController::class, 'updateStatus']);
+
+        });
+        //VENDORS ENDPOINTS ENDS////
+
+
+        ///CLIENT ENDPOINTS////
 
         Route::get('vendor-invoices', [InvoicesController::class, 'index']);
         Route::put('invoices/make-payment/{invoice}', [InvoicesController::class, 'makePayment']);
@@ -195,96 +281,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         });
 
-    });
-
-});
-Route::group(['middleware' => 'vendor'], function () {
-    Route::group(['prefix' => 'vdd'], function () {
-
-
-
-        Route::post('pdf-to-text', [ContractsAndSLAController::class, 'pdfToText']);
-        Route::get('search-email-list', [Controller::class, 'searchEmailList']);
-        Route::get('show-vendor/{vendor}', [VendorsController::class, 'showVendor']);
-        Route::post('update-vendor', [VendorsController::class, 'updateVendor']);
-        Route::delete('delete-uploaded-document/{document}', [VendorsController::class, 'deleteUploadedDocument']);
-
-        Route::group(['prefix' => 'answers'], function () {
-            Route::get('fetch', [DueDiligenceResponsesController::class, 'fetchResponses']);
-            Route::put('update/{answer}', [DueDiligenceResponsesController::class, 'update']);
-            // Route::delete('destroy/{answer}', [DueDiligenceResponsesController::class, 'destroy']);
-
-            Route::post('submit', [DueDiligenceResponsesController::class, 'submitDueDiligenceResponses']);
-
-            Route::post('upload-due-diligence-evidence', [DueDiligenceResponsesController::class, 'uploadDueDiligenceEvidence']);
-            Route::delete('destroy-evidence/{evidence}', [DueDiligenceResponsesController::class, 'destroyDueDiligenceEvidence']);
-        });
-
-        Route::group(['prefix' => 'messages'], function () {
-
-            Route::get('/', [AppMailingsController::class, 'inbox']);
-            Route::get('/inbox', [AppMailingsController::class, 'inbox']);
-            Route::get('/sent', [AppMailingsController::class, 'sent']);
-            Route::post('send-message', [AppMailingsController::class, 'compose']);
-            Route::delete('delete/{message}', [AppMailingsController::class, 'delete']);
-            Route::put('reply/{message}', [AppMailingsController::class, 'reply']);
-            Route::get('/details/{message}', [AppMailingsController::class, 'messageDetails']);
-        });
-
-        Route::group(['prefix' => 'invoices'], function () {
-
-            Route::get('/', [InvoicesController::class, 'index']);
-            Route::post('store', [InvoicesController::class, 'store']);
-            Route::post('upload-invoice', [InvoicesController::class, 'uploadInvoice']);
-
-            Route::put('update/{invoice}', [InvoicesController::class, 'update']);
-            Route::delete('destroy/{invoice}', [InvoicesController::class, 'destroy']);
-            Route::delete('destroy-invoice-item/{invoice_item}', [InvoicesController::class, 'destroyInvoiceItem']);
-
-            Route::put('confirm-payment/{invoice}', [InvoicesController::class, 'confirmPayment']);
-
-        });
-        Route::group(['prefix' => 'vendor-reports'], function () {
-            Route::get('vendor-invoices-analysis', [ReportsController::class, 'vendorInvoicesAnalysis']);
-            Route::get('vendor-tickets-analysis', [ReportsController::class, 'vendorTicketsAnalysis']);
-
-        });
-        Route::group(['prefix' => 'vendor-contracts'], function () {
-
-            Route::get('fetch', [ContractsAndSLAController::class, 'fetchContracts']);
-            Route::get('show-sla/{sla}', [ContractsAndSLAController::class, 'showSLA']);
-            Route::post('upload-contract', [ContractsAndSLAController::class, 'uploadContract']);
-            Route::post('save-sla', [ContractsAndSLAController::class, 'saveSLAConfig']);
-            Route::delete('destroy-metrics/{metrics}', [ContractsAndSLAController::class, 'destroyMetrics']);
-
-        });
-
-        Route::group(['prefix' => 'vendor-tickets'], function () {
-
-            Route::get('/', [TicketsController::class, 'index']);
-            Route::get('show/{ticket}', [TicketsController::class, 'show']);
-            Route::post('store', [TicketsController::class, 'store']);
-            Route::post('save-response', [TicketsController::class, 'saveTicketResponse']);
-            Route::put('update/{ticket}', [TicketsController::class, 'updateField']);
-
-
-        });
-
-        Route::group(['prefix' => 'vendor-review-meetings'], function () {
-
-            Route::apiResource('/', ReviewMeetingController::class);
-            Route::put('update-status/{reviewMeeting}', [ReviewMeetingController::class, 'updateStatus']);
-            Route::get('get-vendor-meetings/{vendor}', [ReviewMeetingController::class, 'getVendorMeetings']);
-
-            // Meeting Attendee Routes
-            Route::apiResource('attendees', MeetingAttendeeController::class);
-            Route::put('review-meetings/{reviewMeeting}/attendees/{attendee}/confirmation', [MeetingAttendeeController::class, 'updateConfirmation']);
-
-            // Meeting Action Item Routes
-            Route::apiResource('action-items', MeetingActionItemController::class);
-            Route::put('review-meetings/{reviewMeeting}/action-items/{actionItem}/status', [MeetingActionItemController::class, 'updateStatus']);
-
-        });
+        ///CLIENT ENDPOINTS////
 
     });
+
 });

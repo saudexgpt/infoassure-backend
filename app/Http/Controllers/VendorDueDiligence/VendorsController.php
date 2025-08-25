@@ -5,10 +5,11 @@ namespace App\Http\Controllers\VendorDueDiligence;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Country;
+use App\Models\Role;
 use App\Models\VendorDueDiligence\BankDetail;
 use App\Models\VendorDueDiligence\Category;
 use App\Models\VendorDueDiligence\DocumentUpload;
-use App\Models\VendorDueDiligence\User;
+use App\Models\User;
 use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Request;
 use App\Mail\SendVendorCredentials;
@@ -83,7 +84,7 @@ class VendorsController extends Controller
 
     public function showVendor(Request $request, Vendor $vendor)
     {
-        $vendor = Vendor::with('users', 'bankDetail', 'documentUploads', 'category')->find($vendor->id);
+        $vendor = Vendor::with('client', 'users', 'bankDetail', 'documentUploads', 'category')->find($vendor->id);
         $business_types = $this->businessTypes();
         $countries = Country::get();
         $industry_certifications = $this->industryCertifications();
@@ -92,14 +93,14 @@ class VendorsController extends Controller
 
     public function businessTypes()
     {
-        return ['Cloud Provider', 'Consultancy', 'Cybersecurity Services', 'Financial Services', 'IT Services'];
+        return ['Cloud Provider', 'Consultancy', 'Cybersecurity Services', 'Financial Services', 'IT Services', 'Others'];
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -115,8 +116,11 @@ class VendorsController extends Controller
             $vendor = new Vendor();
             $vendor->client_id = $client_id;
             $vendor->name = $request->organization_name;
-            $vendor->contact_email = $request->contact_email;
-            $vendor->contact_phone = $request->contact_phone;
+            $vendor->company_email = $request->contact_email;
+            $vendor->company_phone = $request->contact_phone;
+            $vendor->contact_name = $request->admin_first_name . ' ' . $request->admin_last_name;
+            $vendor->contact_email = $request->admin_email;
+            $vendor->contact_phone = $request->admin_phone;
             $vendor->contact_address = $request->contact_address;
             if ($vendor->save()) {
                 $request->vendor_id = $vendor->id;
@@ -135,35 +139,6 @@ class VendorsController extends Controller
         return response()->json(['message' => 'Company already exists'], 401);
     }
 
-    public function registerClient(Request $request)
-    {
-
-        $contact_email = $request->contact_email;
-        $client = Client::where('contact_email', $contact_email)->first();
-        if (!$client) {
-            $client = new Client();
-            $client->name = $request->organization_name;
-            $client->contact_email = $request->contact_email;
-            $client->contact_phone = $request->contact_phone;
-            $client->contact_address = $request->contact_address;
-            if ($client->save()) {
-                $request->client_id = $client->id;
-                $request->role = 'client';
-                $request->roles = ['admin', 'client'];
-                $request->login_as = 'admin';
-                $this->registerClientUser($request);
-                $title = "New Client Registered";
-                //log this event
-                $description = "$client->name was registered";
-                $this->auditTrailEvent($title, $description);
-
-                return response()->json(compact('client'), 200);
-            }
-            return response()->json(['message' => 'Unable to register'], 500);
-        }
-        return response()->json(['message' => 'Company already exists'], 401);
-    }
-
 
     public function registerVendorUser(Request $request)
     {
@@ -174,8 +149,16 @@ class VendorsController extends Controller
         $request->email = $request->admin_email;
         $request->password = $request->admin_email;
         $request->phone = $request->admin_phone;
+        $request->role = 'vendor';
         $user_obj = new User();
         $user = $user_obj->createUser($request);
+        $user->vendor_id = $vendor->id;
+        $user->save();
+        $roles = ['vendor'];
+
+        $roleIds = Role::whereIn('name', $roles)->pluck('id');
+        $user->roles()->sync($roleIds); // role id 3 is client
+
         $this->sendLoginCredentials($user);
         $title = "New Vendor User Registered";
         //log this event
@@ -187,7 +170,7 @@ class VendorsController extends Controller
      * Display the specified resource.
      *
      * @param  \App\Models\Client  $client
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function sendLoginCredentials(User $user)
     {
@@ -326,7 +309,7 @@ class VendorsController extends Controller
 
             // Log this action
 
-            $userIds = $this->getVendorClientUserIds($vendor_id);
+            $userIds = $this->getVendorClientUserIds($vendor->id);
             $this->sendNotification($title, $description2, $userIds);
         }
 

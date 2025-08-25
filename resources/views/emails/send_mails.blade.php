@@ -221,7 +221,7 @@
                                     <div
                                         style="color: #4b4a4a; line-height: 190%; text-align: left; word-wrap: break-word;">
                                         <div>
-                                            Hi {{ $user->name }},
+                                            Dear {{ $user->name }},
                                         </div>
                                         <p />
                                         <div>

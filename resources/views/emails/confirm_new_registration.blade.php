@@ -179,8 +179,7 @@
                                   <td style="padding-right: 0px;padding-left: 0px;" align="center">
 
                                     <img align="center" border="0"
-                                      src="{{ url('storage/partner-logos/default-logo.png') }}" alt="Logo"
-                                      title="Logo"
+                                      src="{{ url('storage/partner-logos/default-logo.png') }}" alt="Logo" title="Logo"
                                       style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 24%;max-width: 139.2px;"
                                       width="139.2" class="v-src-width v-src-max-width" />
 
@@ -223,8 +222,8 @@
                       style="height: 100%; padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
                       <!--<![endif]-->
 
-                      <table id="u_content_heading_1" style="font-family:'Montserrat',sans-serif;"
-                        role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                      <table id="u_content_heading_1" style="font-family:'Montserrat',sans-serif;" role="presentation"
+                        cellpadding="0" cellspacing="0" width="100%" border="0">
                         <tbody>
                           <tr>
                             <td class="v-container-padding-padding"
@@ -241,8 +240,8 @@
                         </tbody>
                       </table>
 
-                      {{-- <table id="u_content_image_3" style="font-family:'Montserrat',sans-serif;" role="presentation"
-                        cellpadding="0" cellspacing="0" width="100%" border="0">
+                      {{-- <table id="u_content_image_3" style="font-family:'Montserrat',sans-serif;"
+                        role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                         <tbody>
                           <tr>
                             <td class="v-container-padding-padding"
@@ -424,8 +423,8 @@
                                 <tr>
                                   <td style="padding-right: 0px;padding-left: 0px;" align="center">
 
-                                    <img align="center" border="0" src="{{ url('images/image-1.png') }}"
-                                      alt="border" title="border"
+                                    <img align="center" border="0" src="{{ url('images/image-1.png') }}" alt="border"
+                                      title="border"
                                       style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 100%;max-width: 600px;"
                                       width="600" class="v-src-width v-src-max-width" />
 
@@ -476,8 +475,7 @@
                               style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;"
                               align="left">
 
-                              <table height="0px" align="center" border="0" cellpadding="0" cellspacing="0"
-                                width="82%"
+                              <table height="0px" align="center" border="0" cellpadding="0" cellspacing="0" width="82%"
                                 style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;border-top: 1px solid #BBBBBB;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
                                 <tbody>
                                   <tr style="vertical-align: top">
@@ -558,8 +556,8 @@
                                 <tr>
                                   <td style="padding-right: 0px;padding-left: 0px;" align="center">
 
-                                    <img align="center" border="0" src="{{ url('images/image-4.png') }}"
-                                      alt="border" title="border"
+                                    <img align="center" border="0" src="{{ url('images/image-4.png') }}" alt="border"
+                                      title="border"
                                       style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 100%;max-width: 600px;"
                                       width="600" class="v-src-width v-src-max-width" />
 
@@ -610,8 +608,7 @@
                               style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;"
                               align="left">
 
-                              <table height="0px" align="center" border="0" cellpadding="0" cellspacing="0"
-                                width="100%"
+                              <table height="0px" align="center" border="0" cellpadding="0" cellspacing="0" width="100%"
                                 style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;border-top: 0px solid #BBBBBB;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
                                 <tbody>
                                   <tr style="vertical-align: top">
