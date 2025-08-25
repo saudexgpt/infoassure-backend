@@ -19,11 +19,17 @@ class VendorsController extends Controller
 {
     public function fetchClientUsers(Request $request)
     {
+
+        if (isset($request->client_id) && $request->client_id != '') {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
         $client = Client::with([
             'users' => function ($q) {
                 $q->select('id', 'name', 'email')->get();
             }
-        ])->find($request->client_id);
+        ])->find($client_id);
         $client_users = $client->users;
         return response()->json(compact('client_users'), 200);
     }
@@ -122,6 +128,15 @@ class VendorsController extends Controller
             $vendor->contact_email = $request->admin_email;
             $vendor->contact_phone = $request->admin_phone;
             $vendor->contact_address = $request->contact_address;
+            $approval = [
+                'action' => 'Pending',
+                'details' => null,
+                'approved_by' => null,
+                'date' => null,
+            ];
+            $vendor->first_approval = $approval;
+            $vendor->second_approval = $approval;
+            $vendor->save();
             if ($vendor->save()) {
                 $request->vendor_id = $vendor->id;
                 $this->registerVendorUser($request);
