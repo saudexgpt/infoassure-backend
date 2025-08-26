@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\VendorDueDiligence;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +15,7 @@ class User extends Authenticatable implements LaratrustUser
 {
     use HasRolesAndPermissions;
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
-    protected $connection = 'mysql';
+    protected $connection = 'vdd';
     /**
      * The attributes that are mass assignable.
      *
@@ -74,11 +74,6 @@ class User extends Authenticatable implements LaratrustUser
     {
         return $this->belongsToMany(Client::class);
     }
-
-    public function assignedTasks()
-    {
-        return $this->hasMany(Task::class, 'assigned_to', 'id');
-    }
     public function partners()
     {
         return $this->belongsToMany(Partner::class);
@@ -104,30 +99,27 @@ class User extends Authenticatable implements LaratrustUser
         if (!$user) {
             $user = new User();
         }
+        $user->vendor_id = $data->vendor_id;
         $user->name = $data->name;
         $user->email = strtolower($data->email);
         $user->phone = $data->phone;
         $user->password = $data->password;
         $user->is_client_admin = (isset($data->is_client_admin)) ? $data->is_client_admin : 0;
         $user->role = $data->role;
-        $user->login_as = (isset($data->login_as)) ? $data->login_as : $data->role;
-        $user->partner_id = (isset($data->partner_id)) ? $data->partner_id : NULL;
-        $user->client_id = (isset($data->client_id)) ? $data->client_id : NULL;
-        $user->vendor_id = (isset($data->vendor_id)) ? $data->vendor_id : NULL;
         $user->designation = $data->designation;
         $user->confirm_hash = hash('sha256', time() . $data->email);
         $user->save();
-        $this->setUserPasswordRecord($user->id, $data->password);
+        // $this->setUserPasswordRecord($user->id, $data->password);
         return $user;
     }
 
-    private function setUserPasswordRecord($user_id, $password)
-    {
-        $user_password = new UserPassword();
-        $user_password->user_id = $user_id;
-        $user_password->password = hash('sha256', $password);
-        $user_password->save();
-    }
+    // private function setUserPasswordRecord($user_id, $password)
+    // {
+    //     $user_password = new UserPassword();
+    //     $user_password->user_id = $user_id;
+    //     $user_password->password = hash('sha256', $password);
+    //     $user_password->save();
+    // }
 
 
     public function isSuperAdmin()

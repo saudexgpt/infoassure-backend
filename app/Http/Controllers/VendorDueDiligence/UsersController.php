@@ -114,15 +114,15 @@ class UsersController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
         $request->password = $request->email;
-        $request->role = 'staff';
+        $request->role = 'vendor';
         $user_obj = new User();
         $user = $user_obj->createUser($request);
-        $user->roles()->sync($request->role_id); // role id 2 is admin
+        $user->roles()->sync([7]); // role id 7 is vendor
 
         // send confirmation email to user
         //email will be sent later containing login credentials
