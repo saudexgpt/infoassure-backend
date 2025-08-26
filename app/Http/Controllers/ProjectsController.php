@@ -42,7 +42,7 @@ class ProjectsController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -65,7 +65,11 @@ class ProjectsController extends Controller
             $partner_id = $this->getPartner()->id;
             $condition = ['partner_id' => $partner_id];
         }
-        $client_id = $request->client_id;
+        if (isset($request->client_id) && $request->client_id != '') {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
         $client = Client::with('users')->find($client_id);
         $users = ($client) ? $client->users : [];
         // $consulting_id = $request->consulting_id;
