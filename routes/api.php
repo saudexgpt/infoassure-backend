@@ -140,6 +140,9 @@ Route::group(['prefix' => 'bia'], function () {
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
 
+
+    Route::post('become-a-client', [ClientsController::class, 'becomeAClient']);
+
     Route::get('search-email-list', [Controller::class, 'searchEmailList']);
 
     Route::get('fetch-client-activated-projects/{client}', [ProjectsController::class, 'fetchClientActivatedProjects']);

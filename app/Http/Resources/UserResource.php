@@ -32,6 +32,11 @@ class UserResource extends JsonResource
             },
             $this->roles->toArray()
         );
+        if ($this->vendor_id !== NULL) {
+
+            $roles[] = 'vendor';
+            $all_roles[] = 'vendor';
+        }
         if ($this->login_as !== NULL) {
 
             $role = Role::with('permissions')->where('name', $this->login_as)->first();
@@ -102,8 +107,8 @@ class UserResource extends JsonResource
             'vendor_id' => $this->vendor_id,
             'modules' => $modules,
             // 'activity_logs' => $this->notifications()->orderBy('created_at', 'DESC')->get(),
-            'roles' => $roles,
-            'all_roles' => $all_roles,
+            'roles' => array_unique($roles),
+            'all_roles' => array_unique($all_roles),
             // 'role' => 'admin',
             'permissions' => $permissions,
             // 'role' => 'admin',

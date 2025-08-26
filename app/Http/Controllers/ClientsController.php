@@ -6,6 +6,7 @@ use App\Models\ActivatedModule;
 use App\Models\Client;
 use App\Models\Partner;
 use App\Models\User;
+use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Request;
 use App\Jobs\SendQueuedConfirmationEmailJob;
 use App\Mail\ConfirmNewRegistration;
@@ -202,6 +203,53 @@ class ClientsController extends Controller
         $client->sidebar_bg = $request->sidebar_bg;
         $client->save();
         $this->changeClientLogo($request, $client);
+    }
+
+    public function becomeAClient(Request $request)
+    {
+        $data = json_decode(json_encode($request->data));
+        $vendorId = $data->id;
+        $vendor = Vendor::find($vendorId);
+        $vendor->is_a_client = 1;
+        $vendor->save();
+
+
+        $name = $data->name;
+        $client = Client::where('name', $name)->first();
+        if (!$client) {
+            $client = new Client();
+            $client->name = $name;
+            $client->contact_email = $data->company_email;
+            $client->contact_phone = $data->company_phone;
+            $client->contact_address = $data->contact_address;
+            if ($client->save()) {
+                $dataUsers = $data->users;
+                $count = 1;
+                foreach ($dataUsers as $dataUser) {
+                    $user_id = $dataUser->id;
+                    $user = User::find($user_id);
+                    $user->role = 'client';
+                    $user->client_id = $client->id;
+                    $roles = ['client'];
+                    $user->login_as = 'client';
+                    if ($count == 1) {
+                        $roles = ['admin', 'client'];
+                        $user->login_as = 'admin';
+                        $client->admin_user_id = $user->id;
+                        $client->save();
+                    }
+                    $user->save();
+                    $client->users()->syncWithoutDetaching($user->id);
+                    $roleIds = Role::whereIn('name', $roles)->pluck('id');
+                    $user->roles()->sync($roleIds);
+                    $count++;
+                }
+                $title = "Vendor registrated as client";
+                //log this event
+                $description = "$client->name has become a client";
+                $this->auditTrailEvent($title, $description);
+            }
+        }
     }
     public function updateTheme(Request $request, Client $client)
     {

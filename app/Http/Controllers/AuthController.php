@@ -280,6 +280,7 @@ class AuthController extends Controller
         $user->login_as = $request->role;
         $user->client_id = $request->client_id;
         $user->partner_id = $request->partner_id;
+        $user->vendor_id = $request->vendor_id;
         $user->save();
         return $this->fetchUser($request);
     }
