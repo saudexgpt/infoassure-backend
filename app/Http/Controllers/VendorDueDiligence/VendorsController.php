@@ -278,7 +278,7 @@ class VendorsController extends Controller
             $this->sendNotification($title, $description, $userIds);
         } catch (\Throwable $th) {
             //throw $th;
-            return 'success';
+            return 'error';
         }
 
         return 'success';
