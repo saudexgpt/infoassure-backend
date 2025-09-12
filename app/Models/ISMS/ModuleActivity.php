@@ -11,7 +11,8 @@ class ModuleActivity extends Model
         'clause_id',
         'activity_no',
         'name',
-        'description'
+        'description',
+        'implementation_guide'
     ];
     public function clause()
     {

@@ -20,6 +20,12 @@ class ProjectsController extends Controller
 {
     public function fetchClientActivatedProjects(Request $request, Client $client)
     {
+        if (isset($request->client_id) && $request->client_id != '') {
+            $client_id = $request->client_id;
+            $client = Client::find($client_id);
+        } else {
+            $client = $this->getClient();
+        }
         $partner_id = $client->partner_id;
         $activated_modules = AvailableModule::join('activated_modules', 'available_modules.id', 'activated_modules.available_module_id')
             ->where('partner_id', $partner_id)

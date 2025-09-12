@@ -82,70 +82,70 @@ Route::group(['prefix' => 'auth'], function () {
         Route::get('user', [AuthController::class, 'fetchUser']); //->middleware('permission:read-users');
     });
 });
-Route::group(['prefix' => 'risk-matrix'], function () {
 
-    Route::get('fetch-risk-matrix', [RiskRegistersController::class, 'fetchRiskMatrix']);
-});
-Route::group(['prefix' => 'risk-assessment'], function () {
-    Route::get('fetch-risks', [RiskAssessmentsController::class, 'fetchRisks']);
-    Route::get('fetch-impacts', [RiskAssessmentsController::class, 'fetchImpacts']);
-    Route::get('fetch-categories', [RiskAssessmentsController::class, 'fetchCategories']);
-    Route::post('generate-risk-categories', [RiskAssessmentsController::class, 'generateRiskCategories']);
-
-    Route::get('fetch-likelihoods', [RiskAssessmentsController::class, 'fetchLikelihoods']);
-});
-Route::group(['prefix' => 'business-units'], function () {
-
-    Route::get('fetch-other-users', [BusinessUnitsController::class, 'fetchOtherUsers']);
-    Route::post('save-other-users', [BusinessUnitsController::class, 'saveOtherUser']);
-    Route::put('update-other-users/{user}', [BusinessUnitsController::class, 'updateOtherUser']);
-
-    Route::get('fetch-business-units', [BusinessUnitsController::class, 'fetchBusinessUnits']);
-
-    Route::get('fetch-business-processes', [BusinessUnitsController::class, 'fetchBusinessProcesses']);
-
-    Route::post('save-business-units', [BusinessUnitsController::class, 'saveBusinessUnits']);
-    Route::post('save-business-processes', [BusinessUnitsController::class, 'saveBusinessProcesses']);
-
-    Route::put('update-business-unit/{unit}', [BusinessUnitsController::class, 'updateBusinessUnit']);
-    Route::put('update-business-process/{process}', [BusinessUnitsController::class, 'updateBusinessProcess']);
-    Route::put('refresh-access-code/{business_unit}', [BusinessUnitsController::class, 'refreshAccessCode']);
-
-    Route::get('get-bia-time-recovery-requirement', [BusinessUnitsController::class, 'getBiaTimeRecoveryRequirement']);
-    Route::post('save-bia-time-recovery-requirement', [BusinessUnitsController::class, 'saveBiaTimeRecoveryRequirement']);
-    Route::put('update-bia-time-recovery-requirement/{criteria}', [BusinessUnitsController::class, 'updateBiaTimeRecoveryRequirement']);
-    Route::delete('delete-bia-time-recovery-requirement/{criteria}', [BusinessUnitsController::class, 'deleteBiaTimeRecoveryRequirement']);
-
-    Route::post('upload-process-flow', [BusinessUnitsController::class, 'uploadProcessFlow']);
-    Route::put('change-process-status/{process}', [BusinessUnitsController::class, 'changeProcessStatus']);
-
-
-});
-Route::group(['prefix' => 'bia'], function () {
-
-    Route::get('fetch-bia', [BIAController::class, 'fetchBIA']);
-    Route::put('update-bia/{bia}', [BIAController::class, 'updateBIA']);
-
-    Route::post('store', [BIAController::class, 'store']);
-    Route::put('update-disruption-impact/{impact}', [BIAController::class, 'updateDisruptionImpact']);
-
-    Route::get('fetch-risk-assessment', [BIAController::class, 'fetchRiskAssessments']);
-    Route::post('store-risk-assessment', [BIAController::class, 'storeRiskAssessment']);
-    Route::put('update-risk-assessment-field/{assessment}', [BIAController::class, 'updateRiskAssessmentFields']);
-    Route::get('risk-assessment-summary', [BIAController::class, 'riskAssessmentSummary']);
-
-
-});
 
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::group(['prefix' => 'risk-matrix'], function () {
 
+        Route::get('fetch-risk-matrix', [RiskRegistersController::class, 'fetchRiskMatrix']);
+    });
+    Route::group(['prefix' => 'risk-assessment'], function () {
+        Route::get('fetch-risks', [RiskAssessmentsController::class, 'fetchRisks']);
+        Route::get('fetch-impacts', [RiskAssessmentsController::class, 'fetchImpacts']);
+        Route::get('fetch-categories', [RiskAssessmentsController::class, 'fetchCategories']);
+        Route::post('generate-risk-categories', [RiskAssessmentsController::class, 'generateRiskCategories']);
+
+        Route::get('fetch-likelihoods', [RiskAssessmentsController::class, 'fetchLikelihoods']);
+    });
+    Route::group(['prefix' => 'business-units'], function () {
+
+        Route::get('fetch-other-users', [BusinessUnitsController::class, 'fetchOtherUsers']);
+        Route::post('save-other-users', [BusinessUnitsController::class, 'saveOtherUser']);
+        Route::put('update-other-users/{user}', [BusinessUnitsController::class, 'updateOtherUser']);
+
+        Route::get('fetch-business-units', [BusinessUnitsController::class, 'fetchBusinessUnits']);
+
+        Route::get('fetch-business-processes', [BusinessUnitsController::class, 'fetchBusinessProcesses']);
+
+        Route::post('save-business-units', [BusinessUnitsController::class, 'saveBusinessUnits']);
+        Route::post('save-business-processes', [BusinessUnitsController::class, 'saveBusinessProcesses']);
+
+        Route::put('update-business-unit/{unit}', [BusinessUnitsController::class, 'updateBusinessUnit']);
+        Route::put('update-business-process/{process}', [BusinessUnitsController::class, 'updateBusinessProcess']);
+        Route::put('refresh-access-code/{business_unit}', [BusinessUnitsController::class, 'refreshAccessCode']);
+
+        Route::get('get-bia-time-recovery-requirement', [BusinessUnitsController::class, 'getBiaTimeRecoveryRequirement']);
+        Route::post('save-bia-time-recovery-requirement', [BusinessUnitsController::class, 'saveBiaTimeRecoveryRequirement']);
+        Route::put('update-bia-time-recovery-requirement/{criteria}', [BusinessUnitsController::class, 'updateBiaTimeRecoveryRequirement']);
+        Route::delete('delete-bia-time-recovery-requirement/{criteria}', [BusinessUnitsController::class, 'deleteBiaTimeRecoveryRequirement']);
+
+        Route::post('upload-process-flow', [BusinessUnitsController::class, 'uploadProcessFlow']);
+        Route::put('change-process-status/{process}', [BusinessUnitsController::class, 'changeProcessStatus']);
+
+
+    });
+    Route::group(['prefix' => 'bia'], function () {
+
+        Route::get('fetch-bia', [BIAController::class, 'fetchBIA']);
+        Route::put('update-bia/{bia}', [BIAController::class, 'updateBIA']);
+
+        Route::post('store', [BIAController::class, 'store']);
+        Route::put('update-disruption-impact/{impact}', [BIAController::class, 'updateDisruptionImpact']);
+
+        Route::get('fetch-risk-assessment', [BIAController::class, 'fetchRiskAssessments']);
+        Route::post('store-risk-assessment', [BIAController::class, 'storeRiskAssessment']);
+        Route::put('update-risk-assessment-field/{assessment}', [BIAController::class, 'updateRiskAssessmentFields']);
+        Route::get('risk-assessment-summary', [BIAController::class, 'riskAssessmentSummary']);
+
+
+    });
 
     Route::post('become-a-client', [ClientsController::class, 'becomeAClient']);
 
     Route::get('search-email-list', [Controller::class, 'searchEmailList']);
 
-    Route::get('fetch-client-activated-projects/{client}', [ProjectsController::class, 'fetchClientActivatedProjects']);
+    Route::get('fetch-client-activated-projects', [ProjectsController::class, 'fetchClientActivatedProjects']);
 
     Route::group(['prefix' => 'messages'], function () {
 
@@ -440,10 +440,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::group(['prefix' => 'uploads'], function () {
         Route::get('fetch-uploads', [UploadsController::class, 'fetchUploads']);
+        Route::post('fetch-uploaded-document-with-template-ids', [UploadsController::class, 'fetchUploadedDocumentWithTemplateIds']);
         Route::post('save', [UploadsController::class, 'createUploads']);
         Route::post('upload-file', [UploadsController::class, 'uploadEvidenceFile']);
         Route::delete('destroy-template/{template}', [UploadsController::class, 'destroyTemplate']);
         Route::put('remark-on-upload/{upload}', [UploadsController::class, 'remarkOnUpload']);
+
     });
     ///////////////////////////////////RISK MANAGEMENT////////////////////////////////////////////////
     Route::group(['prefix' => 'assets'], function () {
@@ -459,7 +461,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::put('set-asset-owner/{asset}', [AssetsController::class, 'setAssetOwner']);
 
-        Route::delete('delete-asset-type/{value}', [AssetsController::class, 'deleteAssetType']);
+        Route::delete('delete-asset-type/{assetType}', [AssetsController::class, 'deleteAssetType']);
+        Route::delete('delete-asset/{asset}', [AssetsController::class, 'deleteAsset']);
     });
     ///////////////////////////////////ASSESSMENT MANAGEMENT////////////////////////////////////////////////
 

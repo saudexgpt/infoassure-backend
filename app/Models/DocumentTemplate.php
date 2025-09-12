@@ -10,7 +10,7 @@ class DocumentTemplate extends Model
 {
     use HasFactory;
     protected $connection = 'mysql';
-    protected $fillable = ['title', 'link', 'external_link', 'applicable_modules'];
+    protected $fillable = ['title', 'link', 'external_link', 'applicable_modules', 'first_letter'];
 
     protected function applicableModules(): Attribute
     {

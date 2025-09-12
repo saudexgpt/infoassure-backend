@@ -163,9 +163,26 @@ class AssetsController extends Controller
         $asset->save();
         return response()->json(compact('asset'), 200);
     }
-    public function deleteAssetType(AssetType $value)
+    public function deleteAssetType(AssetType $assetType)
     {
-        $value->delete();
+        $actor = $this->getUser();
+        $title = "Asset Deletion";
+        //log this event
+        $description = "$actor->name deleted $assetType->name from the list of asset types.";
+        $this->auditTrailEvent($title, $description);
+        $assetType->delete();
         return response()->json([], 204);
     }
+    public function deleteAsset(Asset $asset)
+    {
+        $actor = $this->getUser();
+        $title = "Asset Deletion";
+        //log this event
+        $description = "$actor->name deleted $asset->name from the list of assets.";
+        $this->auditTrailEvent($title, $description);
+
+        $asset->delete();
+        return response()->json([], 204);
+    }
+
 }

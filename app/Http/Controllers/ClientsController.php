@@ -19,7 +19,7 @@ class ClientsController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -70,7 +70,7 @@ class ClientsController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -171,7 +171,7 @@ class ClientsController extends Controller
      * Display the specified resource.
      *
      * @param  \App\Models\Client  $client
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function sendLoginCredentials(User $user)
     {
@@ -190,7 +190,7 @@ class ClientsController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Client  $client
-     * @return \Illuminate\Http\Response
+     * @return void
      */
     public function update(Request $request)
     {
@@ -349,7 +349,7 @@ class ClientsController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  \App\Models\Client  $client
-     * @return \Illuminate\Http\Response
+     * @return void
      */
     public function toggleClientSuspension(Request $request, Client $client)
     {

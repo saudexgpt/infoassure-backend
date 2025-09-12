@@ -12,7 +12,6 @@ class AssignedTask extends Model
     protected $fillable = [
         'client_id',
         'clause_id',
-        'module_activity_id',
         'module_activity_task_id',
         'assignee_id',
         'days',
@@ -20,7 +19,8 @@ class AssignedTask extends Model
         'end_date',
         'progress',
         'status',
-        'assigned_by'
+        'assigned_by',
+        'notes'
     ];
 
     public function client()
@@ -46,6 +46,11 @@ class AssignedTask extends Model
     public function assigner()
     {
         return $this->belongsTo(User::class, 'assigned_by', 'id');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(AssignedTaskComment::class, 'module_activity_task_id', 'id');
     }
 
 }

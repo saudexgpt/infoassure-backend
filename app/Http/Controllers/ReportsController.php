@@ -589,18 +589,21 @@ class ReportsController extends Controller
             $unique_asset_ids = [];
             foreach ($risk_registers as $risk_register) {
                 $asset = $risk_register->asset;
-                if (!in_array($asset->id, $unique_asset_ids)) {
-                    $asset_risk_assessment = RiskAssessment::where(['client_id' => $client_id, 'asset_id' => $asset->id, 'module' => 'isms'])
-                        ->where('asset_type_id', '!=', NULL)
-                        ->select(\DB::raw('COUNT(CASE WHEN revised_risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "High" THEN risk_assessments.id END ) as high'))
-                        ->first();
+                if ($asset) {
+                    if (!in_array($asset->id, $unique_asset_ids)) {
+                        $asset_risk_assessment = RiskAssessment::where(['client_id' => $client_id, 'asset_id' => $asset->id, 'module' => 'isms'])
+                            ->where('asset_type_id', '!=', NULL)
+                            ->select(\DB::raw('COUNT(CASE WHEN revised_risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "High" THEN risk_assessments.id END ) as high'))
+                            ->first();
 
-                    $drilldown_series_low[] = [$asset->name, (int) $asset_risk_assessment->low];
-                    $drilldown_series_medium[] = [$asset->name, (int) $asset_risk_assessment->medium];
-                    $drilldown_series_high[] = [$asset->name, (int) $asset_risk_assessment->high];
+                        $drilldown_series_low[] = [$asset->name, (int) $asset_risk_assessment->low];
+                        $drilldown_series_medium[] = [$asset->name, (int) $asset_risk_assessment->medium];
+                        $drilldown_series_high[] = [$asset->name, (int) $asset_risk_assessment->high];
 
-                    $unique_asset_ids[] = $asset->id;
+                        $unique_asset_ids[] = $asset->id;
+                    }
                 }
+
 
             }
             $drilldown_low_series[] = [
@@ -624,7 +627,7 @@ class ReportsController extends Controller
         endforeach;
         $risk_score = 0;
         $risk_level = '';
-        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $risk_matrix = RiskMatrix::firstOrCreate(['client_id' => $client_id]);
         $matrix = $risk_matrix->current_matrix;
         if ($count_risk_score > 0) {
             $risk_score = (int) ($total_risk_scores / $count_risk_score);
@@ -801,7 +804,7 @@ class ReportsController extends Controller
         endforeach;
         $risk_score = 0;
         $risk_level = '';
-        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $risk_matrix = RiskMatrix::firstOrCreate(['client_id' => $client_id]);
         $matrix = $risk_matrix->current_matrix;
         if ($count_risk_score > 0) {
             $risk_score = (int) ($total_risk_scores / $count_risk_score);

@@ -91,7 +91,8 @@ class RiskRegistersController extends Controller
                 $risk_register_count = RiskRegister::where('asset_id', $asset->id)->count();
                 if ($risk_register_count < 1) {
                     $asset_type = $asset->assetType;
-                    $generated_threats = $this->generativeThreatIntelligence($asset->name, $asset_type->name);
+                    $description = $asset->description;
+                    $generated_threats = $this->generativeThreatIntelligence($asset->name, $asset_type->name, $description);
                     if ($generated_threats !== null && count($generated_threats) > 0) {
                         $this->loadAutoRiskRegisterData($generated_threats, $asset, $asset_type, $client);
                     }
@@ -101,9 +102,13 @@ class RiskRegistersController extends Controller
             }
         }
     }
-    private function generativeThreatIntelligence($item, $category)
+    private function generativeThreatIntelligence($item, $category, $description)
     {
-        $message = "Generate at least 5 cyber security threats associated with ###$item### under ###$category###.";
+        if ($description !== NULL) {
+            $message = "Generate at least 5 cyber security threats associated with ###$item### under ###$category### described as ###$description###.";
+        } else {
+            $message = "Generate at least 5 cyber security threats associated with ###$item### under ###$category###.";
+        }
         $instruction = "
             Also provide the vulnerabilities for each of the threats in an array format.
             Format the responses as an array of objects in json format for easy extraction in the format below:
@@ -634,6 +639,7 @@ class RiskRegistersController extends Controller
     }
     public function deleteRiskImpactArea(Request $request, RiskImpactArea $riskImpactArea)
     {
+        RiskImpactOnArea::where(['risk_impact_area_id' => $riskImpactArea->id])->delete();
         $riskImpactArea->delete();
         return response()->json(['message' => 'Successful'], 200);
     }

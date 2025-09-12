@@ -11,12 +11,12 @@ class ModuleActivityTask extends Model
     protected $fillable = [
         'clause_id',
         'section_id',
-        'module_activity_id',
+        'activity_no',
+        'name',
         'document_template_ids',
         'dependency',
-        'name',
         'description',
-        'hint',
+        'implementation_guide',
         'priority',
         'occurence'
     ];
@@ -24,18 +24,22 @@ class ModuleActivityTask extends Model
     {
         return $this->belongsTo(Clause::class);
     }
-    public function section()
-    {
-        return $this->belongsTo(ClauseSection::class, 'section_id', 'id');
-    }
-    public function activity()
-    {
-        return $this->belongsTo(ModuleActivity::class, 'module_activity_id', 'id');
-    }
+    // public function activity()
+    // {
+    //     return $this->belongsTo(ModuleActivity::class, 'module_activity_id', 'id');
+    // }
 
     public function assignedTask()
     {
         return $this->hasOne(AssignedTask::class, 'module_activity_task_id', 'id');
+    }
+
+    protected function implementationGuide(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => json_decode($value, true),
+            set: fn($value) => json_encode($value),
+        );
     }
 
     protected function documentTemplateIds(): Attribute
@@ -45,7 +49,6 @@ class ModuleActivityTask extends Model
             set: fn($value) => json_encode($value),
         );
     }
-
 
 
 }

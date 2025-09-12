@@ -306,12 +306,14 @@ class RiskAssessmentsController extends Controller
         $risk_assessment_query = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
             ->leftJoin('business_units', 'business_units.id', 'risk_assessments.business_unit_id')
             ->leftJoin('business_processes', 'business_processes.id', 'risk_assessments.business_process_id')
+            ->leftJoin('assets', 'assets.id', 'risk_assessments.asset_id')
+            ->leftJoin('asset_types', 'asset_types.id', 'risk_assessments.asset_type_id')
             ->where(['risk_assessments.client_id' => $client_id/*, 'risk_assessments.module' => $module*/])
-            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))
+            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'assets.name as asset_name', 'asset_types.name as asset_type_name', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))
             ->orderBy('risk_id', 'ASC')
             ->get();
 
-        $asset_types = $risk_assessment_query->where('asset_id', '!=', NULL)->groupBy('asset_name');
+        $asset_types = $risk_assessment_query->where('asset_id', '!=', NULL)->groupBy(['asset_type_name', 'asset_name']);
 
 
         $business_units = $risk_assessment_query->where('business_process', '!=', NULL)->groupBy('business_process');
@@ -319,9 +321,11 @@ class RiskAssessmentsController extends Controller
         $risk_assessments = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
             ->leftJoin('business_units', 'business_units.id', 'risk_assessments.business_unit_id')
             ->leftJoin('business_processes', 'business_processes.id', 'risk_assessments.business_process_id')
+            ->leftJoin('assets', 'assets.id', 'risk_assessments.asset_id')
+            ->leftJoin('asset_types', 'asset_types.id', 'risk_assessments.asset_type_id')
             ->where(['risk_assessments.client_id' => $client_id])
             ->whereIn('risk_assessments.module', $modules)
-            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
+            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'assets.name as asset_name', 'asset_types.name as asset_type_name', 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
             ->orderBy('risk_id', 'ASC')
             ->get();
 

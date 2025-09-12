@@ -203,4 +203,22 @@ class UploadsController extends Controller
         $description = "Remark was made on document title: $clause->title, clause: $clause->name uploaded by $client->name";
         $this->auditTrailEvent($title, $description);
     }
+
+    public function fetchUploadedDocumentWithTemplateIds(Request $request)
+    {
+        $client_id = $this->getClient()->id;
+        $year = $this->getYear();
+        if (isset($request->year) && $request->year != '') {
+            $year = $request->year;
+        }
+        $template_ids = json_decode(json_encode($request->template_ids), 1);
+        $uploads = Upload::join('document_templates', 'uploads.template_id', '=', 'document_templates.id')
+            ->where('uploads.client_id', $client_id)
+            ->whereIn('template_id', $template_ids)
+            ->where('uploads.created_at', 'LIKE', '%' . $year . '%')
+            ->orderBy('title')
+            ->select('uploads.*', 'document_templates.first_letter', 'document_templates.title')
+            ->get();
+        return response()->json(compact('uploads'), 200);
+    }
 }

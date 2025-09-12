@@ -80,6 +80,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             // Incident Types
 
             Route::get('fetch-all-tasks', [CalendarController::class, 'fetchAllTasks']);
+            Route::get('show-task/{task}', [CalendarController::class, 'showTask']);
+
             Route::get('fetch-task-by-clause', [CalendarController::class, 'fetchModuleTaskByClause']);
             Route::get('fetch-client-assigned-tasks', [CalendarController::class, 'fetchClientAssignedTasks']);
 
@@ -95,8 +97,19 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::put('mark-task-as-completed/{task}', [CalendarController::class, 'markTaskAsCompleted']);
 
             Route::get('set-expected-uploads', [CalendarController::class, 'setExpectedUploadsFromAssignedTasks']);
+            Route::put('save-assigned-task-note/{task}', [CalendarController::class, 'saveAssignedTaskNote']);
 
 
+            Route::group(['prefix' => 'comments'], function () {
+                // Incident Types
+
+                Route::get('fetch-task-comments', [CalendarController::class, 'fetchTaskComments']);
+                Route::post('post-task-comment', [CalendarController::class, 'postTaskcomment']);
+                Route::put('update-task-comment/{comment}', [CalendarController::class, 'updateTaskComment']);
+                Route::delete('delete-comment/{comment}', [CalendarController::class, 'deleteComment']);
+
+
+            });
         });
 
 

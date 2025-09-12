@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class RiskMatrix extends Model
 {
     use HasFactory;
+    protected $fillable = ['client_id', 'current_matrix', 'proposed_matrix', 'risk_appetite', 'created_by', 'approved_by'];
     public function client()
     {
         return $this->belongsTo(Client::class);
