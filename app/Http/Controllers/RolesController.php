@@ -58,8 +58,11 @@ class RolesController extends Controller
         $user = $this->getUser();
         if ($user->login_as !== 'super') {
             $client = $this->getClient();
-            $role = Role::where(['name' => $name, 'client_id' => $client->id])
-                ->orWhere(['name' => $name, 'client_id' => null])
+            $role = Role::where('name', $name)
+                ->where(function ($q) use ($client) {
+                    $q->where('client_id', $client->id)
+                        ->orWhere('client_id', null);
+                })
                 ->first();
             if (!$role) {
                 $role = new Role();
