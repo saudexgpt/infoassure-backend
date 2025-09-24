@@ -72,6 +72,13 @@ class RolesController extends Controller
                 $role->description = $validated['description'] ?? null;
                 $role->save();
             }
+
+            $userIds = $client->users()->pluck('id');
+            $userIds = $userIds->toArray();
+            $title = "New Role Created under " . $client->name;
+            //log this event
+            $description = "$user->name created a new role titled: $name";
+            $this->sendNotification($title, $description, $userIds);
         } else {
             $role = Role::where('name', $name)->first();
             if (!$role) {
@@ -80,6 +87,12 @@ class RolesController extends Controller
                 $role->display_name = ucwords(str_replace('-', ' ', $name));
                 $role->description = $validated['description'] ?? null;
                 $role->save();
+
+                $userIds = [$user->id];
+                $title = "New Role Created";
+                //log this event
+                $description = "$user->name created a new role titled: $name";
+                $this->sendNotification($title, $description, $userIds);
             }
         }
         return $this->index($request);
