@@ -217,7 +217,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('update-risk-impact-on-area/{riskImpactOnArea}', [RiskRegistersController::class, 'updateRiskImpactOnArea']);
     Route::delete('delete-risk-impact-on-area/{riskImpactOnArea}', [RiskRegistersController::class, 'deleteRiskImpactOnArea']);
 
-    Route::post('generate-auto-risk-registers', [RiskRegistersController::class, 'autoGenerateAndSaveAssetRiskRegisters']);
+    Route::post('generate-asset-auto-risk-registers', [RiskRegistersController::class, 'autoGenerateAndSaveAssetRiskRegisters']);
+    Route::post('generate-process-auto-risk-registers', [RiskRegistersController::class, 'autoGenerateAndSaveProcessRiskRegisters']);
     Route::get('fetch-asset-risk-registers', [RiskRegistersController::class, 'fetchAssetRiskRegisters']);
 
 
@@ -243,6 +244,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('register', [UsersController::class, 'store']);
         Route::put('update-profile/{user}', [UsersController::class, 'updateProfile']);
         Route::post('upload-photo', [UsersController::class, 'updatePhoto']);
+        Route::get('show/{user}', [UsersController::class, 'show']);
+
     });
 
     Route::group(['prefix' => 'custom-fields'], function () {

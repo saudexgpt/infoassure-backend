@@ -128,7 +128,7 @@ class GeneralRiskLibrariesController extends Controller
         $query->where('client_id', $client_id)->orWhere('client_id', NULL);
         if (isset($request->asset_type) && $request->asset_type != '') {
             $asset_type = $request->asset_type;
-            $query->where('asset_types', 'LIKE', "%$asset_type%")->orderBy('threats')->get();
+            $query->where('asset_types', 'LIKE', "%$asset_type%");
         }
         $threats = $query->orderBy('threats')->get();
         return response()->json(compact('threats'), 200);

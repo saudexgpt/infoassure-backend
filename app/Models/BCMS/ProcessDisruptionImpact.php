@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 class ProcessDisruptionImpact extends Model
 {
     use HasFactory, SoftDeletes;
+    protected $connection = 'bcms';
     protected $fillable = ['client_id', 'business_impact_analysis_id', 'criteria', 'process_disruption_impact'];
     protected function processDisruptionImpact(): Attribute
     {

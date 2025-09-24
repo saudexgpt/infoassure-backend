@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class BusinessImpactAnalysis extends Model
 {
     use HasFactory, SoftDeletes;
+    protected $connection = 'bcms';
     protected $fillable = ['client_id', 'business_unit_id', 'business_process_id', 'minimum_service_level'];
     public function businessUnit()
     {

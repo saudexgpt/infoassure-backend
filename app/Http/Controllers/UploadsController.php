@@ -162,11 +162,12 @@ class UploadsController extends Controller
     public function uploadEvidenceFile(Request $request)
     {
         $client = $this->getClient();
-        $upload = Upload::find($request->upload_id);
+        $upload = Upload::with('template')->find($request->upload_id);
+        $doc_title = $upload->template->title;
         // $folder_key = $client->id;
         $folder_key = str_replace(' ', '_', ucwords($client->name));
         if ($request->file('file_uploaded') != null && $request->file('file_uploaded')->isValid()) {
-            $formated_name = str_replace(' ', '_', ucwords($upload->title));
+            $formated_name = str_replace(' ', '_', ucwords($doc_title));
             $file_name = 'evidence_for_' . $formated_name . '_' . $client->id . '_template' . $upload->template_id . "." . $request->file('file_uploaded')->guessClientExtension();
             $link = $request->file('file_uploaded')->storeAs('clients/' . $folder_key . '/document', $file_name, 'public');
             $upload->link = $link;
@@ -180,7 +181,7 @@ class UploadsController extends Controller
             $name = $user->name;// . ' (' . $user->email . ')';
             $title = "Document Uploaded";
             //log this event
-            $description = "$name uploaded a document titled: $upload->title";
+            $description = "$name uploaded a document titled: $doc_title";
             $this->sendNotification($title, $description, $userIds);
             // $this->auditTrailEvent($title, $description, $users);
 
@@ -212,12 +213,13 @@ class UploadsController extends Controller
             $year = $request->year;
         }
         $template_ids = json_decode(json_encode($request->template_ids), 1);
-        $uploads = Upload::join('document_templates', 'uploads.template_id', '=', 'document_templates.id')
+        $uploads = Upload::with('template')
+            ->join('document_templates', 'uploads.template_id', '=', 'document_templates.id')
             ->where('uploads.client_id', $client_id)
             ->whereIn('template_id', $template_ids)
             ->where('uploads.created_at', 'LIKE', '%' . $year . '%')
             ->orderBy('title')
-            ->select('uploads.*', 'document_templates.first_letter', 'document_templates.title')
+            ->select('uploads.*', 'document_templates.first_letter', 'document_templates.title', 'document_templates.link as template_link')
             ->get();
         return response()->json(compact('uploads'), 200);
     }

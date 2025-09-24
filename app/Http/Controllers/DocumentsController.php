@@ -68,6 +68,7 @@ class DocumentsController extends Controller
         }
         $template->save();
 
+
     }
 
     public function destroy(Request $request, DocumentTemplate $document)
@@ -227,6 +228,17 @@ class DocumentsController extends Controller
             $upload->link = $link;
             $upload->last_modified_by = $this->getUser()->id;
             $upload->save();
+
+            $user = $this->getUser();
+            // $users = $client->users;
+            $userIds = $client->users()->pluck('id');
+            $userIds = $userIds->toArray();
+
+            $name = $user->name;// . ' (' . $user->email . ')';
+            $title = "Document Updated";
+            //log this event
+            $description = "$name modified a document titled: $request->title";
+            $this->sendNotification($title, $description, $userIds);
 
             return response()->json(['message' => 'Saved Successfully'], 200);
         }

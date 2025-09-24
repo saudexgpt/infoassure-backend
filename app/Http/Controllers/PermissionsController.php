@@ -14,11 +14,20 @@ class PermissionsController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
-        $permissions =  Permission::orderBy('name')->get();
+        $user = $this->getUser();
+        if ($user->login_as !== 'super') {
+            $client = $this->getClient();
+            $roles = Role::where('client_id', $client->id)->with('permissions')->get();
+            $permissions = Permission::orderBy('name')->where('module', '!=', 'SYSTEM')->get()->groupBy('module');
+        } else {
+
+
+            $permissions = Permission::orderBy('name')->get()->groupBy('module');
+        }
         return $this->render(compact('permissions'));
     }
 

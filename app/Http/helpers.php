@@ -553,3 +553,16 @@ function folderSizeFilter($bytes)
 
     return (round($bytes, 2) . $label[$i]);
 }
+
+function getDatabaseName($connection, $includePeriod = true)
+{
+    if (empty(config('database.connections.' . $connection . '.database'))) {
+        new Exception('no database connection for' . $connection);
+    }
+
+    if ($includePeriod === false) {
+        return config('database.connections.' . $connection . '.database');
+    }
+
+    return config('database.connections.' . $connection . '.database') . '.';
+}

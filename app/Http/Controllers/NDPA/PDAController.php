@@ -12,7 +12,7 @@ class PDAController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -28,8 +28,8 @@ class PDAController extends Controller
         // if (isset($request->business_process_id) && $request->business_process_id != 'all') {
         //     $condition['business_process_id'] = $request->business_process_id;
         // }
-        $pdas = PersonalDataAssessment::join('business_processes', 'business_processes.id', 'personal_data_assessments.business_process_id')
-            ->join('business_units', 'business_units.id', 'personal_data_assessments.business_unit_id')
+        $pdas = PersonalDataAssessment::join(getDatabaseName('mysql') . 'business_processes as business_processes', 'business_processes.id', 'personal_data_assessments.business_process_id')
+            ->join(getDatabaseName('mysql') . 'business_units as business_units', 'business_units.id', 'personal_data_assessments.business_unit_id')
             ->where('personal_data_assessments.client_id', $client_id)
             ->where($condition)
             ->select('personal_data_assessments.*', 'business_units.unit_name as business_unit', 'business_processes.name as business_process')
@@ -41,16 +41,31 @@ class PDAController extends Controller
 
     public function fetchPersonalDataItems(Request $request)
     {
-        $personal_data_items = PersonalDataItem::orderBy('item')->get();
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $personal_data_items = PersonalDataItem::where(function ($q) use ($client_id) {
+            $q->whereNull('client_id')
+                ->orWhere('client_id', $client_id);
+
+        })->orderBy('item')->get();
         return response()->json(compact('personal_data_items'), 200);
     }
-    private function saveNewPersonalDataItem($items)
+    private function saveNewPersonalDataItem(Request $request, $items)
     {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
         if ($items != NULL) {
 
             foreach ($items as $item) {
                 PersonalDataItem::firstOrCreate([
-                    'item' => $item
+                    'item' => $item,
+                    'client_id' => $client_id
                 ]);
             }
         }

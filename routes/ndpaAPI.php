@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\NDPA\CalendarController;
 use App\Http\Controllers\NDPA\ClausesController;
+use App\Http\Controllers\NDPA\PDAController;
 use App\Http\Controllers\NDPA\QuestionsController;
 use App\Http\Controllers\NDPA\AnswersController;
 use App\Http\Controllers\NDPA\ReportsController;
@@ -79,10 +80,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::delete('reverse/{exception}', [ClausesController::class, 'reverseException']);
         });
 
-        Route::group(['prefix' => 'calendar'], routes: function () {
+        Route::group(['prefix' => 'calendar'], function () {
             // Incident Types
 
             Route::get('fetch-all-tasks', [CalendarController::class, 'fetchAllTasks']);
+            Route::get('show-task/{task}', [CalendarController::class, 'showTask']);
+
             Route::get('fetch-task-by-clause', [CalendarController::class, 'fetchModuleTaskByClause']);
             Route::get('fetch-client-assigned-tasks', [CalendarController::class, 'fetchClientAssignedTasks']);
 
@@ -97,6 +100,50 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::put('mark-task-as-done/{task}', [CalendarController::class, 'markTaskAsDone']);
             Route::put('mark-task-as-completed/{task}', [CalendarController::class, 'markTaskAsCompleted']);
 
+            Route::get('set-expected-uploads', [CalendarController::class, 'setExpectedUploadsFromAssignedTasks']);
+            Route::put('save-assigned-task-note/{task}', [CalendarController::class, 'saveAssignedTaskNote']);
+
+
+            Route::group(['prefix' => 'comments'], function () {
+                // Incident Types
+
+                Route::get('fetch-task-comments', [CalendarController::class, 'fetchTaskComments']);
+                Route::post('post-task-comment', [CalendarController::class, 'postTaskcomment']);
+                Route::put('update-task-comment/{comment}', [CalendarController::class, 'updateTaskComment']);
+                Route::delete('delete-comment/{comment}', [CalendarController::class, 'deleteComment']);
+
+
+            });
         });
+
+        Route::group(['prefix' => 'pda'], function () {
+
+            Route::get('/', [PDAController::class, 'index']);
+            Route::get('fetch-personal-data-item', [PDAController::class, 'fetchPersonalDataItems']);
+            Route::post('store', [PDAController::class, 'store']);
+
+
+            Route::put('update/{pda}', [PDAController::class, 'update']);
+            Route::delete('destroy/{pda}', [PDAController::class, 'destroy']);
+        });
+        // Route::group(['prefix' => 'calendar'], routes: function () {
+        //     // Incident Types
+
+        //     Route::get('fetch-all-tasks', [CalendarController::class, 'fetchAllTasks']);
+        //     Route::get('fetch-task-by-clause', [CalendarController::class, 'fetchModuleTaskByClause']);
+        //     Route::get('fetch-client-assigned-tasks', [CalendarController::class, 'fetchClientAssignedTasks']);
+
+        //     Route::post('store-clause-activities', [CalendarController::class, 'storeClauseActivities']);
+        //     Route::put('update-clause-activity/{moduleActivity}', [CalendarController::class, 'updateClauseActivity']);
+        //     Route::post('store-clause-activity-tasks', [CalendarController::class, 'storeClauseActivityTasks']);
+        //     Route::put('update-clause-activity-task/{moduleActivityTask}', [CalendarController::class, 'updateClauseActivityTask']);
+        //     Route::post('assign-task-to-user', [CalendarController::class, 'assignTaskToUser']);
+        //     Route::get('fetch-my-calendar-data', [CalendarController::class, 'fetchMyCalendarData']);
+        //     Route::get('fetch-project-calendar-data', [CalendarController::class, 'fetchProjectCalendarData']);
+
+        //     Route::put('mark-task-as-done/{task}', [CalendarController::class, 'markTaskAsDone']);
+        //     Route::put('mark-task-as-completed/{task}', [CalendarController::class, 'markTaskAsCompleted']);
+
+        // });
     });
 });

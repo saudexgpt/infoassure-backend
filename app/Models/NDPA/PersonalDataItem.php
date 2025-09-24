@@ -9,5 +9,5 @@ class PersonalDataItem extends Model
 {
     use HasFactory;
     protected $connection = 'ndpa';
-    protected $fillable = ['item'];
+    protected $fillable = ['item', 'client_id'];
 }

@@ -4,17 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\User;
-use App\Models\Role;
-use App\Models\School;
-use App\Models\Staff;
-use App\Models\State;
-use App\Models\Student;
-use App\Models\StudentsInClass;
-use Auth;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Laracasts\Flash\Flash;
 
 class UsersController extends Controller
 {
@@ -137,8 +128,10 @@ class UsersController extends Controller
 
 
 
-    public function show(User $user)
+    public function show(Request $request, User $user)
     {
+        $user = $user->with('roles', 'permissions')->find($user->id);
+        return response()->json(compact('user'), 200);
     }
 
     public function editPhoto(Request $request)

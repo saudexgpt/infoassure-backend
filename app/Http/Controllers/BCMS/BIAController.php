@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BCMS\BIARiskAssessment;
 use App\Models\BCMS\BusinessImpactAnalysis;
 use App\Models\BusinessProcess;
+use App\Models\BusinessUnit;
 use App\Models\BCMS\BiaTimeRecoveryRequirement;
 use App\Models\BCMS\ProcessDisruptionImpact;
 use App\Models\RiskImpact;
@@ -21,8 +22,8 @@ class BIAController extends Controller
         $client_id = $request->client_id;
         $this->store($client_id);
         $bias = BusinessImpactAnalysis::with('impacts')
-            ->join('business_units', 'business_units.id', 'business_impact_analyses.business_unit_id')
-            ->join('business_processes', 'business_processes.id', 'business_impact_analyses.business_process_id')
+            ->join(getDatabaseName('mysql') . 'business_units as business_units', 'business_units.id', 'business_impact_analyses.business_unit_id')
+            ->join(getDatabaseName('mysql') . 'business_processes as business_processes', 'business_processes.id', 'business_impact_analyses.business_process_id')
             ->where(['business_impact_analyses.client_id' => $client_id])
             ->select('business_impact_analyses.*', 'business_impact_analyses.id as id', 'business_units.unit_name as business_unit', 'business_processes.description', 'business_processes.roles_responsible', 'business_processes.no_of_people_involved', 'business_processes.minimum_no_of_people_involved', 'business_processes.product_or_service_delivered', 'business_processes.regulatory_obligations', 'business_processes.name as business_process', 'generated_process_id')
             ->get();

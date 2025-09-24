@@ -26,7 +26,7 @@ class Clause extends Model
     // }
     public function sections()
     {
-        return $this->hasMany(ClauseSection::class);
+        return $this->hasMany(ClauseSection::class, 'clause_id', 'id');
     }
 
     public function activities()

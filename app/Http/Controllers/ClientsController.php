@@ -51,11 +51,21 @@ class ClientsController extends Controller
     }
 
 
-    public function fetchUserClients()
+    public function fetchUserClients(Request $request)
     {
+
         $user_id = $this->getUser()->id;
         $user = User::find($user_id);
         $clients = $user->clients;
+        if (isset($request->role) && $request->role !== null) {
+            foreach ($clients as $client) {
+
+                $role = Role::where(['name' => $request->role, 'client_id' => $client->id])->first();
+                if (!$role) {
+                    $clients = $clients->except($client->id);
+                }
+            }
+        }
         return response()->json(compact('clients'), 200);
     }
 

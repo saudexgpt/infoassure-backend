@@ -69,17 +69,8 @@ class CalendarController extends Controller
         // $instruction = "Provide the response in a string array format";
 
         // $content = $message . $instruction;
+        //return $this->callOpenAISearch($content);
 
-        // $result = OpenAI::chat()->create([
-        //     'model' => 'gpt-3.5-turbo',
-        //     'messages' => [
-        //         ['role' => 'user', 'content' => $content],
-        //     ],
-        // ]);
-
-        // // response is score and justification
-        // $ai_response = json_decode($result->choices[0]->message->content);
-        // return $ai_response;
         $filename = portalPulicPath('isms_activities.json');
         $file_content = file_get_contents($filename);
         return json_decode($file_content);

@@ -151,17 +151,7 @@ class AnswersController extends Controller
 
         $content = $message . $question . $answer . $evidence . $instruction;
 
-        $result = OpenAI::chat()->create([
-            'model' => 'gpt-3.5-turbo',
-            'messages' => [
-                ['role' => 'user', 'content' => $content],
-            ],
-        ]);
-
-        // response is score and justification
-        $ai_response = json_decode($result->choices[0]->message->content);
-        return $ai_response;
-        // print_r($result);
+        return $this->callOpenAISearch($content);
     }
 
     /**

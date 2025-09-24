@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use OpenAI\Laravel\Facades\OpenAI;
 use Notification;
 
 class Controller extends BaseController
@@ -313,5 +314,18 @@ class Controller extends BaseController
     public function industryCertifications()
     {
         return ['ISO 27001', 'SOC 2', 'GDPR', 'PCI-DSS'];
+    }
+
+    public function callOpenAISearch($query)
+    {
+        $result = OpenAI::chat()->create([
+            'model' => 'gpt-3.5-turbo',
+            //'model' => 'gpt-4o-mini',
+            'messages' => [
+                ['role' => 'user', 'content' => $query],
+            ],
+        ]);
+        $ai_response = json_decode($result->choices[0]->message->content);
+        return $ai_response;
     }
 }

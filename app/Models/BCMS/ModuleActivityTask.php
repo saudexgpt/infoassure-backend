@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Models\NDPA;
+namespace App\Models\BCMS;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class ModuleActivityTask extends Model
 {
-    protected $connection = 'ndpa';
+    protected $connection = 'bcms';
     protected $fillable = [
         'clause_id',
-        'section_id',
         'activity_no',
         'name',
         'document_template_ids',
+        'tasks',
         'dependency',
         'description',
         'implementation_guide',
@@ -23,10 +23,6 @@ class ModuleActivityTask extends Model
     public function clause()
     {
         return $this->belongsTo(Clause::class);
-    }
-    public function section()
-    {
-        return $this->belongsTo(ClauseSection::class, 'section_id', 'id');
     }
     // public function activity()
     // {
@@ -38,7 +34,7 @@ class ModuleActivityTask extends Model
         return $this->hasOne(AssignedTask::class, 'module_activity_task_id', 'id');
     }
 
-    protected function implementationGuide(): Attribute
+    protected function tasks(): Attribute
     {
         return Attribute::make(
             get: fn($value) => json_decode($value, true),

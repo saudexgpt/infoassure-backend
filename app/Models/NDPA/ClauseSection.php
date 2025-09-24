@@ -29,6 +29,6 @@ class ClauseSection extends Model
 
     public function tasks()
     {
-        return $this->hasMany(ModuleActivityTask::class, 'clause_id', 'id');
+        return $this->hasMany(ModuleActivityTask::class, 'section_id', 'id');
     }
 }

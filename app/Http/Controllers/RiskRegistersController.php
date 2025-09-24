@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Asset;
 use App\Models\AssetType;
+use App\Models\BusinessProcess;
 use App\Models\BusinessUnit;
 use App\Models\Client;
 use App\Models\GeneralRiskLibrary;
-use App\Models\PersonalDataAssessment;
+use App\Models\NDPA\PersonalDataAssessment;
 use App\Models\RiskControlSelfAssessment;
 use App\Models\RiskImpact;
 use App\Models\RiskImpactArea;
@@ -15,21 +16,27 @@ use App\Models\RiskImpactOnArea;
 use App\Models\RiskLikelihood;
 use App\Models\RiskMatrix;
 use App\Models\RiskRegister;
+use Artisan;
 use Illuminate\Http\Request;
 use OpenAI\Laravel\Facades\OpenAI;
 
 class RiskRegistersController extends Controller
 {
-    // public function __construct(Request $httpRequest)
-    // {
-    //     parent::__construct($httpRequest);
-    //     $this->middleware(function ($request, $next) {
+    public function __construct(Request $httpRequest)
+    {
+        parent::__construct($httpRequest);
+        $this->middleware(function ($request, $next) {
+            try {
+                Artisan::call('ai:generated-threats-library');
+            } catch (\Throwable $th) {
+                //throw $th;
+            }
 
-    //         $this->setupRiskMatrices($request);
-    //         // $this->autoGenerateAndSaveAssetRiskRegisters($request);
-    //         return $next($request);
-    //     });
-
+            // $this->setupRiskMatrices($request);
+            // $this->autoGenerateAndSaveAssetRiskRegisters($request);
+            return $next($request);
+        });
+    }
     private function loadAutoRiskRegisterData($generatedThreats, $asset, $asset_type, $client)
     {
         foreach ($generatedThreats as $generated_threat) {
@@ -63,7 +70,6 @@ class RiskRegistersController extends Controller
 
         }
     }
-    // }
     public function autoGenerateAndSaveAssetRiskRegisters(Request $request)
     {
         if (isset($request->client_id)) {
@@ -72,12 +78,14 @@ class RiskRegistersController extends Controller
             $client_id = $this->getClient()->id;
         }
         $client = Client::find($client_id);
-        if (isset($request->asset_id) && $request->asset_id != '') {
-            $asset = Asset::with('assetType')->find($request->asset_id);
+        if (isset($request->id) && $request->id != '') {
+            $id = $request->id;
+            $asset = Asset::with('assetType')->find($id);
             $risk_register_count = RiskRegister::where('asset_id', $asset->id)->count();
             if ($risk_register_count < 1) {
                 $asset_type = $asset->assetType;
-                $generated_threats = $this->generativeThreatIntelligence($asset->name, $asset_type->name);
+                $description = $asset->description;
+                $generated_threats = $this->generativeThreatIntelligence($asset->name, $asset_type->name, $description);
                 if ($generated_threats !== null && count($generated_threats) > 0) {
                     $this->loadAutoRiskRegisterData($generated_threats, $asset, $asset_type, $client);
                 }
@@ -101,6 +109,49 @@ class RiskRegistersController extends Controller
                 }
             }
         }
+
+    }
+    // }
+    public function autoGenerateAndSaveProcessRiskRegisters(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $client = Client::find($client_id);
+        if (isset($request->id) && $request->id != '') {
+            $id = $request->id;
+            $business_process = BusinessProcess::with('businessUnit')->find($id);
+            $risk_register_count = RiskRegister::where('business_process_id', $business_process->id)->count();
+            if ($risk_register_count < 1) {
+                $business_unit = $business_process->businessUnit;
+                $description = $business_process->description;
+                $generated_threats = $this->generativeThreatIntelligence($business_process->name, $business_unit->name, $description);
+                if ($generated_threats !== null && count($generated_threats) > 0) {
+                    $this->loadAutoRiskRegisterData($generated_threats, $business_process, $business_unit, $client);
+                }
+
+
+            }
+        } else {
+            $business_processes = BusinessProcess::with('businessUnit')->where('client_id', $client_id)->get();
+            foreach ($business_processes as $business_process) {
+
+                $risk_register_count = RiskRegister::where('business_process_id', $business_process->id)->count();
+                if ($risk_register_count < 1) {
+                    $business_unit = $business_process->businessUnit;
+                    $description = $business_process->description;
+                    $generated_threats = $this->generativeThreatIntelligence($business_process->name, $business_unit->name, $description);
+                    if ($generated_threats !== null && count($generated_threats) > 0) {
+                        $this->loadAutoRiskRegisterData($generated_threats, $business_process, $business_unit, $client);
+                    }
+
+
+                }
+            }
+        }
+
     }
     private function generativeThreatIntelligence($item, $category, $description)
     {
@@ -118,15 +169,7 @@ class RiskRegistersController extends Controller
 
         $content = $message . $instruction;
 
-        $result = OpenAI::chat()->create([
-            'model' => 'gpt-3.5-turbo',
-            //'model' => 'gpt-4o-mini',
-            'messages' => [
-                ['role' => 'user', 'content' => $content],
-            ],
-        ]);
-        $ai_response = json_decode($result->choices[0]->message->content);
-        return $ai_response;
+        return $this->callOpenAISearch($content);
     }
     public function setupRiskMatrices(Request $request)
     {
@@ -389,7 +432,7 @@ class RiskRegistersController extends Controller
         } else {
             $client_id = $this->getClient()->id;
         }
-        $this->loadPDAToRiskRegister($client_id);
+        // $this->loadPDAToRiskRegister($client_id);
         $business_units = BusinessUnit::with([
             'businessProcesses.riskRegisters' => function ($q) use ($client_id) {
                 $q->where('client_id', $client_id);
@@ -403,7 +446,7 @@ class RiskRegistersController extends Controller
         $type = 'Personal Data Asset';
         $pdas = PersonalDataAssessment::where('client_id', $client_id)->get();
         foreach ($pdas as $pda) {
-            $asset_name = $pda->personal_data_item; // implode(',', $pda->personal_data_item);
+            $asset_name = implode(',', $pda->personal_data_item); //$pda->personal_data_item; // implode(',', $pda->personal_data_item);
             $riskRegister = RiskRegister::where([
                 'client_id' => $client_id,
                 'module' => $module,
@@ -515,25 +558,31 @@ class RiskRegistersController extends Controller
         $riskRegister->save();
         if ($riskRegister->risk_id == NULL && $request->submit_mode == 'final') {
 
+            $client = Client::find($client_id);
+            $riskRegister->risk_id = 'RSK' . generateNumber($client->next_general_risk_id);
 
+            $riskRegister->control_no = 'CTRL' . generateNumber($client->next_general_risk_id);
+            $riskRegister->save();
+            $client->next_general_risk_id += 1;
+            $client->save();
 
-            if ($request->business_unit_id != null) {
-                $business_unit = BusinessUnit::find($request->business_unit_id);
-                $riskRegister->risk_id = $business_unit->prepend_risk_no_value . generateNumber($business_unit->next_risk_id);
+            // if ($request->business_unit_id != null) {
+            //     $business_unit = BusinessUnit::find($request->business_unit_id);
+            //     $riskRegister->risk_id = $business_unit->prepend_risk_no_value . generateNumber($business_unit->next_risk_id);
 
-                $riskRegister->control_no = 'CTRL' . generateNumber($business_unit->next_risk_id);
-                $riskRegister->save();
-                $business_unit->next_risk_id += 1;
-                $business_unit->save();
-            } else {
-                $client = Client::find($client_id);
-                $riskRegister->risk_id = 'RSK' . generateNumber($client->next_general_risk_id);
+            //     $riskRegister->control_no = 'CTRL' . generateNumber($business_unit->next_risk_id);
+            //     $riskRegister->save();
+            //     $business_unit->next_risk_id += 1;
+            //     $business_unit->save();
+            // } else {
+            //     $client = Client::find($client_id);
+            //     $riskRegister->risk_id = 'RSK' . generateNumber($client->next_general_risk_id);
 
-                $riskRegister->control_no = 'CTRL' . generateNumber($client->next_general_risk_id);
-                $riskRegister->save();
-                $client->next_general_risk_id += 1;
-                $client->save();
-            }
+            //     $riskRegister->control_no = 'CTRL' . generateNumber($client->next_general_risk_id);
+            //     $riskRegister->save();
+            //     $client->next_general_risk_id += 1;
+            //     $client->save();
+            // }
 
         }
         return response()->json(['id' => $riskRegister->id], 200);
