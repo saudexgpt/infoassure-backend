@@ -24,18 +24,15 @@ class RiskRegistersController extends Controller
 {
     public function __construct(Request $httpRequest)
     {
-        parent::__construct($httpRequest);
-        $this->middleware(function ($request, $next) {
-            try {
-                Artisan::call('ai:generated-threats-library');
-            } catch (\Throwable $th) {
-                //throw $th;
-            }
-
-            // $this->setupRiskMatrices($request);
-            // $this->autoGenerateAndSaveAssetRiskRegisters($request);
-            return $next($request);
-        });
+        // parent::__construct($httpRequest);
+        // $this->middleware(function ($request, $next) {
+        //     try {
+        //         Artisan::call('ai:generated-threats-library');
+        //     } catch (\Throwable $th) {
+        //         //throw $th;
+        //     }
+        //     return $next($request);
+        // });
     }
     private function loadAutoRiskRegisterData($generatedThreats, $asset, $asset_type, $client)
     {
