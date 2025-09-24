@@ -22,18 +22,18 @@ use OpenAI\Laravel\Facades\OpenAI;
 
 class RiskRegistersController extends Controller
 {
-    public function __construct(Request $httpRequest)
-    {
-        // parent::__construct($httpRequest);
-        // $this->middleware(function ($request, $next) {
-        //     try {
-        //         Artisan::call('ai:generated-threats-library');
-        //     } catch (\Throwable $th) {
-        //         //throw $th;
-        //     }
-        //     return $next($request);
-        // });
-    }
+    // public function __construct(Request $httpRequest)
+    // {
+    //     parent::__construct($httpRequest);
+    //     $this->middleware(function ($request, $next) {
+    //         try {
+    //             Artisan::call('ai:generated-threats-library');
+    //         } catch (\Throwable $th) {
+    //             //throw $th;
+    //         }
+    //         return $next($request);
+    //     });
+    // }
     private function loadAutoRiskRegisterData($generatedThreats, $asset, $asset_type, $client)
     {
         foreach ($generatedThreats as $generated_threat) {
