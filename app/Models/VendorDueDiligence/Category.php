@@ -8,4 +8,5 @@ class Category extends Model
 {
     //
     protected $connection = 'vdd';
+    protected $fillable = ['client_id', 'name', 'slug', 'description'];
 }

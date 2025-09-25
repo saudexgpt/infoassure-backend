@@ -267,7 +267,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update-client-user/{user}', [ClientsController::class, 'updateClientUser']);
         Route::put('update-theme/{client}', [ClientsController::class, 'updateTheme']);
         Route::put('attach-client-user/{client}', [ClientsController::class, 'attachClientUser']);
-        Route::put('delete-client-user/{client}', [ClientsController::class, 'removeClientUser']);
+        Route::delete('delete-client-user/{user}', [ClientsController::class, 'deleteClientUser']);
 
 
         // Route::delete('delete-client-user/{user}', [ClientsController::class, 'removeClientUser']);

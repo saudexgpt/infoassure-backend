@@ -35,8 +35,42 @@ class VendorsController extends Controller
     }
     public function fetchVendorCategories()
     {
-        $categories = Category::orderBy('slug')->get();
+        $client_id = $this->getClient()->id;
+        $categories = Category::where('client_id', $client_id)->orderBy('slug')->get();
         return response()->json(compact('categories'), 200);
+    }
+    public function saveVendorCategory(Request $request)
+    {
+        $client_id = $this->getClient()->id;
+        $validate = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+        ]);
+        $name = $validate['name'];
+        $description = $validate['description'];
+        Category::firstOrCreate([
+            'client_id' => $client_id,
+            'name' => $name
+        ], [
+            'slug' => strtolower(str_replace(' ', '-', $name)),
+            'description' => $description
+        ]);
+        return 'success';
+    }
+
+    public function updateVendorCategory(Request $request, Category $category)
+    {
+        $category->name = $request->name;
+        $category->name = strtolower(str_replace(' ', '-', $request->name));
+        $category->description = $request->description;
+        $category->save();
+        return 'success';
+    }
+
+    public function deleteVendorCategory(Request $request, Category $category)
+    {
+        $category->delete();
+        return response()->json([], 204);
     }
     /**
      * Display a listing of the resource.
@@ -410,23 +444,23 @@ class VendorsController extends Controller
     }
 
 
-    // public function deleteClientUser(Request $request, User $user)
-    // {
-    //     $actor = $this->getUser();
-    //     if (!$user->haRole('partner')) {
-    //         return response()->json(['message' => 'Clients are managed by Partners only'], 500);
-    //     }
-    //     $title = "Client User Deletion";
-    //     //log this event
-    //     $description = "$user->name was deleted by $actor->name";
-    //     $this->auditTrailEvent($title, $description);
-    //     $user->forceDelete();
-    //     return response()->json([], 204);
-    //     // $client->users()->sync($user->id);
-    //     // $role = Role::where('name', 'client')->first();
-    //     // $user->roles()->sync($role->id); // role id 3 is client
+    public function deleteVendorUser(Request $request, User $user)
+    {
+        $actor = $this->getUser();
+        if (!$actor->hasPermission('delete-vendor')) {
+            return response()->json(['message' => 'You need permission for this critical action'], 403);
+        }
+        $title = "Vendor User Deletion";
+        //log this event
+        $description = "$user->name was deleted by $actor->name";
+        $this->auditTrailEvent($title, $description);
+        $user->forceDelete();
+        return response()->json([], 204);
+        // $client->users()->sync($user->id);
+        // $role = Role::where('name', 'client')->first();
+        // $user->roles()->sync($role->id); // role id 3 is client
 
-    // }
+    }
 
     /**
      * Remove the specified resource from storage.

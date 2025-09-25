@@ -196,7 +196,7 @@ class ReportsController extends Controller
         $vendor_categories = [];
         $data = [];
         $vendor_grouped_categories = Vendor::leftJoin('categories', 'categories.id', '=', 'vendors.category_id')
-            ->where(['client_id' => $client_id])
+            ->where(['vendors.client_id' => $client_id])
             ->select('vendors.id', 'category_id', 'slug')
             ->get()
             ->groupBy('slug');

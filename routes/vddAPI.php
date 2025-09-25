@@ -125,7 +125,14 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('approve-invoice/{invoice}', [InvoicesController::class, 'approvalAction']);
 
         Route::get('fetch-vendors', [VendorsController::class, 'index']);
+        Route::delete('delete-vendor-user/{user}', [VendorsController::class, 'deleteVendorUser']);
+
         Route::get('fetch-vendor-categories', [VendorsController::class, 'fetchVendorCategories']);
+        Route::post('save-vendor-category', [VendorsController::class, 'saveVendorCategory']);
+        Route::put('update-vendor-category/{category}', [VendorsController::class, 'updateVendorCategory']);
+        Route::delete('delete-vendor-category/{category}', [VendorsController::class, 'deleteVendorCategory']);
+
+
         Route::put('assign-users-as-vendor-admin/{vendor}', [VendorsController::class, 'assignUserAsVendorAdmin']);
 
         Route::get('fetch-approved-vendors', [VendorsController::class, 'fetchApprovedVendors']);

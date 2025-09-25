@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Asset extends Model
 {
     use HasFactory; // SoftDeletes;
-    protected $fillable = ['name', 'client_id', 'asset_type_id', 'description', 'purpose', 'classification', 'information_stored', 'location'];
+    protected $fillable = ['name', 'client_id', 'asset_type_id', 'description', 'purpose', 'classification', 'information_stored', 'location', 'owner_id', 'owner'];
     public function client()
     {
         return $this->belongsTo(Client::class);

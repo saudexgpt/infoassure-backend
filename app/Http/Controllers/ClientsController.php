@@ -85,9 +85,12 @@ class ClientsController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
-        if (!$user->haRole('partner')) {
-            return response()->json(['message' => 'Clients registration is restricted to Partners only'], 500);
+        if (!$user->hasPermission('create-clients')) {
+            return response()->json(['message' => 'You need permission for this action'], 403);
         }
+        // if (!$user->haRole('partner')) {
+        //     return response()->json(['message' => 'Clients registration is restricted to Partners only'], 500);
+        // }
         $partner_id = $this->getPartner()->id;
 
         $contact_email = $request->contact_email;
@@ -200,10 +203,14 @@ class ClientsController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Client  $client
-     * @return void
+     * @return mixed
      */
     public function update(Request $request)
     {
+        $user = $this->getUser();
+        if (!$user->hasPermission('update-clients')) {
+            return response()->json(['message' => 'You need permission for this action'], 403);
+        }
         $client = Client::find($request->id);
         $client->name = $request->name;
         $client->contact_email = $request->contact_email;
@@ -337,32 +344,36 @@ class ClientsController extends Controller
         // $partner->roles()->sync($role->id); // role id 3 is partner
 
     }
-    // public function deleteClientUser(Request $request, User $user)
-    // {
-    //     $actor = $this->getUser();
-    //     if (!$user->haRole('partner')) {
-    //         return response()->json(['message' => 'Clients are managed by Partners only'], 500);
-    //     }
-    //     $title = "Client User Deletion";
-    //     //log this event
-    //     $description = "$user->name was deleted by $actor->name";
-    //     $this->auditTrailEvent($title, $description);
-    //     $user->forceDelete();
-    //     return response()->json([], 204);
-    //     // $client->users()->sync($user->id);
-    //     // $role = Role::where('name', 'client')->first();
-    //     // $user->roles()->sync($role->id); // role id 3 is client
+    public function deleteClientUser(Request $request, User $user)
+    {
+        $actor = $this->getUser();
+        if (!$actor->hasPermission('delete-client-user')) {
+            return response()->json(['message' => 'You need permission for this critical action'], 403);
+        }
+        $title = "User Deletion";
+        //log this event
+        $description = "$user->name was deleted by $actor->name";
+        $this->auditTrailEvent($title, $description);
+        $user->forceDelete();
+        return response()->json([], 204);
+        // $client->users()->sync($user->id);
+        // $role = Role::where('name', 'client')->first();
+        // $user->roles()->sync($role->id); // role id 3 is client
 
-    // }
+    }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  \App\Models\Client  $client
-     * @return void
+     * @return mixed
      */
     public function toggleClientSuspension(Request $request, Client $client)
     {
+        $actor = $this->getUser();
+        if (!$actor->haRole(['partner', 'super'])) {
+            return response()->json(['message' => 'Permission Denied'], 403);
+        }
         $value = $request->value;
         $client->is_active = $value;
         $client->save();
