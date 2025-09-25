@@ -182,7 +182,6 @@ class RiskAssessmentsController extends Controller
      * Display the specified resource.
      *
      * @param  \App\Models\RiskAssessment  $riskAssessment
-     * @return \App\Models\RiskAssessment  $riskAssessment
      */
     public function updateRiskAssessmentFields(Request $request, RiskAssessment $riskAssessment)
     {

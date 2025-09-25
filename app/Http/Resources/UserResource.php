@@ -37,35 +37,11 @@ class UserResource extends JsonResource
             $roles[] = 'vendor';
             $all_roles[] = 'vendor';
         }
-        if ($this->haRole('super') || $this->haRole('partner')) {
+        if ($this->login_as !== NULL) {
+
             $role = Role::with('permissions')->where('name', $this->login_as)->first();
             $permissions = $role->permissions()->pluck('name');
-        } else {
-            $client_id = $this->client_id;
-            $client = Client::find($client_id);
-            $role = Role::where('name', $this->login_as)
-                ->where(function ($q) use ($client) {
-                    $q->where('client_id', $client->id)
-                        ->orWhere('client_id', null);
-
-                })
-                ->with('permissions')
-                ->first();
-            $permissions = $role->permissions()->pluck('name');
         }
-        // if ($this->login_as !== NULL) {
-
-        //     $role = Role::with('permissions')->where('name', $this->login_as)->first();
-        //     $role = Role::where('name', $this->login_as)
-        //         ->where(function ($q) use ($client) {
-        //             $q->where('client_id', $client->id)
-        //                 ->orWhere('client_id', null);
-
-        //         })
-        //         ->with('permissions')
-        //         ->get();
-        //     $permissions = $role->permissions()->pluck('name');
-        // }
         $modules = [];
         $partner = '';
         if ($this->haRole('client')) {
@@ -134,7 +110,13 @@ class UserResource extends JsonResource
             'roles' => array_unique($roles),
             'all_roles' => array_unique($all_roles),
             // 'role' => 'admin',
-            'permissions' => $permissions,
+            // 'permissions' => $permissions,
+            'permissions' => array_map(
+                function ($permission) {
+                    return $permission['name'];
+                },
+                $this->allPermissions()->toArray()
+            ),
             // 'role' => 'admin',
             'all_permissions' => array_map(
                 function ($permission) {
