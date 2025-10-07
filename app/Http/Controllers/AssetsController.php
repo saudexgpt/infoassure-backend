@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Asset;
 use App\Models\AssetType;
@@ -185,4 +186,51 @@ class AssetsController extends Controller
         return response()->json([], 204);
     }
 
+    public function uploadBulkAssets(Request $request)
+    {
+
+        if (isset($request->client_id) && $request->client_id != null) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $data = $request->validate([
+            'asset_type_id' => 'required|exists:asset_types,id',
+            'assets' => 'required|array',
+            'assets.*.ASSET_NAME' => 'required|string',
+            'assets.*.ASSET_DESCRIPTION' => 'nullable|string',
+            'assets.*.ASSET_LOCATION' => 'nullable|string',
+            'assets.*.ASSET_CLASSIFICATION' => 'nullable|string',
+            'assets.*.PURPOSE_OF_ASSET' => 'nullable|string',
+            'assets.*.INFORMATION_STORED' => 'nullable|string',
+            'assets.*.ASSET_OWNER' => 'required|string',
+
+        ]);
+        $asset_type_id = $data['asset_type_id'];
+        $unsaved_data = [];
+        foreach ($data['assets'] as $asset_data) {
+            try {
+                $owner_id = User::where('name', $asset_data['ASSET_OWNER'])->value('id');
+                $name = $asset_data['ASSET_NAME'];
+                Asset::firstOrCreate([
+                    'client_id' => $client_id,
+                    'name' => trim($name)
+                ], [
+                    'asset_type_id' => $asset_type_id,
+                    'description' => $asset_data['ASSET_DESCRIPTION'],
+                    'location' => $asset_data['ASSET_LOCATION'],
+                    'classification' => $asset_data['ASSET_CLASSIFICATION'],
+                    'purpose' => $asset_data['PURPOSE_OF_ASSET'],
+                    'information_stored' => $asset_data['INFORMATION_STORED'],
+                    'owner_id' => $owner_id,
+                ]);
+                //add to asset type asset_samples with new record
+                $this->updateAssetTypeAssetSamples($asset_type_id, $name);
+            } catch (\Throwable $th) {
+                $unsaved_data[] = $asset_data;
+            }
+
+        }
+        return response()->json(compact('unsaved_data'), 200);
+    }
 }

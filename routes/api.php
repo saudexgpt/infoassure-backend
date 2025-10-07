@@ -458,6 +458,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::post('save-asset-types', [AssetsController::class, 'saveAssetTypes']);
         Route::post('save-assets', [AssetsController::class, 'saveAssets']);
+        Route::post('upload-bulk-assets', [AssetsController::class, 'uploadBulkAssets']);
+
 
         Route::put('update-asset-type/{asset_type}', [AssetsController::class, 'updateAssetType']);
         Route::put('update-asset/{asset}', [AssetsController::class, 'updateAsset']);
