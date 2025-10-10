@@ -156,6 +156,9 @@ class User extends Authenticatable implements LaratrustUser
     }
     public function haRole($userRole)
     {
+        if ($userRole == 'client') {
+            $userRole = 'user';
+        }
         // foreach ($this->roles as $role) {
         //     if ($role->hasRole($userRole)) {
         //         return true;

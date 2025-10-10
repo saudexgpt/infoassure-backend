@@ -13,7 +13,11 @@ class TaskLog extends Model
         'assigned_task_id',
         'triggered_by',
         'executed_at',
-        'notes'
+        'start_date',
+        'deadline',
+        'notes',
+        'recurrence_tag',
+        'status'
     ];
     public function client()
     {

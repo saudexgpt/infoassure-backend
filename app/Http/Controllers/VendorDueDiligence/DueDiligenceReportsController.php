@@ -9,7 +9,7 @@ use App\Models\Project;
 use App\Models\VendorDueDiligence\DueDiligenceEvidence;
 use App\Models\DueDiligenceQuestion;
 use App\Models\VendorDueDiligence\DueDiligenceResponse;
-use App\Models\VendorDueDiligence\User;
+use App\Models\User;
 use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;

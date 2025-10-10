@@ -5,7 +5,7 @@ namespace App\Http\Controllers\VendorDueDiligence;
 use App\Http\Controllers\Controller;
 use App\Models\VendorDueDiligence\Contract;
 use App\Models\VendorDueDiligence\SlaConfig;
-use App\Models\VendorDueDiligence\User;
+use App\Models\User;
 use App\Models\VendorDueDiligence\Vendor;
 use App\Models\VendorDueDiligence\VendorPerformanceMetric;
 use App\Models\VendorDueDiligence\VendorPerformanceScorecard;

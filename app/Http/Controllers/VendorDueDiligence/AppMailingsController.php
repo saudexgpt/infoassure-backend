@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\EmailMessage;
 use App\Models\EmailReply;
-use App\Models\VendorDueDiligence\User;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AppMailingsController extends Controller

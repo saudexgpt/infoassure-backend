@@ -85,6 +85,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
             Route::get('fetch-all-tasks', [CalendarController::class, 'fetchAllTasks']);
             Route::get('show-task/{task}', [CalendarController::class, 'showTask']);
+            Route::get('fetch-task-logs', [CalendarController::class, 'fetchTaskLogs']);
 
             Route::get('fetch-task-by-clause', [CalendarController::class, 'fetchModuleTaskByClause']);
             Route::get('fetch-client-assigned-tasks', [CalendarController::class, 'fetchClientAssignedTasks']);
@@ -98,10 +99,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::get('fetch-project-calendar-data', [CalendarController::class, 'fetchProjectCalendarData']);
 
             Route::put('mark-task-as-done/{task}', [CalendarController::class, 'markTaskAsDone']);
-            Route::put('mark-task-as-completed/{task}', [CalendarController::class, 'markTaskAsCompleted']);
+            Route::put('mark-task-as-completed/{taskLog}', [CalendarController::class, 'markTaskAsCompleted']);
 
             Route::get('set-expected-uploads', [CalendarController::class, 'setExpectedUploadsFromAssignedTasks']);
-            Route::put('save-assigned-task-note/{task}', [CalendarController::class, 'saveAssignedTaskNote']);
+            Route::put('save-assigned-task-note/{taskLog}', [CalendarController::class, 'saveAssignedTaskNote']);
 
 
             Route::group(['prefix' => 'comments'], function () {

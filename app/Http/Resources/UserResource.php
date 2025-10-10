@@ -44,7 +44,7 @@ class UserResource extends JsonResource
         }
         $modules = [];
         $partner = '';
-        if ($this->haRole('client')) {
+        if ($this->haRole('user')) {
             $client_id = $this->client_id;
             $client = Client::find($client_id);
             $partner_id = $client->partner_id;

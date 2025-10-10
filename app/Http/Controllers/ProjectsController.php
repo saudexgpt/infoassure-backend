@@ -123,7 +123,7 @@ class ProjectsController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -263,7 +263,7 @@ class ProjectsController extends Controller
      * Display the specified resource.
      *
      * @param  \App\Models\Project  $project
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(Project $project)
     {
@@ -276,14 +276,16 @@ class ProjectsController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Project  $project
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function setDates(Request $request, Project $project)
     {
         //
-        $field = $request->field;
+        $deadline = date('Y-m-d', strtotime('+1 year'));
         $value = $request->date;
-        $project->$field = date('Y-m-d', strtotime($value));
+        $project->start_date = date('Y-m-d', strtotime($value));
+        $project->deadline = $deadline;
+        $project->year = date('Y', strtotime($value));
         $project->save();
         return response()->json(['message' => 'Successful'], 200);
     }
@@ -300,7 +302,7 @@ class ProjectsController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  \App\Models\Project  $project
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Project $project)
     {

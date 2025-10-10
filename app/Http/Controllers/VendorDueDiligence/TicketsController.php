@@ -5,7 +5,7 @@ namespace App\Http\Controllers\VendorDueDiligence;
 use App\Http\Controllers\Controller;
 use App\Models\VendorDueDiligence\Ticket;
 use App\Models\VendorDueDiligence\TicketResponse;
-use App\Models\VendorDueDiligence\User;
+use App\Models\User;
 use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Request;
 

@@ -106,7 +106,7 @@ class Controller extends BaseController
 
             $client_id = $user->client_id;
         }
-        if ($user->haRole('client') || $user->haRole('admin') || $user->haRole('super')) {
+        if ($user->haRole('user') || $user->haRole('admin') || $user->haRole('super')) {
             $this->myProjects = $user->projects()
                 ->with('client', 'availableModule', 'package')
                 ->where(['client_id' => $client_id, 'year' => $this->getYear()])

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\BCMS;
 
 use App\Http\Controllers\Controller;
+use App\Models\BCMS\TaskLog;
 use App\Models\DocumentTemplate;
 use App\Models\BCMS\AssignedTask;
 use App\Models\BCMS\AssignedTaskComment;
 use App\Models\BCMS\Clause;
 use App\Models\BCMS\ModuleActivity;
 use App\Models\BCMS\ModuleActivityTask;
+use App\Models\Project;
 use Illuminate\Http\Request;
 
 class CalendarController extends Controller
@@ -33,6 +35,7 @@ class CalendarController extends Controller
             $process = $activity->process;
             $activity_no = $activity->activity_no;
             $description = $activity->description;
+            $occurence = $activity->occurence;
             $implementation_guide = $activity->implementation_guide;
             $tasks = $activity->tasks;
             $evidences = $activity->evidences;
@@ -45,7 +48,8 @@ class CalendarController extends Controller
                 'description' => $description,
                 'implementation_guide' => $implementation_guide,
                 'document_template_ids' => $document_template_ids,
-                'tasks' => $tasks
+                'tasks' => $tasks,
+                'occurence' => $occurence
             ]);
         }
 
@@ -80,7 +84,7 @@ class CalendarController extends Controller
         // // response is score and justification
         // $ai_response = json_decode($result->choices[0]->message->content);
         // return $ai_response;
-        $filename = portalPulicPath('isms_activities.json');
+        $filename = portalPulicPath('bcms_activities.json');
         $file_content = file_get_contents($filename);
         return json_decode($file_content);
         // print_r($result);
@@ -102,9 +106,17 @@ class CalendarController extends Controller
             'assignedTask' => function ($q) use ($client) {
                 $q->where('client_id', $client->id);
             },
-            'assignedTask.assignee'
+            'assignedTask.assignee',
         ])->find($task->id);
         return response()->json(compact('task'), 200);
+    }
+
+    public function fetchTaskLogs(Request $request)
+    {
+        $client = $this->getClient();
+        $today_date = date('Y-m-d', strtotime('now'));
+        $task_logs = TaskLog::where(['client_id' => $client->id, 'assigned_task_id' => $request->assigned_task_id])->get();
+        return response()->json(compact('task_logs', 'today_date'), 200);
     }
 
     public function fetchModuleTaskByClause(Request $request)
@@ -117,6 +129,43 @@ class CalendarController extends Controller
         return response()->json(compact('clause_tasks'), 200);
     }
     public function fetchClientAssignedTasks(Request $request)
+    {
+        $client = $this->getClient();
+        $user = $this->getUser();
+        if ($user->login_as === 'client') {
+            $clause_tasks = ModuleActivityTask::join('assigned_tasks', 'module_activity_tasks.id', 'assigned_tasks.module_activity_task_id')
+                ->with([
+                    'clause',
+                    'assignedTask' => function ($q) use ($client, $user) {
+                        $q->where('client_id', $client->id);
+                        $q->where('assignee_id', $user->id);
+                    },
+                    'assignedTask.assignee'
+                ])
+                ->where('assigned_tasks.client_id', $client->id)
+                ->where('assigned_tasks.assignee_id', $user->id)
+
+                ->orderBy('id')
+                ->orderBy('module_activity_tasks.clause_id')
+                ->select('module_activity_tasks.*')
+                ->get()
+                ->groupBy('occurence');
+        } else {
+            $clause_tasks = ModuleActivityTask::with([
+                'clause',
+                'assignedTask' => function ($q) use ($client) {
+                    $q->where('client_id', $client->id);
+                },
+                'assignedTask.assignee'
+            ])
+                ->orderBy('id')
+                ->orderBy('module_activity_tasks.clause_id')
+                ->get()
+                ->groupBy('occurence');
+        }
+        return response()->json(compact('clause_tasks'), 200);
+    }
+    public function fetchClientAssignedTasksOld(Request $request)
     {
         $client = $this->getClient();
         $user = $this->getUser();
@@ -154,35 +203,6 @@ class CalendarController extends Controller
 
 
         return response()->json(compact('clause_tasks'), 200);
-    }
-    public function storeClauseActivities(Request $request)
-    {
-        $request->validate([
-            'clause_id' => 'required|integer|exists:isms.clauses,id',
-            'details' => 'required|array',
-        ]);
-        $clause_id = $request->clause_id;
-        $details = json_decode(json_encode($request->details));
-
-        foreach ($details as $detail) {
-            ModuleActivity::updateOrCreate([
-                'clause_id' => $clause_id,
-                'activity_no' => $detail->activity_no,
-                'name' => $detail->name,
-            ], [
-                'description' => $detail->description
-            ]);
-        }
-        return $this->fetchModuleTaskByClause($request);
-    }
-    public function updateClauseActivity(Request $request, ModuleActivity $moduleActivity)
-    {
-        $moduleActivity->update([
-            'activity_no' => $request->activity_no,
-            'name' => $request->name,
-            'description' => $request->description
-        ]);
-        return $this->fetchModuleTaskByClause($request);
     }
     public function storeClauseActivityTasks(Request $request)
     {
@@ -226,16 +246,17 @@ class CalendarController extends Controller
 
     public function assignTaskToUser(Request $request)
     {
+        $year = date('Y', strtotime('now'));
         $request->validate([
             'module_activity_task_id' => 'required|integer|exists:isms.module_activity_tasks,id',
             'assignee_id' => 'required|integer|exists:users,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date'
+            // 'start_date' => 'required|date',
+            // 'end_date' => 'required|date'
         ]);
         $module_activity_task_id = $request->module_activity_task_id;
         $assignee_id = $request->assignee_id;
-        $start_date = $request->start_date;
-        $end_date = $request->end_date;
+        // $start_date = $request->start_date;
+        // $end_date = $request->end_date;
         $client_id = $this->getClient()->id;
         $user = $this->getUser();
 
@@ -244,27 +265,137 @@ class CalendarController extends Controller
             return response()->json(['message' => 'Task not found'], 404);
         }
 
-        $assignedTask = $task->assignedTask()
-            ->updateOrCreate(
-                [
-                    'module_activity_task_id' => $module_activity_task_id,
-                    'client_id' => $client_id,
-                    'clause_id' => $task->clause_id,
-                ],
-                [
-                    'assignee_id' => $assignee_id,
-                    'start_date' => $start_date,
-                    'end_date' => $end_date,
-                    'assigned_by' => $user->id,
-                ]
-            );
-        // send notification to the assignee
-        $title = "Task Assigned";
-        $description = "$user->name assigned you a task on the BCMS module.";
-        $this->sendNotification($title, $description, [$assignee_id]);
+        $project = Project::where(['client_id' => $client_id, 'year' => $year])
+            ->where('title', 'LIKE', '%BCMS%')
+            ->first();
 
-        $assignedTask = $assignedTask->with('assignee')->find($assignedTask->id);
-        return response()->json(['message' => 'Task assigned successfully', 'assigned_task' => $assignedTask], 200);
+        if ($project) {
+            $assignedTask = $task->assignedTask()
+                ->updateOrCreate(
+                    [
+                        'project_id' => $project->id,
+                        'module_activity_task_id' => $module_activity_task_id,
+                        'client_id' => $client_id,
+                        'clause_id' => $task->clause_id,
+                    ],
+                    [
+                        'assignee_id' => $assignee_id,
+                        // 'start_date' => $start_date,
+                        // 'end_date' => $end_date,
+                        'assigned_by' => $user->id,
+                    ]
+                );
+            // Create task logs for the specified recurrence
+            $recurrence = $task->occurence;
+            $this->setupTaskLogForRecurrentTasks($assignedTask->id, $recurrence, $project);
+            // send notification to the assignee
+            $title = "Task Assigned";
+            $description = "$user->name assigned you a task on the BCMS module.";
+            $this->sendNotification($title, $description, [$assignee_id]);
+
+            $assignedTask = $assignedTask->with('assignee')->find($assignedTask->id);
+            return response()->json(['message' => 'Task assigned successfully', 'assigned_task' => $assignedTask], 200);
+        }
+        return response()->json(['message' => "You need to subscribe to the BCMS module for $year"], 403);
+    }
+
+    private function setupTaskLogForRecurrentTasks($assignedTaskId, $recurrence, $project)
+    {
+        $client_id = $this->getClient()->id;
+        switch ($recurrence) {
+            case 'Weekly':
+                $start_date = $project->start_date;
+                for ($i = 1; $i <= 52; $i++) {
+                    $recurrence_tag = "Week $i";
+                    TaskLog::firstOrCreate([
+                        'client_id' => $client_id,
+                        'assigned_task_id' => $assignedTaskId,
+                        'start_date' => $start_date,
+                    ], [
+                        'recurrence_tag' => $recurrence_tag,
+                        'deadline' => date('Y-m-d', strtotime("+$i week", strtotime($start_date)))
+                    ]);
+
+                    $start_date = date('Y-m-d', strtotime("+$i week", strtotime($start_date)));
+                }
+                break;
+            case 'Monthly':
+                $start_date = $project->start_date;
+                for ($i = 1; $i <= 12; $i++) {
+                    $recurrence_tag = "Month $i";
+                    TaskLog::firstOrCreate([
+                        'client_id' => $client_id,
+                        'assigned_task_id' => $assignedTaskId,
+                        'start_date' => $start_date,
+                    ], [
+                        'recurrence_tag' => $recurrence_tag,
+                        'deadline' => date('Y-m-d', strtotime("+$i month", strtotime($start_date)))
+                    ]);
+
+                    $start_date = date('Y-m-d', strtotime("+$i month", strtotime($start_date)));
+                }
+                break;
+
+            case 'Quarterly':
+                $start_date = $project->start_date;
+                for ($i = 1; $i <= 4; $i++) {
+                    $recurrence_tag = "Q $i";
+                    TaskLog::firstOrCreate([
+                        'client_id' => $client_id,
+                        'assigned_task_id' => $assignedTaskId,
+                        'start_date' => $start_date,
+                    ], [
+                        'recurrence_tag' => $recurrence_tag,
+                        'deadline' => date('Y-m-d', strtotime("+3 months", strtotime($start_date)))
+                    ]);
+
+                    $start_date = date('Y-m-d', strtotime("+3 months", strtotime($start_date)));
+                }
+                break;
+            case 'Biannually':
+                $start_date = $project->start_date;
+                for ($i = 1; $i <= 2; $i++) {
+                    $recurrence_tag = "H $i";
+                    TaskLog::firstOrCreate([
+                        'client_id' => $client_id,
+                        'assigned_task_id' => $assignedTaskId,
+                        'start_date' => $start_date,
+                    ], [
+                        'recurrence_tag' => $recurrence_tag,
+                        'deadline' => date('Y-m-d', strtotime("+6 months", strtotime($start_date)))
+                    ]);
+
+                    $start_date = date('Y-m-d', strtotime("+6 months", strtotime($start_date)));
+                }
+                break;
+            case 'Annually':
+                $start_date = $project->start_date;
+                $recurrence_tag = "Annual";
+                TaskLog::firstOrCreate([
+                    'client_id' => $client_id,
+                    'assigned_task_id' => $assignedTaskId,
+                    'start_date' => $start_date,
+                ], [
+                    'recurrence_tag' => $recurrence_tag,
+                    'deadline' => date('Y-m-d', strtotime("+1 year", strtotime($start_date)))
+                ]);
+
+                break;
+
+            default:
+                $start_date = $project->start_date;
+                $recurrence_tag = $recurrence;
+                TaskLog::firstOrCreate([
+                    'client_id' => $client_id,
+                    'assigned_task_id' => $assignedTaskId,
+                    'start_date' => $start_date,
+                ], [
+                    'recurrence_tag' => $recurrence_tag,
+                    'deadline' => date('Y-m-d', strtotime("+1 year", strtotime($start_date)))
+                ]);
+
+                break;
+        }
     }
     public function fetchProjectCalendarData(Request $request)
     {
@@ -408,24 +539,21 @@ class CalendarController extends Controller
         return response()->json(['message' => 'Task marked as done successfully', 'task' => $task], 200);
     }
 
-    public function markTaskAsCompleted(Request $request, AssignedTask $task)
+    public function markTaskAsCompleted(Request $request, TaskLog $taskLog)
     {
         // $user = $this->getUser();
-        $task->update(['status' => 'completed']);
-        // Optionally, you can return the updated task or a success message
-        $assignedTask = $task->with('assignee')->find($task->id);
-        return response()->json(['message' => 'Task marked as done successfully', 'task' => $assignedTask], 200);
+        $taskLog->update(['status' => 'Completed']);
+        return response()->json(['message' => 'Action successfull'], 200);
     }
 
-    public function saveAssignedTaskNote(Request $request, AssignedTask $task)
+    public function saveAssignedTaskNote(Request $request, TaskLog $taskLog)
     {
         $validate = $request->validate([
             'notes' => 'required|string',
         ]);
-        $task->update(['notes' => $validate['notes']]);
+        $taskLog->update(['notes' => $validate['notes']]);
         // Optionally, you can return the updated task or a success message
-        $assignedTask = $task->with('assignee')->find($task->id);
-        return response()->json(['message' => 'Task marked as done successfully', 'task' => $assignedTask], 200);
+        return response()->json(['message' => 'Action successfull'], 200);
     }
 
 

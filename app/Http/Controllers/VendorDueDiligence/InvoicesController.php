@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\VendorDueDiligence\Invoice;
 use App\Models\VendorDueDiligence\InvoiceItem;
-use App\Models\VendorDueDiligence\User;
+use App\Models\User;
 use App\Models\VendorDueDiligence\Vendor;
 use Illuminate\Http\Request;
 
