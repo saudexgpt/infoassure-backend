@@ -51,7 +51,11 @@ class DueDiligenceQuestionsController extends Controller
     public function saveQuestions(Request $request)
     {
         $client_id = $this->getClient()->id;
-        $this->store($client_id, $request);
+        $details = json_decode(json_encode($request->details));
+        foreach ($details as $data) {
+
+            $this->store($client_id, $data);
+        }
     }
     /**
      * Store a newly created resource in storage.
