@@ -19,6 +19,7 @@ class AssignedTask extends Model
         'days',
         'start_date',
         'end_date',
+        'recurrence',
         'progress',
         'status',
         'assigned_by',

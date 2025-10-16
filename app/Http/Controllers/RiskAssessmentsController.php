@@ -291,7 +291,6 @@ class RiskAssessmentsController extends Controller
         //     $standard_id = $request->standard_id;
         // }
         $module = $request->module;
-        $module = $request->module;
         $modules = ['isms'];
         if ($module == 'bcms' || $module == 'ndpa' || $module == 'rcsa') {
             $modules = ['bcms', 'ndpa', 'rcsa'];
@@ -311,7 +310,7 @@ class RiskAssessmentsController extends Controller
             ->where(['risk_assessments.client_id' => $client_id/*, 'risk_assessments.module' => $module*/])
             ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))
             ->orderBy('risk_id', 'ASC')
-            ->get();
+            ->paginate(10);
 
         $asset_types = $risk_assessment_query->where('asset_id', '!=', NULL)->groupBy(['asset_type_name', 'asset_name']);
 
@@ -327,7 +326,7 @@ class RiskAssessmentsController extends Controller
             ->whereIn('risk_assessments.module', $modules)
             ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
             ->orderBy('risk_id', 'ASC')
-            ->get();
+            ->paginate(10);
 
         return response()->json(compact('risk_assessments', 'asset_types', 'business_units', 'risk_appetite'), 200);
     }

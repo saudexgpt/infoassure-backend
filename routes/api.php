@@ -569,14 +569,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update/{pda}', [PDAController::class, 'update']);
         Route::delete('destroy/{pda}', [PDAController::class, 'destroy']);
     });
-    Route::group(['prefix' => 'ropa'], function () {
 
-        Route::get('/', [RoPAController::class, 'index']);
-        Route::post('store', [RoPAController::class, 'store']);
-
-        Route::put('update/{ropa}', [RoPAController::class, 'update']);
-        Route::delete('destroy/{ropa}', [RoPAController::class, 'destroy']);
-    });
     Route::group(['prefix' => 'dpia'], function () {
 
         Route::get('/', [DPIAController::class, 'index']);

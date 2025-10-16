@@ -49,6 +49,10 @@ class UserResource extends JsonResource
             $client = Client::find($client_id);
             $partner_id = $client->partner_id;
 
+            // $projects = Project::with('availableModule')
+            //     ->where(['client_id' => $client_id, 'year' => $this_year])
+            //     ->orderBy('id', 'DESC')
+            //     ->get();
             $projects = $this->projects()
                 ->with('availableModule')
                 ->where(['client_id' => $client_id, 'year' => $this_year])

@@ -6,6 +6,7 @@ use App\Http\Controllers\NDPA\PDAController;
 use App\Http\Controllers\NDPA\QuestionsController;
 use App\Http\Controllers\NDPA\AnswersController;
 use App\Http\Controllers\NDPA\ReportsController;
+use App\Http\Controllers\NDPA\RoPAController;
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'ndpa'], function () {
         Route::group(['prefix' => 'clauses'], function () {
@@ -126,6 +127,14 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
             Route::put('update/{pda}', [PDAController::class, 'update']);
             Route::delete('destroy/{pda}', [PDAController::class, 'destroy']);
+        });
+        Route::group(['prefix' => 'ropa'], function () {
+
+            Route::get('/', [RoPAController::class, 'index']);
+            Route::post('store', [RoPAController::class, 'store']);
+
+            Route::put('update/{ropa}', [RoPAController::class, 'update']);
+            Route::delete('destroy/{ropa}', [RoPAController::class, 'destroy']);
         });
         // Route::group(['prefix' => 'calendar'], routes: function () {
         //     // Incident Types

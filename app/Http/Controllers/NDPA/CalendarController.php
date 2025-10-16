@@ -131,7 +131,7 @@ class CalendarController extends Controller
         $clause_tasks = Clause::with('sections.tasks')->get();
         return response()->json(compact('clause_tasks'), 200);
     }
-    public function fetchClientAssignedTasks(Request $request)
+    public function fetchClientAssignedTasksNew(Request $request)
     {
         $client = $this->getClient();
         $user = $this->getUser();
@@ -168,7 +168,7 @@ class CalendarController extends Controller
         }
         return response()->json(compact('clause_tasks'), 200);
     }
-    public function fetchClientAssignedTasksOld(Request $request)
+    public function fetchClientAssignedTasks(Request $request)
     {
         $client = $this->getClient();
         $user = $this->getUser();
@@ -273,13 +273,15 @@ class CalendarController extends Controller
         $request->validate([
             'module_activity_task_id' => 'required|integer|exists:isms.module_activity_tasks,id',
             'assignee_id' => 'required|integer|exists:users,id',
-            // 'start_date' => 'required|date',
-            // 'end_date' => 'required|date'
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'recurrence' => 'required|string'
         ]);
         $module_activity_task_id = $request->module_activity_task_id;
         $assignee_id = $request->assignee_id;
-        // $start_date = $request->start_date;
-        // $end_date = $request->end_date;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+        $recurrence = $request->recurrence;
         $client_id = $this->getClient()->id;
         $user = $this->getUser();
 
@@ -303,14 +305,15 @@ class CalendarController extends Controller
                     ],
                     [
                         'assignee_id' => $assignee_id,
-                        // 'start_date' => $start_date,
-                        // 'end_date' => $end_date,
+                        'start_date' => $start_date,
+                        'end_date' => $end_date,
                         'assigned_by' => $user->id,
+                        'recurrence' => $recurrence
                     ]
                 );
             // Create task logs for the specified recurrence
-            $recurrence = $task->occurence;
-            $this->setupTaskLogForRecurrentTasks($assignedTask->id, $recurrence, $project);
+            // $recurrence = $task->occurence;
+            $this->setupTaskLogForRecurrentTasks($assignedTask->id, $recurrence, $project, $start_date, $end_date);
             // send notification to the assignee
             $title = "Task Assigned";
             $description = "$user->name assigned you a task on the NDPA module.";
@@ -322,12 +325,11 @@ class CalendarController extends Controller
         return response()->json(['message' => "You need to subscribe to the NDPA module for $year"], 403);
     }
 
-    private function setupTaskLogForRecurrentTasks($assignedTaskId, $recurrence, $project)
+    private function setupTaskLogForRecurrentTasks($assignedTaskId, $recurrence, $project, $start_date, $end_date)
     {
         $client_id = $this->getClient()->id;
         switch ($recurrence) {
             case 'Weekly':
-                $start_date = $project->start_date;
                 for ($i = 1; $i <= 52; $i++) {
                     $recurrence_tag = "Week $i";
                     TaskLog::firstOrCreate([
@@ -336,14 +338,14 @@ class CalendarController extends Controller
                         'start_date' => $start_date,
                     ], [
                         'recurrence_tag' => $recurrence_tag,
-                        'deadline' => date('Y-m-d', strtotime("+$i week", strtotime($start_date)))
+                        'deadline' => $end_date
                     ]);
 
                     $start_date = date('Y-m-d', strtotime("+$i week", strtotime($start_date)));
+                    $end_date = date('Y-m-d', strtotime("+$i week", strtotime($end_date)));
                 }
                 break;
             case 'Monthly':
-                $start_date = $project->start_date;
                 for ($i = 1; $i <= 12; $i++) {
                     $recurrence_tag = "Month $i";
                     TaskLog::firstOrCreate([
@@ -352,15 +354,15 @@ class CalendarController extends Controller
                         'start_date' => $start_date,
                     ], [
                         'recurrence_tag' => $recurrence_tag,
-                        'deadline' => date('Y-m-d', strtotime("+$i month", strtotime($start_date)))
+                        'deadline' => $end_date
                     ]);
 
                     $start_date = date('Y-m-d', strtotime("+$i month", strtotime($start_date)));
+                    $end_date = date('Y-m-d', strtotime("+$i month", strtotime($end_date)));
                 }
                 break;
 
             case 'Quarterly':
-                $start_date = $project->start_date;
                 for ($i = 1; $i <= 4; $i++) {
                     $recurrence_tag = "Q $i";
                     TaskLog::firstOrCreate([
@@ -372,6 +374,7 @@ class CalendarController extends Controller
                         'deadline' => date('Y-m-d', strtotime("+3 months", strtotime($start_date)))
                     ]);
 
+                    $start_date = date('Y-m-d', strtotime("+3 months", strtotime($start_date)));
                     $start_date = date('Y-m-d', strtotime("+3 months", strtotime($start_date)));
                 }
                 break;
