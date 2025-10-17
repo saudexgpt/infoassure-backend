@@ -17,6 +17,7 @@ use App\Models\RiskMatrix;
 use App\Models\RiskRegister;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use PHPUnit\Framework\Constraint\Operator;
 
 class RiskAssessmentsController extends Controller
@@ -51,7 +52,11 @@ class RiskAssessmentsController extends Controller
         } else {
             $client_id = $this->getClient()->id;
         }
-        $asset_types = AssetType::with('assets')->orderBy('name')->get();
+        $asset_types = AssetType::join('assets', 'asset_types.id', '=', 'assets.asset_type_id')
+            ->with('assets')
+            ->orderBy('asset_types.name')
+            ->select('asset_types.*')
+            ->get();
         return response()->json(compact('asset_types'), 200);
     }
     public function fetchAssetTypesWithAssetAssessments(Request $request)
@@ -69,7 +74,7 @@ class RiskAssessmentsController extends Controller
         return response()->json(compact('asset_types'), 200);
     }
 
-    public function fetchBusinessUnitsWithRiskAssessments(Request $request)
+    public function fetchBusinessUnits(Request $request)
     {
         if (isset($request->client_id)) {
             $client_id = $request->client_id;
@@ -77,10 +82,12 @@ class RiskAssessmentsController extends Controller
             $client_id = $this->getClient()->id;
         }
         $business_units = BusinessUnit::with([
-            'businessProcesses.riskAssessments' => function ($q) use ($client_id) {
+            'businessProcesses' => function ($q) use ($client_id) {
                 $q->where('client_id', $client_id);
             }
-        ])->where('client_id', $client_id)->orderBy('unit_name')->get();
+        ])->where('client_id', $client_id)
+            ->orderBy('unit_name')
+            ->get();
         return response()->json(compact('business_units'), 200);
     }
 
@@ -278,7 +285,7 @@ class RiskAssessmentsController extends Controller
     }
 
 
-    public function fetchRiskAssessments(Request $request)
+    public function fetchRiskAssessmentsOld(Request $request)
     {
         if (isset($request->client_id)) {
             $client_id = $request->client_id;
@@ -310,7 +317,7 @@ class RiskAssessmentsController extends Controller
             ->where(['risk_assessments.client_id' => $client_id/*, 'risk_assessments.module' => $module*/])
             ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))
             ->orderBy('risk_id', 'ASC')
-            ->paginate(10);
+            ->get();
 
         $asset_types = $risk_assessment_query->where('asset_id', '!=', NULL)->groupBy(['asset_type_name', 'asset_name']);
 
@@ -326,9 +333,113 @@ class RiskAssessmentsController extends Controller
             ->whereIn('risk_assessments.module', $modules)
             ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
             ->orderBy('risk_id', 'ASC')
-            ->paginate(10);
+            ->get();
 
         return response()->json(compact('risk_assessments', 'asset_types', 'business_units', 'risk_appetite'), 200);
+    }
+
+    public function fetchRiskAssessments(Request $request)
+    {
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $this->store($client_id);
+        // $standard_id = 0;
+        // if (isset($request->standard_id)) {
+        //     $standard_id = $request->standard_id;
+        // }
+        $asset_id = $request->asset_id;
+        $business_process_id = $request->business_process_id;
+        $modules = ['isms'];
+
+        $module = $request->module;
+        if ($module == 'bcms' || $module == 'ndpa' || $module == 'rcsa') {
+            $modules = ['bcms', 'ndpa', 'rcsa'];
+        }
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $risk_appetite = null;
+        if ($risk_matrix) {
+
+            $risk_appetite = $risk_matrix->risk_appetite;
+        }
+
+        $risk_assessment_query = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
+            ->leftJoin('business_units', 'business_units.id', 'risk_registers.business_unit_id')
+            ->leftJoin('business_processes', 'business_processes.id', 'risk_registers.business_process_id')
+            ->leftJoin('assets', 'assets.id', 'risk_registers.asset_id')
+            ->leftJoin('asset_types', 'asset_types.id', 'risk_registers.asset_type_id')
+            ->where(['risk_assessments.client_id' => $client_id/*, 'risk_assessments.module' => $module*/])
+            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))
+            ->orderBy('risk_id', 'ASC');
+
+        if ($asset_id !== null) {
+            $risk_assessments = $risk_assessment_query->where('risk_assessments.asset_id', $asset_id)->get();
+        }
+
+        if ($business_process_id !== null) {
+            $risk_assessments = $risk_assessment_query->where('risk_assessments.business_process_id', $business_process_id)->get();
+        }
+
+        // for tabular view
+        // $risk_assessments = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
+        //     ->leftJoin('business_units', 'business_units.id', 'risk_registers.business_unit_id')
+        //     ->leftJoin('business_processes', 'business_processes.id', 'risk_registers.business_process_id')
+        //     ->leftJoin('assets', 'assets.id', 'risk_registers.asset_id')
+        //     ->leftJoin('asset_types', 'asset_types.id', 'risk_registers.asset_type_id')
+        //     ->where(['risk_assessments.client_id' => $client_id])
+        //     ->whereIn('risk_assessments.module', $modules)
+        //     ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
+        //     ->orderBy('risk_id', 'ASC')
+        //     ->paginate(10);
+
+        return response()->json(compact('risk_assessments', 'risk_appetite'), 200);
+    }
+
+    public function fetchAllRiskAssessments(Request $request)
+    {
+        set_time_limit(0);
+        ini_set('memory_limit', '1024M');
+        if (isset($request->client_id)) {
+            $client_id = $request->client_id;
+        } else {
+            $client_id = $this->getClient()->id;
+        }
+        $this->store($client_id);
+        // $standard_id = 0;
+        // if (isset($request->standard_id)) {
+        //     $standard_id = $request->standard_id;
+        // }
+        $asset_id = $request->asset_id;
+        $business_process_id = $request->business_process_id;
+        $modules = ['isms'];
+
+        $module = $request->module;
+        if ($module == 'bcms' || $module == 'ndpa' || $module == 'rcsa') {
+            $modules = ['bcms', 'ndpa', 'rcsa'];
+        }
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $risk_appetite = null;
+        if ($risk_matrix) {
+
+            $risk_appetite = $risk_matrix->risk_appetite;
+        }
+
+        // for tabular view
+        $risk_assessments = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
+            ->leftJoin('business_units', 'business_units.id', 'risk_registers.business_unit_id')
+            ->leftJoin('business_processes', 'business_processes.id', 'risk_registers.business_process_id')
+            ->leftJoin('assets', 'assets.id', 'risk_registers.asset_id')
+            ->leftJoin('asset_types', 'asset_types.id', 'risk_registers.asset_type_id')
+            ->where(['risk_assessments.client_id' => $client_id])
+            ->whereIn('risk_assessments.module', $modules)
+            ->where('risk_score', '!=', NULL)
+            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_processes.name as business_process', 'business_units.unit_name as business_unit')
+            ->orderBy('risk_id', 'ASC')
+            ->get();
+        ini_set('memory_limit', '128M');
+        return response()->json(compact('risk_assessments', 'risk_appetite'), 200);
     }
 
     /**
@@ -396,9 +507,95 @@ class RiskAssessmentsController extends Controller
         }
         return 'success';
     }
+    private function resetImpactOnArea(RiskAssessment $riskAssessment)
+    {
+        $client_id = $this->getClient()->id;
+        $risk_matrix = RiskMatrix::where('client_id', $client_id)->first();
+        $matrix = $risk_matrix->current_matrix;
+
+        $new_impact_on_areas = [];
+        $new_revised_impact_on_areas = [];
+        $impact_on_areas = $riskAssessment->impact_on_areas;
+        $revised_impact_on_areas = $riskAssessment->revised_impact_on_areas;
+        $impact_areas = RiskImpactArea::where(['client_id' => $client_id])->orderBy('area')->get();
+        foreach ($impact_areas as $impact_area) {
+            if (!in_array($impact_area->id, array_column($impact_on_areas, 'id'))) {
+
+                $new_impact_on_areas[] = [
+                    'id' => $impact_area->id,
+                    'name' => $impact_area->area,
+                    'slug' => $impact_area->area,
+                    'impact_value' => '',
+                    'meaning' => ''
+                ];
+                $new_revised_impact_on_areas[] = [
+                    'id' => $impact_area->id,
+                    'name' => $impact_area->area,
+                    'slug' => $impact_area->area,
+                    'impact_value' => '',
+                    'meaning' => ''
+                ];
+            } else {
+                foreach ($impact_on_areas as $impact_on_area) {
+                    if ($impact_on_area['id'] == $impact_area->id) {
+                        $new_impact_on_areas[] = [
+                            'id' => $impact_area->id,
+                            'name' => $impact_area->area,
+                            'slug' => $impact_area->area,
+                            'impact_value' => $impact_on_area['impact_value'],
+                            'meaning' => $impact_on_area['meaning']
+                        ];
+                        // $new_impact_on_areas[] = $impact_on_area;
+                    }
+                }
+                foreach ($revised_impact_on_areas as $impact_on_area) {
+                    if ($impact_on_area['id'] == $impact_area->id) {
+                        // $new_revised_impact_on_areas[] = $impact_on_area;
+                        $new_revised_impact_on_areas[] = [
+                            'id' => $impact_area->id,
+                            'name' => $impact_area->area,
+                            'slug' => $impact_area->area,
+                            'impact_value' => $impact_on_area['impact_value'],
+                            'meaning' => $impact_on_area['meaning']
+                        ];
+                    }
+                }
+            }
+        }
+        $riskAssessment->impact_on_areas = $new_impact_on_areas;
+        $riskAssessment->revised_impact_on_areas = $new_revised_impact_on_areas;
+        $riskAssessment->save();
+        $this->updateLikelihoodRationale($riskAssessment, $matrix);
+        $this->updateRevisedLikelihoodRationale($riskAssessment, $matrix);
+        $this->updateRiskCategory($riskAssessment, $matrix);
+        $this->updateImpactRationale($riskAssessment, $matrix);
+        $this->updateReversedRiskCategory($riskAssessment, $matrix);
+        $this->updateRevisedImpactRationale($riskAssessment, $matrix);
+    }
     public function show(Request $request, RiskAssessment $riskAssessment)
     {
+        $this->resetImpactOnArea($riskAssessment);
+        $riskAssessment = $riskAssessment->join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
+            ->leftJoin('business_units', 'business_units.id', 'risk_registers.business_unit_id')
+            ->leftJoin('business_processes', 'business_processes.id', 'risk_registers.business_process_id')
+            ->leftJoin('assets', 'assets.id', 'risk_registers.asset_id')
+            ->leftJoin('asset_types', 'asset_types.id', 'risk_registers.asset_type_id')
+            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))->find($riskAssessment->id);
+
         return response()->json(['risk_assessment' => $riskAssessment], 200);
+    }
+    public function deleteRiskImpactArea(Request $request, RiskImpactArea $riskImpactArea)
+    {
+        RiskImpactOnArea::where(['risk_impact_area_id' => $riskImpactArea->id])->delete();
+        $riskImpactArea->delete();
+
+        RiskAssessment::chunkById(100, function (Collection $riskAssessments) {
+            foreach ($riskAssessments as $riskAssessment) {
+
+                $this->resetImpactOnArea($riskAssessment);
+            }
+        }, $column = 'id');
+        return response()->json(['message' => 'Successful'], 200);
     }
     private function maxValue($arrayNums)
     {

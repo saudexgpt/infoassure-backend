@@ -85,19 +85,18 @@ function riskLikelihoodMatrix()
 function defaultImpactCriteria()
 {
     return [
+        // 'Confidentiality',
+        // 'Integrity',
+        // 'Availability',
+        // 'Privacy',
         'Financial Impact',
         'Health & Safety Impact',
         'Reputational Impact',
+        'Legal Impact',
         'Stakeholders Impact',
         'People Impact',
         'Operational Impact',
-        'Regulatory/Legal/Contractual Impact',
-        // 'Financial Loss',
-        // 'Negative Publicity',
-        // 'Customer Dissatisfaction',
-        // 'Risk to Health/Safety of staff and visitors',
-        // 'Interruption of other processes',
-        // 'Regulatory/Legal/Contractual Violation',
+        'Regulatory Impact'
     ];
 }
 function defaultBiaTimeRecoveryRequirement()

@@ -9,6 +9,7 @@ use App\Models\BusinessUnit;
 use App\Models\Client;
 use App\Models\GeneralRiskLibrary;
 use App\Models\NDPA\PersonalDataAssessment;
+use App\Models\RiskAssessment;
 use App\Models\RiskControlSelfAssessment;
 use App\Models\RiskImpact;
 use App\Models\RiskImpactArea;
@@ -168,6 +169,12 @@ class RiskRegistersController extends Controller
 
         return $this->callOpenAISearch($content);
     }
+    public function fetchDefaultRiskImpactArea()
+    {
+        $impact_areas = defaultImpactCriteria();
+        return response()->json(compact('impact_areas'));
+    }
+
     public function setupRiskMatrices(Request $request)
     {
         if (isset($request->client_id)) {
@@ -675,6 +682,7 @@ class RiskRegistersController extends Controller
                 'area' => trim($area)
             ]);
         }
+        $this->setupImpactOnAreas($client_id);
         return response()->json(['message' => 'Successful'], 200);
     }
     public function updateRiskImpactArea(Request $request, RiskImpactArea $riskImpactArea)
