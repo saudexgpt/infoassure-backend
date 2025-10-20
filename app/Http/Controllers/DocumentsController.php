@@ -8,9 +8,34 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentsController extends Controller
 {
+    public function __construct(Request $httpRequest)
+    {
+        parent::__construct($httpRequest);
+        $this->middleware(function ($request, $next) {
+            try {
+                $files = Storage::disk('public')->allFiles('document_template');
+                foreach ($files as $path) {
+                    $title = strtoupper(pathinfo($path)['filename']);
+                    $template = DocumentTemplate::where('title', $title)->first();
+                    if (!$template) {
+                        $template = new DocumentTemplate();
+
+                        $template->title = $title;
+                        $template->first_letter = substr($title, 0, 1);
+                        $template->link = $path;
+                        $template->save();
+                    }
+                }
+            } catch (\Throwable $th) {
+                //throw $th;
+            }
+            return $next($request);
+        });
+    }
     public function fetchDocumentTemplates(Request $request)
     {
         if (isset($request->title) && $request->title != '') {
@@ -20,6 +45,7 @@ class DocumentsController extends Controller
 
             $document_templates = DocumentTemplate::orderBy('title')->get()->groupBy('first_letter');
         }
+
         // foreach ($document_templates as $template) {
         //     $template->first_letter = substr($template->title, 0, 1);
         //     $template->save();
@@ -52,9 +78,10 @@ class DocumentsController extends Controller
     public function updateDocumentTemplate(Request $request)
     {
         $id = $request->id;
-        $title = $request->title;
+        $title = strtoupper($request->title);
         $template = DocumentTemplate::find($id);
-
+        $old_title = $template->title;
+        $old_link = $template->link;
         $template->title = $title;
         $template->first_letter = substr($title, 0, 1);
 
@@ -62,6 +89,11 @@ class DocumentsController extends Controller
             $file_name = str_replace(' ', '_', strtolower($title)) . '_template' . "." . $request->file('file_uploaded')->guessClientExtension();
             $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
             $template->link = $link;
+        } else {
+            $ext = pathinfo($old_link, PATHINFO_EXTENSION);
+            $dirname = pathinfo($old_link)['dirname'];
+            Storage::disk('public')->move($old_link, $dirname . '/' . $title . '.' . $ext);
+            $template->link = $dirname . '/' . $title . '.' . $ext;
         }
         if (isset($request->external_link) && $request->external_link != '') {
             $template->external_link = $request->external_link;

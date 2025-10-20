@@ -41,7 +41,7 @@ class CalendarController extends Controller
             // $implementation_guide = $activity->implementation_guide;
             $implementation_guide = $activity->implementation_guide;
             $evidences = $activity->evidences;
-            $document_template_ids = $this->createDocumentTemplate($evidences);
+            // $document_template_ids = $this->createDocumentTemplate($evidences);
             ModuleActivityTask::firstOrCreate([
                 'clause_id' => $clause->id,
                 'section_id' => $section->id,
@@ -50,7 +50,7 @@ class CalendarController extends Controller
                 // 'activity_no' => $activity_no,
                 'description' => $description,
                 'implementation_guide' => $implementation_guide,
-                'document_template_ids' => $document_template_ids,
+                // 'document_template_ids' => $document_template_ids,
                 'occurence' => $occurence
                 // 'tasks' => $tasks
             ]);
