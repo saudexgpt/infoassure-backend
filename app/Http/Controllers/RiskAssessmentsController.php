@@ -53,7 +53,11 @@ class RiskAssessmentsController extends Controller
             $client_id = $this->getClient()->id;
         }
         $asset_types = AssetType::join('assets', 'asset_types.id', '=', 'assets.asset_type_id')
-            ->with('assets')
+            ->with([
+                'assets' => function ($q) use ($client_id) {
+                    $q->where('client_id', $client_id);
+                }
+            ])
             ->orderBy('asset_types.name')
             ->select('asset_types.*')
             ->get()
