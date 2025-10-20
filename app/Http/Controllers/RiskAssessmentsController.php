@@ -55,7 +55,7 @@ class RiskAssessmentsController extends Controller
         $asset_types = AssetType::join('assets', 'asset_types.id', '=', 'assets.asset_type_id')
             ->with('assets')
             ->orderBy('asset_types.name')
-            ->select('asset_types.id', 'asset_types.name', 'asset_types.assets')
+            ->select('asset_types.id', 'asset_types.name', 'assets.*')
             ->get();
         return response()->json(compact('asset_types'), 200);
     }
