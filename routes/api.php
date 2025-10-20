@@ -228,6 +228,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('format-doc-to-sfdt', [DocumentsController::class, 'formatDocToSFDT']);
     Route::post('save-doc-template', [DocumentsController::class, 'saveDocTemplate']);
     Route::post('save-excel-doc-template', [DocumentsController::class, 'saveExcelDocTemplate']);
+    Route::post('upload-default-templates', [DocumentsController::class, 'uploadDefaultTemplates']);
+
 
 
 

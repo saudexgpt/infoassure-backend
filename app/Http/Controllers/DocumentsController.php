@@ -12,29 +12,26 @@ use Illuminate\Support\Facades\Storage;
 
 class DocumentsController extends Controller
 {
-    public function __construct(Request $httpRequest)
+    public function uploadDefaultTemplates(Request $request)
     {
-        parent::__construct($httpRequest);
-        $this->middleware(function ($request, $next) {
-            try {
-                $files = Storage::disk('public')->allFiles('document_template');
-                foreach ($files as $path) {
-                    $title = strtoupper(pathinfo($path)['filename']);
-                    $template = DocumentTemplate::where('title', $title)->first();
-                    if (!$template) {
-                        $template = new DocumentTemplate();
+        $module = strtoupper($request->module);
+        try {
+            $files = Storage::disk('public')->allFiles('document_template/' . $module);
+            foreach ($files as $path) {
+                $title = strtoupper(pathinfo($path)['filename']);
+                $template = DocumentTemplate::where('title', $title)->first();
+                if (!$template) {
+                    $template = new DocumentTemplate();
 
-                        $template->title = $title;
-                        $template->first_letter = substr($title, 0, 1);
-                        $template->link = $path;
-                        $template->save();
-                    }
+                    $template->title = $title;
+                    $template->first_letter = substr($title, 0, 1);
+                    $template->link = $path;
+                    $template->save();
                 }
-            } catch (\Throwable $th) {
-                //throw $th;
             }
-            return $next($request);
-        });
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
     public function fetchDocumentTemplates(Request $request)
     {
@@ -93,15 +90,18 @@ class DocumentsController extends Controller
             $ext = pathinfo($old_link, PATHINFO_EXTENSION);
             $dirname = pathinfo($old_link)['dirname'];
             $template->link = $dirname . '/' . $title . '.' . $ext;
-            if (Storage::disk('public')->move($old_link, $dirname . '/' . $title . '.' . $ext)) {
-
-                Storage::disk('public')->delete($old_link);
-            }
+            Storage::disk('public')->move($old_link, $dirname . '/' . $title . '.' . $ext);
         }
         if (isset($request->external_link) && $request->external_link != '') {
             $template->external_link = $request->external_link;
         }
         $template->save();
+
+        if (Storage::disk('public')->exists($old_link)) {
+
+            Storage::disk('public')->delete($old_link);
+
+        }
 
 
     }
