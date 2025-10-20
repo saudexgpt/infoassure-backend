@@ -11,7 +11,7 @@ class RoPAController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -25,12 +25,13 @@ class RoPAController extends Controller
             $condition['business_unit_id'] = $request->business_unit_id;
         }
 
-        $ropas = RecordOfProcessingActivity::join('business_units', 'business_units.id', 'record_of_processing_activities.business_unit_id')
+        $ropas = RecordOfProcessingActivity::join(getDatabaseName('mysql') . 'business_units as business_units', 'business_units.id', 'record_of_processing_activities.business_unit_id')
             ->where('record_of_processing_activities.client_id', $client_id)
             ->where($condition)
             ->select('record_of_processing_activities.*', 'business_units.unit_name as business_unit')
             ->get();
-        return response()->json(compact('ropas'), 200);
+        $grouped_ropas = $ropas->groupBy('business_unit');
+        return response()->json(compact('ropas', 'grouped_ropas'), 200);
     }
 
     /**
