@@ -92,8 +92,11 @@ class DocumentsController extends Controller
         } else {
             $ext = pathinfo($old_link, PATHINFO_EXTENSION);
             $dirname = pathinfo($old_link)['dirname'];
-            Storage::disk('public')->move($old_link, $dirname . '/' . $title . '.' . $ext);
             $template->link = $dirname . '/' . $title . '.' . $ext;
+            if (Storage::disk('public')->move($old_link, $dirname . '/' . $title . '.' . $ext)) {
+
+                Storage::disk('public')->delete($old_link);
+            }
         }
         if (isset($request->external_link) && $request->external_link != '') {
             $template->external_link = $request->external_link;
