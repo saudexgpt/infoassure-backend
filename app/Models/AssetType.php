@@ -10,6 +10,10 @@ class AssetType extends Model
 {
     use HasFactory;
     protected $fillable = ['name', 'asset_samples'];
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
     public function client()
     {
         return $this->belongsTo(Client::class);
