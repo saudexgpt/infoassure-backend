@@ -56,7 +56,8 @@ class RiskAssessmentsController extends Controller
             ->with('assets')
             ->orderBy('asset_types.name')
             ->select('asset_types.*')
-            ->get();
+            ->get()
+            ->makeHidden('asset_samples');
         return response()->json(compact('asset_types'), 200);
     }
     public function fetchAssetTypesWithAssetAssessments(Request $request)
