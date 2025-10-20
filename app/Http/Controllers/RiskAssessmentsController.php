@@ -350,6 +350,7 @@ class RiskAssessmentsController extends Controller
         // if (isset($request->standard_id)) {
         //     $standard_id = $request->standard_id;
         // }
+        $type = $request->type;
         $asset_id = $request->asset_id;
         $business_process_id = $request->business_process_id;
         $modules = ['isms'];
@@ -365,21 +366,32 @@ class RiskAssessmentsController extends Controller
             $risk_appetite = $risk_matrix->risk_appetite;
         }
 
-        $risk_assessment_query = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
-            ->leftJoin('business_units', 'business_units.id', 'risk_registers.business_unit_id')
-            ->leftJoin('business_processes', 'business_processes.id', 'risk_registers.business_process_id')
-            ->leftJoin('assets', 'assets.id', 'risk_registers.asset_id')
-            ->leftJoin('asset_types', 'asset_types.id', 'risk_registers.asset_type_id')
-            ->where(['risk_assessments.client_id' => $client_id/*, 'risk_assessments.module' => $module*/])
-            ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))
-            ->orderBy('risk_id', 'ASC');
-
+        $asset_risk_assessments = [];
+        $business_risk_assessments = [];
         if ($asset_id !== null) {
-            $risk_assessments = $risk_assessment_query->where('risk_assessments.asset_id', $asset_id)->get();
+            $asset_risk_assessment_query = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
+                ->leftJoin('business_units', 'business_units.id', 'risk_registers.business_unit_id')
+                ->leftJoin('business_processes', 'business_processes.id', 'risk_registers.business_process_id')
+                ->leftJoin('assets', 'assets.id', 'risk_registers.asset_id')
+                ->leftJoin('asset_types', 'asset_types.id', 'risk_registers.asset_type_id')
+                ->where(['risk_assessments.client_id' => $client_id/*, 'risk_assessments.module' => $module*/])
+                ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))
+                ->orderBy('risk_id', 'ASC');
+
+            $asset_risk_assessments = $asset_risk_assessment_query->where('risk_assessments.asset_id', $asset_id)->get();
         }
 
         if ($business_process_id !== null) {
-            $risk_assessments = $risk_assessment_query->where('risk_assessments.business_process_id', $business_process_id)->get();
+            $business_risk_assessment_query = RiskAssessment::join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
+                ->leftJoin('business_units', 'business_units.id', 'risk_registers.business_unit_id')
+                ->leftJoin('business_processes', 'business_processes.id', 'risk_registers.business_process_id')
+                ->leftJoin('assets', 'assets.id', 'risk_registers.asset_id')
+                ->leftJoin('asset_types', 'asset_types.id', 'risk_registers.asset_type_id')
+                ->where(['risk_assessments.client_id' => $client_id/*, 'risk_assessments.module' => $module*/])
+                ->select('risk_assessments.*', 'risk_registers.*', 'risk_assessments.id as id', 'risk_registers.asset_name as asset_name', 'risk_registers.asset_type_name as asset_type_name', 'business_units.unit_name as business_unit', \DB::raw("CONCAT_WS(' ',business_processes.generated_process_id, business_processes.name) as business_process"))
+                ->orderBy('risk_id', 'ASC');
+
+            $business_risk_assessments = $business_risk_assessment_query->where('risk_assessments.business_process_id', $business_process_id)->get();
         }
 
         // for tabular view
@@ -394,7 +406,7 @@ class RiskAssessmentsController extends Controller
         //     ->orderBy('risk_id', 'ASC')
         //     ->paginate(10);
 
-        return response()->json(compact('risk_assessments', 'risk_appetite'), 200);
+        return response()->json(compact('asset_risk_assessments', 'business_risk_assessments', 'risk_appetite'), 200);
     }
 
     public function fetchAllRiskAssessments(Request $request)
