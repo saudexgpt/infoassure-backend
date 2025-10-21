@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Answer;
 use App\Models\AssetType;
+use App\Models\AvailableModule;
 use App\Models\BusinessImpactAnalysis;
 use App\Models\Client;
 use App\Models\RiskMatrix;
@@ -422,7 +423,9 @@ class ReportsController extends Controller
         $uploads = Upload::where('client_id', $client->id)
             ->where('is_exception', 0)
             ->where('link', '!=', NULL)->count();
-        return response()->json(compact('users', 'projects', 'uploads'), 200);
+        $project_completion = 30;
+        $available_modules = AvailableModule::where('status', 'Ready')->orderBy('name')->get();
+        return response()->json(compact('users', 'projects', 'uploads', 'project_completion', 'available_modules'), 200);
     }
 
     public function soaSummary(Request $request)

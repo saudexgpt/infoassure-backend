@@ -416,7 +416,8 @@ class RiskRegistersController extends Controller
             $asset_risk_registers_query = RiskRegister::leftJoin('business_units', 'risk_registers.business_unit_id', 'business_units.id')
                 ->leftJoin('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
                 ->where(['risk_registers.client_id' => $client_id])
-                ->where('submit_mode', 'final')
+                // ->where('submit_mode', 'final')
+                ->where('risk_registers.asset_id', $asset_id)
                 ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process');
             $asset_risk_registers = $asset_risk_registers_query->where('risk_registers.asset_id', $asset_id)->get();
         }
@@ -425,7 +426,7 @@ class RiskRegistersController extends Controller
             $business_risk_registers_query = RiskRegister::leftJoin('business_units', 'risk_registers.business_unit_id', 'business_units.id')
                 ->leftJoin('business_processes', 'risk_registers.business_process_id', 'business_processes.id')
                 ->where(['risk_registers.client_id' => $client_id])
-                ->where('submit_mode', 'final')
+                // ->where('submit_mode', 'final')
                 ->select('risk_registers.*', 'business_units.group_name as l1', 'business_units.unit_name as l2', 'business_units.unit_name as business_unit', 'business_units.teams as teams', 'business_processes.name as business_process', 'business_processes.objective as business_process_objective', 'business_processes.generated_process_id as generated_process_id', 'business_processes.name as business_process');
             $business_risk_registers = $business_risk_registers_query->where('risk_registers.business_process_id', $business_process_id)->get();
         }
