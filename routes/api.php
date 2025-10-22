@@ -519,6 +519,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('details/{riskAssessment}', [RiskAssessmentsController::class, 'show']);
 
         Route::put('save-risk-assessment-treatment-details/{riskAssessment}', [RiskAssessmentsController::class, 'saveRiskAssessmentTreatmentDetails']);
+        Route::put('save-residual-risk-assessment-treatment-details/{riskAssessment}', [RiskAssessmentsController::class, 'saveResidualRiskAssessmentTreatmentDetails']);
 
     });
     ///////////////////////////////////RISK ASSESSMENT////////////////////////////////////////////////

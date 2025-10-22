@@ -811,5 +811,13 @@ class RiskAssessmentsController extends Controller
         ]);
         return $riskAssessment;
     }
+    public function saveResidualRiskAssessmentTreatmentDetails(Request $request, RiskAssessment $riskAssessment)
+    {
+        $riskAssessment->update([
+            'residual_risk_treatment_option' => $request->residual_risk_treatment_option,
+            'residual_treatment_option_details' => $request->residual_treatment_option_details,
+        ]);
+        return $riskAssessment;
+    }
 
 }

@@ -84,7 +84,7 @@ class AuthController extends Controller
             'email' => 'required|string|unique:users',
             'password' => 'required|string',
             'c_password' => 'required|same:password',
-            'g-recaptcha-response' => ['required', new ReCaptcha]
+            'recaptcha' => ['required', new ReCaptcha]
         ]);
 
         $user = new User([
@@ -159,6 +159,9 @@ class AuthController extends Controller
     }
     public function login(Request $request)
     {
+        $request->validate([
+            'recaptcha' => ['required', new ReCaptcha]
+        ]);
         $this->username = $this->findUsername();
 
         $credentials = $request->only($this->username(), 'password');
@@ -207,6 +210,12 @@ class AuthController extends Controller
     {
         $token = randomNumber();
         $_2fa = TwoFactorAuthentication::where('user_id', $user->id)->first();
+        if ($_2fa) {
+            $resend_time = strtotime('now');
+            if ($resend_time - $_2fa->timestamp <= 90) {
+                return response()->json(['message' => 'Please wait a little before sending another OTP'], 500);
+            }
+        }
         if (!$_2fa) {
 
             $_2fa = new TwoFactorAuthentication();
@@ -224,6 +233,9 @@ class AuthController extends Controller
     }
     public function confirm2FACode(Request $request, User $user)
     {
+        $request->validate([
+            'recaptcha' => ['required', new ReCaptcha]
+        ]);
         $login_time = strtotime('now');
         $token = hash('sha256', $request->token);
         $_2fa = TwoFactorAuthentication::where(['user_id' => $user->id, 'token' => $token])->first();
@@ -388,6 +400,11 @@ class AuthController extends Controller
     }
     public function resetPassword(Request $request)
     {
+        $data = $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
+            'recaptcha' => ['required', new ReCaptcha]
+        ]);
         if (isset($request->include_old_password)) {
 
 
@@ -400,10 +417,10 @@ class AuthController extends Controller
         }
 
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $data['email'])->first();
         if ($user) {
 
-            $hashed_password = hash('sha256', $request->new_password);
+            $hashed_password = hash('sha256', $data['password']);
             if (isset($request->message) && $request->message === 'password_due_for_change') {
 
                 $user_password = UserPassword::where(['user_id' => $user->id, 'password' => $hashed_password])->first();
@@ -413,11 +430,11 @@ class AuthController extends Controller
                     ], 401);
                 }
             }
-            $user->password = $request->new_password;
+            $user->password = $data['password'];
             $user->password_status = 'custom';
             $user->password_expires_at = date('Y-m-d H:i:s', strtotime($this->todayDate . ' +90 days'));
             if ($user->save()) {
-                DB::table('password_resets')->where('email', $request->email)->delete();
+                DB::table('password_resets')->where('email', $data['email'])->delete();
                 $user_password_count = UserPassword::where('user_id', $user->id)->count();
                 if ($user_password_count < 3) {
                     $user_password = new UserPassword();

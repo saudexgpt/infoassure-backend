@@ -60,15 +60,57 @@ class ReportsController extends Controller
         return response()->json(compact('client', 'all_projects', 'all_projects_count', 'completed_projects', 'in_progress'), 200);
     }
 
+    /**
+     * Validate client/project scope and enforce ownership.
+     * Throws Illuminate\Validation\ValidationException for invalid input.
+     * Returns array with validated keys.
+     */
+    private function validateClientScope(Request $request, array $rules = [])
+    {
+        // Basic validation first
+        $data = $request->validate($rules);
+
+        // Enforce that if client_id is supplied it matches current client's id
+        if (isset($data['client_id'])) {
+            $currentClient = $this->getClient();
+            if (!$currentClient || (int) $data['client_id'] !== (int) $currentClient->id) {
+                abort(403, 'Forbidden client scope');
+            }
+        }
+
+        // If project_id provided, ensure project exists and belongs to client
+        if (isset($data['project_id'])) {
+            $project = Project::findOrFail($data['project_id']);
+            $clientIdToCheck = $data['client_id'] ?? $this->getClient()->id;
+            if ((int) $project->client_id !== (int) $clientIdToCheck) {
+                abort(403, 'Project does not belong to client');
+            }
+        }
+
+        return $data;
+    }
+
     public function clientProjectDataAnalysis(Request $request)
     {
-        if (isset($request->client_id) && $request->client_id != '') {
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'nullable|integer|exists:clients,id',
+            'project_id' => 'required',
+        ]);
 
-            $client_id = $request->client_id;
-        } else {
-
-            $client_id = $this->getClient()->id;
+        // allow 'all' or integer id for project_id
+        if ($request->project_id !== 'all') {
+            $request->validate(['project_id' => 'required|integer|exists:projects,id']);
         }
+
+        // guard against returning very large result sets
+        $maxAllowed = 5000;
+        $projectIds = $this->getMyProjects($this->getClient()->id)->pluck('id');
+        if ($projectIds->count() > $maxAllowed) {
+            abort(413, 'Request would return too many projects; narrow the scope');
+        }
+
+        // ...existing logic follows (unchanged)...
+        $client_id = $request->client_id;
         $project_id = $request->project_id;
         if ($project_id === 'all') {
             $expectedDocumentProjectIds = $this->getMyProjects($client_id)->where('allow_document_uploads', 1)->pluck('id');
@@ -126,27 +168,41 @@ class ReportsController extends Controller
 
     public function clientProjectAssessmentSummaryReport(Request $request)
     {
-        $client_id = $request->client_id;
-        $project_id = $request->project_id;
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'required|integer|exists:clients,id',
+            'project_id' => 'required|integer|exists:projects,id',
+        ]);
+
+        // safe query using validated data
+        $client_id = $data['client_id'];
+        $project_id = $data['project_id'];
+
         $reports = Answer::join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
-            // ->where('is_submitted', 1)
             ->orderBy('clauses.sort_by')
             ->select(\DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->first();
+
         return response()->json(compact('reports'), 200);
     }
+
     public function clientProjectManagementClauseReport(Request $request)
     {
-        $client_id = $request->client_id;
-        $project_id = $request->project_id;
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'required|integer|exists:clients,id',
+            'project_id' => 'required|integer|exists:projects,id',
+        ]);
+
+        $client_id = $data['client_id'];
+        $project_id = $data['project_id'];
+
         $reports = Answer::join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->groupBy('clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
-            // ->where('is_submitted', 1)
             ->orderBy('clauses.sort_by')
             ->select('clauses.name', \DB::raw('COUNT(*) as total'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Conformity" THEN answers.id END ) as conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Non-Conformity" THEN answers.id END ) as non_conformity'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Not Applicable" THEN answers.id END ) as not_applicable'), \DB::raw('COUNT(CASE WHEN consultant_grade = "Opportunity For Improvement" THEN answers.id END ) as open_for_imporvement'))
             ->get();
+
         $categories = [];
         $conformity = [];
         $non_conformity = [];
@@ -335,17 +391,17 @@ class ReportsController extends Controller
     //                     'name' => 'Conformity',
     //                     'y' => $conformity_count,
     //                     'color' => '#00a65a',
-    //                 ],
+    //                 },
     //                 [
     //                     'name' => 'Non Conformity',
     //                     'y' => $non_conformity_count,
     //                     'color' => '#f00c12',
-    //                 ],
+    //                 },
     //                 [
     //                     'name' => 'Open For Improvement',
     //                     'y' => $not_applicable_count,
     //                     'color' => '#FFA500',
-    //                 ],
+    //                 },
     //                 [
     //                     'name' => 'N/A',
     //                     'y' => $open_for_imporvement_count,
@@ -360,8 +416,14 @@ class ReportsController extends Controller
     // }
     public function clientProjectRequirementCompletionReport(Request $request)
     {
-        $client_id = $request->client_id;
-        $project_id = $request->project_id;
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'required|integer|exists:clients,id',
+            'project_id' => 'required|integer|exists:projects,id',
+        ]);
+
+        $client_id = $data['client_id'];
+        $project_id = $data['project_id'];
+
         $clauses = Answer::groupBy('clause_id')
             ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->where(['client_id' => $client_id, 'project_id' => $project_id])
@@ -430,8 +492,11 @@ class ReportsController extends Controller
 
     public function soaSummary(Request $request)
     {
-        $client_id = $request->client_id;
-        // $standard_id = $request->standard_id;
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'required|integer|exists:clients,id',
+        ]);
+        $client_id = $data['client_id'];
+
         $reports = SOAArea::with('controls')->orderBy('name')->get();
         $controls = [];
         $categories = [];
@@ -496,32 +561,55 @@ class ReportsController extends Controller
 
     public function riskAssessmentSummary(Request $request)
     {
-        $client_id = $request->client_id;
-        $standard_id = $request->standard_id;
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'required|integer|exists:clients,id',
+            'standard_id' => 'required|integer|exists:standards,id'
+        ]);
+        $client_id = $data['client_id'];
+        $standard_id = $data['standard_id'];
+
         $summary = RiskAssessment::join('asset_types', 'asset_types.id', '=', 'risk_assessments.asset_type_id')
             ->join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
             ->groupBy('asset')
             ->where(['risk_assessments.client_id' => $client_id, 'risk_assessments.standard_id' => $standard_id])
             ->select('asset_types.name as asset_type', 'risk_owner', 'asset', \DB::raw('COUNT(*) as no_of_threats'), \DB::raw('COUNT(CASE WHEN risk_category = "Low" THEN risk_assessments.id END ) as lows'), \DB::raw('COUNT(CASE WHEN risk_category = "Medium" THEN risk_assessments.id END ) as mediums'), \DB::raw('COUNT(CASE WHEN risk_category = "High" THEN risk_assessments.id END ) as highs'))
             ->get();
+
         return response()->json(compact('summary'), 200);
     }
+
     public function fetchProjectAnswers(Request $request)
     {
-        $project_id = $request->project_id;
-        $standard_id = $request->standard_id;
+        $data = $this->validateClientScope($request, [
+            'project_id' => 'required|integer|exists:projects,id',
+            'standard_id' => 'nullable|integer|exists:standards,id',
+        ]);
+
+        $project_id = $data['project_id'];
+
         $assessment_answers = Answer::with(['client', 'clause', 'standard', 'question'])
             ->join('clauses', 'clauses.id', '=', 'answers.clause_id')
             ->where(['project_id' => $project_id])
             ->orderBy('clauses.sort_by')
             ->select('answers.*')
             ->get();
+
         return response()->json(compact('assessment_answers'), 200);
     }
 
     public function assetRiskAnalysis(Request $request)
     {
-        $client_id = $request->client_id;
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'required|integer|exists:clients,id',
+        ]);
+        $client_id = $data['client_id'];
+
+        // guard: if many grouped items would be returned, ask caller to paginate/filter
+        $groupCount = RiskRegister::where(['client_id' => $client_id, 'module' => 'isms'])->whereNotNull('asset_type_id')->count();
+        if ($groupCount > 5000) {
+            abort(413, 'Too many assets to analyze at once');
+        }
+
         $categories = [];
         $total_low = 0;
         $total_medium = 0;
@@ -675,11 +763,27 @@ class ReportsController extends Controller
     }
     public function processRiskAnalysis(Request $request)
     {
-        $client_id = $request->client_id;
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'required|integer|exists:clients,id',
+            'module' => 'nullable|string',
+        ]);
         $module_condition = [];
         if (isset($request->module) && $request->module != 'all') {
             $module_condition = ['module' => $request->module];
         }
+        $client_id = $data['client_id'];
+
+        // restrict module values if provided
+        if ($request->filled('module') && !in_array($request->module, ['isms', 'bcms', 'ndpa', 'rcsa', 'all'])) {
+            abort(422, 'Invalid module');
+        }
+
+        // guard large datasets
+        $groupCount = RiskRegister::where(['client_id' => $client_id])->whereNotNull('business_unit_id')->count();
+        if ($groupCount > 5000) {
+            abort(413, 'Too many business units to analyze at once');
+        }
+
         $categories = [];
         $total_low = 0;
         $total_medium = 0;
@@ -875,8 +979,13 @@ class ReportsController extends Controller
     }
     public function dataAnalysisBIA(Request $request)
     {
-        $client_id = $request->client_id;
-        $business_unit_id = $request->business_unit_id;
+        $data = $this->validateClientScope($request, [
+            'client_id' => 'required|integer|exists:clients,id',
+            'business_unit_id' => 'required|integer|exists:business_units,id',
+        ]);
+        $client_id = $data['client_id'];
+        $business_unit_id = $data['business_unit_id'];
+
         $categories = [];
         $impact_areas = [];
         $total_critical = 0;
