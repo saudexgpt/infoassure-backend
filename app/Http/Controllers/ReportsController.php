@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Answer;
+use App\Models\Asset;
 use App\Models\AssetType;
 use App\Models\AvailableModule;
 use App\Models\BusinessImpactAnalysis;
+use App\Models\BusinessProcess;
+use App\Models\BusinessUnit;
 use App\Models\Client;
 use App\Models\RiskMatrix;
 use App\Models\RiskRegister;
@@ -486,8 +489,23 @@ class ReportsController extends Controller
             ->where('is_exception', 0)
             ->where('link', '!=', NULL)->count();
         $project_completion = 30;
+        $assets = Asset::where('client_id', $client->id)->count();
+        $business_units = BusinessUnit::where('client_id', $client->id)->count();
+        $busness_processes = BusinessProcess::where('client_id', $client->id)->count();
         $available_modules = AvailableModule::where('status', 'Ready')->orderBy('name')->get();
-        return response()->json(compact('users', 'projects', 'uploads', 'project_completion', 'available_modules'), 200);
+        return response()->json(
+            compact(
+                'users',
+                'projects',
+                'uploads',
+                'project_completion',
+                'available_modules',
+                'assets',
+                'business_units',
+                'busness_processes'
+            ),
+            200
+        );
     }
 
     public function soaSummary(Request $request)
