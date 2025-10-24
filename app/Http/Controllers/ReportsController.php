@@ -659,7 +659,8 @@ class ReportsController extends Controller
         foreach ($grouped_risk_registers as $asset_type_id => $risk_registers):
             $asset_type = $risk_registers[0]->assetType;
             $categories[] = $asset_type->name;
-            $risk_assessment = RiskAssessment::where(['client_id' => $client_id, 'asset_type_id' => $asset_type_id, 'module' => 'isms'])
+            $risk_assessment = RiskAssessment::groupBy('asset_type_id')
+                ->where(['client_id' => $client_id, 'asset_type_id' => $asset_type_id, 'module' => 'isms'])
                 ->select(\DB::raw('COUNT(CASE WHEN revised_risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "High" THEN risk_assessments.id END ) as high'), \DB::raw('SUM(revised_risk_score) as total_risk_score'))
                 ->first();
 
@@ -700,7 +701,8 @@ class ReportsController extends Controller
                 $asset = $risk_register->asset;
                 if ($asset) {
                     if (!in_array($asset->id, $unique_asset_ids)) {
-                        $asset_risk_assessment = RiskAssessment::where(['client_id' => $client_id, 'asset_id' => $asset->id, 'module' => 'isms'])
+                        $asset_risk_assessment = RiskAssessment::groupBy('asset_id')
+                            ->where(['client_id' => $client_id, 'asset_id' => $asset->id, 'module' => 'isms'])
                             ->where('asset_type_id', '!=', NULL)
                             ->select(\DB::raw('COUNT(CASE WHEN revised_risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "High" THEN risk_assessments.id END ) as high'))
                             ->first();
