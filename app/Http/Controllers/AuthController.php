@@ -408,7 +408,7 @@ class AuthController extends Controller
         if (isset($request->include_old_password)) {
 
 
-            $credentials = $request->only('email', 'password');
+            $credentials = ['email' => $request->email, 'password' => $request->old_password]; // $request->only('email', 'password');
             if (!Auth::attempt($credentials)) {
                 return response()->json([
                     'message' => 'You need to remember your old password'
