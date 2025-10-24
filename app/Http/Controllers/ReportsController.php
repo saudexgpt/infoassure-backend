@@ -661,7 +661,7 @@ class ReportsController extends Controller
             $categories[] = $asset_type->name;
             $risk_assessment = RiskAssessment::groupBy('asset_type_id')
                 ->where(['client_id' => $client_id, 'asset_type_id' => $asset_type_id, 'module' => 'isms'])
-                ->select(\DB::raw('COUNT(CASE WHEN revised_risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "High" THEN risk_assessments.id END ) as high'), \DB::raw('SUM(revised_risk_score) as total_risk_score'))
+                ->select(\DB::raw('COUNT(CASE WHEN risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN risk_level = "High" THEN risk_assessments.id END ) as high'), \DB::raw('SUM(risk_score) as total_risk_score'))
                 ->first();
 
             $total_low += $risk_assessment->low;
@@ -704,7 +704,7 @@ class ReportsController extends Controller
                         $asset_risk_assessment = RiskAssessment::groupBy('asset_id')
                             ->where(['client_id' => $client_id, 'asset_id' => $asset->id, 'module' => 'isms'])
                             ->where('asset_type_id', '!=', NULL)
-                            ->select(\DB::raw('COUNT(CASE WHEN revised_risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN revised_risk_level = "High" THEN risk_assessments.id END ) as high'))
+                            ->select(\DB::raw('COUNT(CASE WHEN risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN risk_level = "High" THEN risk_assessments.id END ) as high'))
                             ->first();
 
                         $drilldown_series_low[] = [$asset->name, (int) $asset_risk_assessment->low];
