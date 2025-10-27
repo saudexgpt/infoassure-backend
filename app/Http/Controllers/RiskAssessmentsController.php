@@ -591,7 +591,8 @@ class RiskAssessmentsController extends Controller
     public function show(Request $request, RiskAssessment $riskAssessment)
     {
         $this->resetImpactOnArea($riskAssessment);
-        $riskAssessment = $riskAssessment->join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
+        $riskAssessment = $riskAssessment->with('riskRegister')
+            ->join('risk_registers', 'risk_registers.id', 'risk_assessments.risk_register_id')
             ->leftJoin('business_units', 'business_units.id', 'risk_registers.business_unit_id')
             ->leftJoin('business_processes', 'business_processes.id', 'risk_registers.business_process_id')
             ->leftJoin('assets', 'assets.id', 'risk_registers.asset_id')

@@ -10,7 +10,7 @@ use App\Http\Resources\UserResource;
 use App\Jobs\SendQueuedPasswordResetEmailJob;
 use App\Models\TwoFactorAuthentication;
 use App\Jobs\SendQueued2FACode;
-
+use Illuminate\Validation\Rules\Password;
 use App\Mail\PassKey;
 use App\Mail\ResetPassword;
 use App\Models\Client;
@@ -402,9 +402,18 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'email' => 'required|string',
-            'password' => 'required|string',
+            'password' => [
+                'required',
+                Password::min(12) // Minimum length of 8 characters
+                    ->letters() // Must contain at least one letter
+                    ->mixedCase() // Must contain both uppercase and lowercase letters
+                    ->numbers() // Must contain at least one number
+                    ->symbols() // Must contain at least one symbol
+                    ->uncompromised()
+            ],
             'recaptcha' => ['required', new ReCaptcha]
         ]);
+
         if (isset($request->include_old_password)) {
 
 

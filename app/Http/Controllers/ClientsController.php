@@ -188,7 +188,7 @@ class ClientsController extends Controller
      */
     public function sendLoginCredentials(User $user)
     {
-        $password = $user->email; // randomPassword();
+        $password = randomPassword();
         $user->password = $password;
         $user->password_status = 'default';
         $user->save();

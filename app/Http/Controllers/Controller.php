@@ -319,7 +319,7 @@ class Controller extends BaseController
     public function callOpenAISearch($query)
     {
         $result = OpenAI::chat()->create([
-            'model' => 'gpt-3.5-turbo',
+            'model' => 'gpt-5',
             //'model' => 'gpt-4o-mini',
             'messages' => [
                 ['role' => 'user', 'content' => $query],

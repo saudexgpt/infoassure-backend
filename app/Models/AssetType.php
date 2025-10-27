@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 class AssetType extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'asset_samples'];
+    protected $fillable = ['name', 'client_id'];
     protected $hidden = [
         'created_at',
         'updated_at',

@@ -54,6 +54,11 @@ class RiskAssessment extends Model
             set: fn($value) => json_encode($value),
         );
     }
+    public function riskRegister()
+    {
+        return $this->belongsTo(RiskRegister::class, 'risk_register_id', 'id');
+    }
+
     public function assetType()
     {
         return $this->belongsTo(AssetType::class);

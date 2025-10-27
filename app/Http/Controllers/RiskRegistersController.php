@@ -70,12 +70,8 @@ class RiskRegistersController extends Controller
     }
     public function autoGenerateAndSaveAssetRiskRegisters(Request $request)
     {
-        if (isset($request->client_id)) {
-            $client_id = $request->client_id;
-        } else {
-            $client_id = $this->getClient()->id;
-        }
-        $client = Client::find($client_id);
+        $client = $this->getClient();
+        $client_id = $client->id;
         if (isset($request->id) && $request->id != '') {
             $id = $request->id;
             $asset = Asset::with('assetType')->find($id);
@@ -112,12 +108,8 @@ class RiskRegistersController extends Controller
     // }
     public function autoGenerateAndSaveProcessRiskRegisters(Request $request)
     {
-        if (isset($request->client_id)) {
-            $client_id = $request->client_id;
-        } else {
-            $client_id = $this->getClient()->id;
-        }
-        $client = Client::find($client_id);
+        $client = $this->getClient();
+        $client_id = $client->id;
         if (isset($request->id) && $request->id != '') {
             $id = $request->id;
             $business_process = BusinessProcess::with('businessUnit')->find($id);

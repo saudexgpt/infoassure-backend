@@ -56,7 +56,6 @@ Route::get('fetch-available-modules', [Controller::class, 'fetchAvailableModules
 
 Route::get('generate-captcha', [Controller::class, 'fetchCaptcha']);
 Route::post('spreadsheet/export-excel', [DocumentsController::class, 'exportExcel']);
-Route::get('generate-threat-intelligence', [GeneralRiskLibrariesController::class, 'generativeThreatIntelligence']);
 
 
 // Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
@@ -229,6 +228,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('save-doc-template', [DocumentsController::class, 'saveDocTemplate']);
     Route::post('save-excel-doc-template', [DocumentsController::class, 'saveExcelDocTemplate']);
     Route::post('upload-default-templates', [DocumentsController::class, 'uploadDefaultTemplates']);
+
+
+    Route::get('generate-threat-intelligence', [GeneralRiskLibrariesController::class, 'generativeThreatIntelligence']);
 
 
 
