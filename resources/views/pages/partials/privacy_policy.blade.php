@@ -3,7 +3,7 @@
 
 
 
-  <p>This privacy policy describes <strong>The Compass</strong> policies and procedures on the collection, use, as
+  <p>This privacy policy describes <strong>Decompass</strong> policies and procedures on the collection, use, as
     well as disclosure of your information when you subscribe to our services, it tells you how the law
     protects you and your privacy rights.</p>
 
@@ -44,7 +44,7 @@
     effectiveness of the ad campaigns.<br><br>Administered by Cookeries<strong><br>To whom we share your
       Personal data:<br></strong>We share your personal data with Service providers and third-party
     organizations (Our Partners) based on the lawful purpose of processing.<br><br><strong>Retention of your
-      personal data<br></strong><strong>The Compass</strong> will retain your personal data only for as long as it is
+      personal data<br></strong><strong>Decompass</strong> will retain your personal data only for as long as it is
     necessary
     for the purposes set out in this privacy policy. We will retain and use your personal data to the
     extent necessary to comply with our legal obligations.<br><br><strong>Security of your personal
@@ -64,7 +64,7 @@
     <!-- <br>28, Obanikoro Estate, Obanikoro, Lagos, Nigeria<br>+234 803
     533
     8896<br><br> -->
-    <strong>ISMS Policy Statement<br></strong>The Board and Management of <strong>The Compass</strong> which
+    <strong>ISMS Policy Statement<br></strong>The Board and Management of <strong>Decompass</strong> which
     operates in the Information technology sector are committed to preserving the confidentiality, integrity
     and availability of all physical and electronic information assets throughout the organization, in
     order to preserve its asset, legal, regulatory as well as contractual, compliance and image.<br>
@@ -75,18 +75,18 @@
   <p>The Information Security Management Systems (ISO 27001) requirements will continue to be aligned with
     organizational goals and is also intended to be an enabling mechanism for information sharing, electronic
     operations, and reducing information &amp; Technology related risks to acceptable
-    levels.<br><br><strong>The Compass</strong> is committed to providing quality services to our customers,
+    levels.<br><br><strong>Decompass</strong> is committed to providing quality services to our customers,
     both internal and external by aligning Information Technology investments with organizational goals.
-    <strong>The Compass</strong> has aligned its processes and operations to the requirements of the ISO27001 standard
+    <strong>Decompass</strong> has aligned its processes and operations to the requirements of the ISO27001 standard
     to ensure, cyber resilience, protection of its information asset and maximization of benefit/returns on
-    IT investments.<br><br>It is, therefore, <strong>The Compass</strong> policy to ensure:<br>• Current strategy and
+    IT investments.<br><br>It is, therefore, <strong>Decompass</strong> policy to ensure:<br>• Current strategy and
     Information
     Security Management Systems (ISMS) provide the context for identifying, assessing, evaluating, and
     controlling information/process/service-related risks through the establishment and maintenance of the
     ISMS. The risk assessment and risk treatment plan capture how identified risks are controlled in
-    alignment with <strong>The Compass</strong> risk management strategy.<br>• Information security education, awareness
+    alignment with <strong>Decompass</strong> risk management strategy.<br>• Information security education, awareness
     and
-    training are made available to all stakeholders<br>• All employees of <strong>The Compass</strong> and external
+    training are made available to all stakeholders<br>• All employees of <strong>Decompass</strong> and external
     parties
     identified in the Management Systems are expected to comply with this policy. All staff and certain
     external parties will receive or be required to provide evidence of receiving appropriate training.<br>•

@@ -85,6 +85,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
             Route::get('fetch-task-by-clause', [CalendarController::class, 'fetchModuleTaskByClause']);
             Route::get('fetch-client-assigned-tasks', [CalendarController::class, 'fetchClientAssignedTasks']);
+            Route::get('fetch-user-assigned-tasks', [CalendarController::class, 'fetchUserAssignedTasks']);
 
             Route::post('store-clause-activities', [CalendarController::class, 'storeClauseActivities']);
             Route::put('update-clause-activity/{moduleActivity}', [CalendarController::class, 'updateClauseActivity']);

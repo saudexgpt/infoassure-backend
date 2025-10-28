@@ -5,11 +5,11 @@
                 <div class="testimonial-inner text-center p-5">
                     <div class="d-flex align-items-center justify-content-center mb-4">
                         <div>
-                            <h3 class="mb-2">What is <strong>The Compass</strong> and how does it help with
+                            <h3 class="mb-2">What is <strong>Decompass</strong> and how does it help with
                                 cybersecurity compliance?</h3>
                         </div>
                     </div>
-                    <p class="fs-7"><strong>The Compass</strong> is a cybersecurity compliance tool designed to assist
+                    <p class="fs-7"><strong>Decompass</strong> is a cybersecurity compliance tool designed to assist
                         organizations in achieving and maintaining compliance with various frameworks such as ISO 27001,
                         PCI-DSS, GDPR, NDPA, Third Party Risk Assessment and more. It provides comprehensive
                         assessments, personalized compliance roadmaps, and
@@ -21,10 +21,10 @@
                 <div class="testimonial-inner text-center p-5">
                     <div class="d-flex align-items-center justify-content-center mb-4">
                         <div>
-                            <h3 class="mb-2">What frameworks does <strong>The Compass</strong> support?</h3>
+                            <h3 class="mb-2">What frameworks does <strong>Decompass</strong> support?</h3>
                         </div>
                     </div>
-                    <p class="fs-7"><strong>The Compass</strong> supports a wide range of cybersecurity frameworks,
+                    <p class="fs-7"><strong>Decompass</strong> supports a wide range of cybersecurity frameworks,
                         including ISO 27001, ISO 22301, PCI-DSS, NDPA (Nigerian Data Protection Act), BIA, and others.
                     </p>
 
@@ -34,10 +34,10 @@
                 <div class="testimonial-inner text-center p-5">
                     <div class="d-flex align-items-center justify-content-center mb-4">
                         <div>
-                            <h3 class="mb-2">How does <strong>The Compass</strong> ensure the security of my data?</h3>
+                            <h3 class="mb-2">How does <strong>Decompass</strong> ensure the security of my data?</h3>
                         </div>
                     </div>
-                    <p class="fs-7">Security is our top priority. <strong>The Compass</strong> employs robust encryption
+                    <p class="fs-7">Security is our top priority. <strong>Decompass</strong> employs robust encryption
                         protocols and follows industry best practices to safeguard your data. Our platform is hosted on
                         secure servers with regular security audits and updates to mitigate risks.</p>
 
@@ -47,11 +47,11 @@
                 <div class="testimonial-inner text-center p-5">
                     <div class="d-flex align-items-center justify-content-center mb-4">
                         <div>
-                            <h3 class="mb-2">Can <strong>The Compass</strong> be customized to meet our organization's
+                            <h3 class="mb-2">Can <strong>Decompass</strong> be customized to meet our organization's
                                 specific needs?</h3>
                         </div>
                     </div>
-                    <p class="fs-7">Yes, <strong>The Compass</strong> can be customized to align with your
+                    <p class="fs-7">Yes, <strong>Decompass</strong> can be customized to align with your
                         organization's unique requirements. Our team works closely with clients to tailor compliance
                         roadmaps, assessments, and reporting features to address specific challenges and objectives.</p>
 
@@ -61,11 +61,11 @@
                 <div class="testimonial-inner text-center p-5">
                     <div class="d-flex align-items-center justify-content-center mb-4">
                         <div>
-                            <h3 class="mb-2">Is training provided for using <strong>The Compass</strong></h3>
+                            <h3 class="mb-2">Is training provided for using <strong>Decompass</strong></h3>
                         </div>
                     </div>
                     <p class="fs-7">Yes, we offer training and support to ensure that users can maximize the benefits of
-                        <strong>The Compass</strong>. Our team provides comprehensive onboarding sessions, training
+                        <strong>Decompass</strong>. Our team provides comprehensive onboarding sessions, training
                         materials, and ongoing support to help clients navigate
                         the platform effectively
                     </p>
@@ -81,7 +81,7 @@
                     </div>
                     <p class="fs-7">Compliance assessments and reports are updated regularly to reflect changes in
                         regulations, standards, and best
-                        practices. <strong>The Compass</strong> provides automatic updates and notifications to keep
+                        practices. <strong>Decompass</strong> provides automatic updates and notifications to keep
                         clients informed
                         of any changes that may
                         impact their compliance posture.</p>
@@ -92,11 +92,11 @@
                 <div class="testimonial-inner text-center p-5">
                     <div class="d-flex align-items-center justify-content-center mb-4">
                         <div>
-                            <h3 class="mb-2">What sets <strong>The Compass</strong> apart from other cybersecurity
+                            <h3 class="mb-2">What sets <strong>Decompass</strong> apart from other cybersecurity
                                 compliance tools?</h3>
                         </div>
                     </div>
-                    <p class="fs-7"><strong>The Compass</strong> stands out for its user-friendly interface,
+                    <p class="fs-7"><strong>Decompass</strong> stands out for its user-friendly interface,
                         comprehensive framework coverage, personalized approach, and dedicated customer support. Our
                         tool is designed to simplify the compliance process and empower organizations to achieve
                         compliance with confidence</p>

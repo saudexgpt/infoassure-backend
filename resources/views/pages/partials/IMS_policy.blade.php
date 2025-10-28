@@ -1,5 +1,5 @@
 <div style="max-height: 400px; overflow: auto">
-  <p>The Board and Management of <strong>The Compass</strong> are fully dedicated to upholding the confidentiality,
+  <p>The Board and Management of <strong>Decompass</strong> are fully dedicated to upholding the confidentiality,
     integrity, and
     availability of all physical and electronic information assets in the organization. Our commitment is essential to
     safeguard our assets, adhere to legal and regulatory requirements, meet contractual obligations, and preserve our

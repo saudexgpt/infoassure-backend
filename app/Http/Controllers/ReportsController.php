@@ -663,36 +663,38 @@ class ReportsController extends Controller
                 ->where(['client_id' => $client_id, 'asset_type_id' => $asset_type_id, 'module' => 'isms'])
                 ->select(\DB::raw('COUNT(CASE WHEN risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN risk_level = "High" THEN risk_assessments.id END ) as high'), \DB::raw('SUM(risk_score) as total_risk_score'))
                 ->first();
+            if ($risk_assessment) {
+                $total_low += $risk_assessment->low;
+                $total_medium += $risk_assessment->medium;
+                $total_high += $risk_assessment->high;
+                $current_risk_score = (int) $risk_assessment->total_risk_score;
+                if ($current_risk_score > 0) {
 
-            $total_low += $risk_assessment->low;
-            $total_medium += $risk_assessment->medium;
-            $total_high += $risk_assessment->high;
-            $current_risk_score = (int) $risk_assessment->total_risk_score;
-            if ($current_risk_score > 0) {
+                    $total_risk_scores += $current_risk_score;
+                    $count_risk_score++;
+                }
+                $low[] = [
+                    'name' => $asset_type->name,
+                    'y' => (int) $risk_assessment->low,
+                    'drilldown' => $asset_type_id . '_low',
 
-                $total_risk_scores += $current_risk_score;
-                $count_risk_score++;
+                ];
+
+                $medium[] = [
+                    'name' => $asset_type->name,
+                    'y' => (int) $risk_assessment->medium,
+                    'drilldown' => $asset_type_id . '_medium',
+
+                ];
+
+                $high[] = [
+                    'name' => $asset_type->name,
+                    'y' => (int) $risk_assessment->high,
+                    'drilldown' => $asset_type_id . '_high',
+
+                ];
+
             }
-            $low[] = [
-                'name' => $asset_type->name,
-                'y' => (int) $risk_assessment->low,
-                'drilldown' => $asset_type_id . '_low',
-
-            ];
-
-            $medium[] = [
-                'name' => $asset_type->name,
-                'y' => (int) $risk_assessment->medium,
-                'drilldown' => $asset_type_id . '_medium',
-
-            ];
-
-            $high[] = [
-                'name' => $asset_type->name,
-                'y' => (int) $risk_assessment->high,
-                'drilldown' => $asset_type_id . '_high',
-
-            ];
             $drilldown_series_low = [];
             $drilldown_series_medium = [];
             $drilldown_series_high = [];
@@ -706,10 +708,11 @@ class ReportsController extends Controller
                             ->where('asset_type_id', '!=', NULL)
                             ->select(\DB::raw('COUNT(CASE WHEN risk_level = "Low" THEN risk_assessments.id END ) as low'), \DB::raw('COUNT(CASE WHEN risk_level = "Medium" THEN risk_assessments.id END ) as medium'), \DB::raw('COUNT(CASE WHEN risk_level = "High" THEN risk_assessments.id END ) as high'))
                             ->first();
-
-                        $drilldown_series_low[] = [$asset->name, (int) $asset_risk_assessment->low];
-                        $drilldown_series_medium[] = [$asset->name, (int) $asset_risk_assessment->medium];
-                        $drilldown_series_high[] = [$asset->name, (int) $asset_risk_assessment->high];
+                        if ($asset_risk_assessment) {
+                            $drilldown_series_low[] = [$asset->name, (int) $asset_risk_assessment->low];
+                            $drilldown_series_medium[] = [$asset->name, (int) $asset_risk_assessment->medium];
+                            $drilldown_series_high[] = [$asset->name, (int) $asset_risk_assessment->high];
+                        }
 
                         $unique_asset_ids[] = $asset->id;
                     }
@@ -735,6 +738,7 @@ class ReportsController extends Controller
                 "data" => $drilldown_series_high,
                 // 'dataLabels' => $dataLabels
             ];
+
         endforeach;
         $risk_score = 0;
         $risk_level = '';

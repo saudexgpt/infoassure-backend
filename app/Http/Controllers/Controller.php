@@ -95,7 +95,7 @@ class Controller extends BaseController
 
     public function getUser()
     {
-        // $this->setUser();
+        $this->setUser();
 
         return $this->user;
     }

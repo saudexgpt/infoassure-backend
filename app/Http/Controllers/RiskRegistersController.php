@@ -146,16 +146,17 @@ class RiskRegistersController extends Controller
     private function generativeThreatIntelligence($item, $category, $description)
     {
         if ($description !== NULL) {
-            $message = "Generate at least 5 cyber security threats associated with ###$item### under ###$category### described as ###$description###.";
+            $message = "Generate at least 5 cyber security threats associated with $item under $category described as $description.";
         } else {
-            $message = "Generate at least 5 cyber security threats associated with ###$item### under ###$category###.";
+            $message = "Generate at least 5 cyber security threats associated with $item under $category.";
         }
         $instruction = "
-            Also provide the vulnerabilities for each of the threats in an array format.
+            Also provide the vulnerabilities and recommended controls for each of the threats in an array format.
             Format the responses as an array of objects in json format for easy extraction in the format below:
             
             threat: <threat>
-            vulnerabilities: <vulnerabilities>";
+            vulnerabilities: <vulnerabilities>
+            recommended_controls: <recommended_controls>";
 
         $content = $message . $instruction;
 

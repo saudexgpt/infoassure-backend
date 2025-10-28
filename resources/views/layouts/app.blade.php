@@ -9,10 +9,10 @@
   <title>@yield('title') | {{ env('APP_NAME') }}</title>
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <meta
-    content="The Compass, Compass, Compliance, IT Governance, Risk & Compliance (IT GRC), Information & Cyber Security, Audit & Assurance firm, ISO 27001, ISO 22301, ISO 20000, PCI DSS, COBIT, NIST, ITIL, TOGAF"
+    content="Decompass, Compass, Compliance, IT Governance, Risk & Compliance (IT GRC), Information & Cyber Security, Audit & Assurance firm, ISO 27001, ISO 22301, ISO 20000, PCI DSS, COBIT, NIST, ITIL, TOGAF"
     name="keywords">
   <meta
-    content="The Compass is a cybersecurity compliance tool designed to assist organizations in achieving and maintaining compliance with various frameworks such as ISO 27001, PCI-DSS, and more. It provides comprehensive assessments, personalized compliance roadmaps, and automated monitoring to streamline the compliance process. @yield('title')"
+    content="Decompass is a cybersecurity compliance tool designed to assist organizations in achieving and maintaining compliance with various frameworks such as ISO 27001, PCI-DSS, and more. It provides comprehensive assessments, personalized compliance roadmaps, and automated monitoring to streamline the compliance process. @yield('title')"
     name="description">
   <meta property="og:image" content="{{ URL::asset('img/favicon.ico') }}">
 

@@ -25,6 +25,6 @@ class TaskLog extends Model
     }
     public function task()
     {
-        return $this->belongsTo(ModuleActivityTask::class, 'module_activity_task_id', 'id');
+        return $this->belongsTo(AssignedTask::class, 'assigned_task_id', 'id');
     }
 }

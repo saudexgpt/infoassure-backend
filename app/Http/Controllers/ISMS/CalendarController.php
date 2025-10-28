@@ -116,11 +116,25 @@ class CalendarController extends Controller
         $clause_tasks = Clause::with('tasks')->get();
         return response()->json(compact('clause_tasks'), 200);
     }
+    public function fetchUserAssignedTasks(Request $request)
+    {
+        $client = $this->getClient();
+        $user = $this->getUser();
+
+        $my_tasks = TaskLog::join('assigned_tasks', 'assigned_tasks.id', '=', 'task_logs.assigned_task_id')
+            ->join('module_activity_tasks', 'module_activity_tasks.id', '=', 'assigned_tasks.module_activity_task_id')
+            ->join(getDatabaseName('mysql') . 'users as users', 'users.id', 'assigned_tasks.assignee_id')
+            ->where(['task_logs.client_id' => $client->id, 'assigned_tasks.assignee_id' => $user->id])
+            ->select('task_logs.*', 'task_logs.id as id', 'users.name as assignee', 'module_activity_tasks.name as task_name')
+            ->get();
+
+        return response()->json(compact('my_tasks'), 200);
+    }
     public function fetchClientAssignedTasks(Request $request)
     {
         $client = $this->getClient();
         $user = $this->getUser();
-        if ($user->login_as === 'client') {
+        if ($user->haRole('client')) {
             $clause_tasks = Clause::join('assigned_tasks', 'clauses.id', 'assigned_tasks.clause_id')
                 ->join('module_activity_tasks', 'module_activity_tasks.id', 'assigned_tasks.module_activity_task_id')
                 ->with([
@@ -248,7 +262,7 @@ class CalendarController extends Controller
         }
 
         $project = Project::where(['client_id' => $client_id, 'year' => $year])
-            ->where('title', 'LIKE', '%NDPA%')
+            ->where('title', 'LIKE', '%ISMS%')
             ->first();
 
         if ($project) {
@@ -273,13 +287,13 @@ class CalendarController extends Controller
             $this->setupTaskLogForRecurrentTasks($assignedTask->id, $recurrence, $project, $start_date, $end_date);
             // send notification to the assignee
             $title = "Task Assigned";
-            $description = "$user->name assigned you a task on the NDPA module.";
+            $description = "$user->name assigned you a task on the ISMS module.";
             $this->sendNotification($title, $description, [$assignee_id]);
 
             $assignedTask = $assignedTask->with('assignee')->find($assignedTask->id);
             return response()->json(['message' => 'Task assigned successfully', 'assigned_task' => $assignedTask], 200);
         }
-        return response()->json(['message' => "You need to subscribe to the NDPA module for $year"], 403);
+        return response()->json(['message' => "You need to subscribe to the ISMS module for $year"], 403);
     }
 
     private function setupTaskLogForRecurrentTasks($assignedTaskId, $recurrence, $project, $start_date, $end_date)
@@ -298,8 +312,8 @@ class CalendarController extends Controller
                         'deadline' => $end_date
                     ]);
 
-                    $start_date = date('Y-m-d', strtotime("+$i week", strtotime($start_date)));
-                    $end_date = date('Y-m-d', strtotime("+$i week", strtotime($end_date)));
+                    $start_date = date('Y-m-d', strtotime("+1 week", strtotime($start_date)));
+                    $end_date = date('Y-m-d', strtotime("+1 week", strtotime($end_date)));
                 }
                 break;
             case 'Monthly':
@@ -314,8 +328,8 @@ class CalendarController extends Controller
                         'deadline' => $end_date
                     ]);
 
-                    $start_date = date('Y-m-d', strtotime("+$i month", strtotime($start_date)));
-                    $end_date = date('Y-m-d', strtotime("+$i month", strtotime($end_date)));
+                    $start_date = date('Y-m-d', strtotime("+1 month", strtotime($start_date)));
+                    $end_date = date('Y-m-d', strtotime("+1 month", strtotime($end_date)));
                 }
                 break;
 
