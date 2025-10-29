@@ -342,11 +342,11 @@ class CalendarController extends Controller
                         'start_date' => $start_date,
                     ], [
                         'recurrence_tag' => $recurrence_tag,
-                        'deadline' => date('Y-m-d', strtotime("+3 months", strtotime($start_date)))
+                        'deadline' => $end_date
                     ]);
 
                     $start_date = date('Y-m-d', strtotime("+3 months", strtotime($start_date)));
-                    $start_date = date('Y-m-d', strtotime("+3 months", strtotime($start_date)));
+                    $end_date = date('Y-m-d', strtotime("+3 months", strtotime($end_date)));
                 }
                 break;
             case 'Biannually':
@@ -359,10 +359,11 @@ class CalendarController extends Controller
                         'start_date' => $start_date,
                     ], [
                         'recurrence_tag' => $recurrence_tag,
-                        'deadline' => date('Y-m-d', strtotime("+6 months", strtotime($start_date)))
+                        'deadline' => $end_date
                     ]);
 
                     $start_date = date('Y-m-d', strtotime("+6 months", strtotime($start_date)));
+                    $end_date = date('Y-m-d', strtotime("+6 months", strtotime($end_date)));
                 }
                 break;
             case 'Annually':
@@ -374,7 +375,7 @@ class CalendarController extends Controller
                     'start_date' => $start_date,
                 ], [
                     'recurrence_tag' => $recurrence_tag,
-                    'deadline' => date('Y-m-d', strtotime("+1 year", strtotime($start_date)))
+                    'deadline' => $end_date
                 ]);
 
                 break;

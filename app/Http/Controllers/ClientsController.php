@@ -26,7 +26,7 @@ class ClientsController extends Controller
         $user = $this->getUser();
         $condition = [];
         $partner_with_clients = [];
-        if ($user->haRole('client') || $user->haRole('admin')) {
+        if ($user->haRole('user') || $user->haRole('admin')) {
             $id = $this->getClient()->id;
             $condition = ['id' => $id];
         }
@@ -136,8 +136,8 @@ class ClientsController extends Controller
             $client->contact_address = $request->contact_address;
             if ($client->save()) {
                 $request->client_id = $client->id;
-                $request->role = 'client';
-                $request->roles = ['admin', 'client'];
+                $request->role = 'user';
+                $request->roles = ['admin', 'user'];
                 $request->login_as = 'admin';
                 $this->registerClientUser($request);
                 $title = "New Client Registered";
@@ -245,12 +245,12 @@ class ClientsController extends Controller
                 foreach ($dataUsers as $dataUser) {
                     $user_id = $dataUser->id;
                     $user = User::find($user_id);
-                    $user->role = 'client';
+                    $user->role = 'user';
                     $user->client_id = $client->id;
-                    $roles = ['client'];
-                    $user->login_as = 'client';
+                    $roles = ['user'];
+                    $user->login_as = 'user';
                     if ($count == 1) {
-                        $roles = ['admin', 'client'];
+                        $roles = ['admin', 'user'];
                         $user->login_as = 'admin';
                         $client->admin_user_id = $user->id;
                         $client->save();
