@@ -488,7 +488,7 @@ class ReportsController extends Controller
         $uploads = Upload::where('client_id', $client->id)
             ->where('is_exception', 0)
             ->where('link', '!=', NULL)->count();
-        $project_completion = 30;
+        $project_completion = 0;
         $assets = Asset::where('client_id', $client->id)->count();
         $business_units = BusinessUnit::where('client_id', $client->id)->count();
         $busness_processes = BusinessProcess::where('client_id', $client->id)->count();
