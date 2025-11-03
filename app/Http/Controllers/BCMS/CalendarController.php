@@ -39,7 +39,7 @@ class CalendarController extends Controller
             $tasks = $activity->tasks;
             $evidences = $activity->evidences;
             // $document_template_ids = $this->createDocumentTemplate($evidences);
-            ModuleActivityTask::firstOrCreate([
+            ModuleActivityTask::updateOrCreate([
                 'clause_id' => $clause->id,
                 'name' => $process,
             ], [
@@ -58,7 +58,7 @@ class CalendarController extends Controller
         $template_ids = [];
         foreach ($titles as $title) {
             $title = ucwords(trim($title));
-            $template = DocumentTemplate::firstOrCreate(['title' => $title, 'first_letter' => substr($title, 0, 1)]);
+            $template = DocumentTemplate::updateOrCreate(['title' => $title, 'first_letter' => substr($title, 0, 1)]);
             $template_ids[] = $template->id;
         }
         return $template_ids;
@@ -73,7 +73,7 @@ class CalendarController extends Controller
         // $content = $message . $instruction;
         //return $this->callOpenAISearch($content);
 
-        $filename = portalPulicPath('BCMS_activities.json');
+        $filename = portalPulicPath('bcms_activities.json');
         $file_content = file_get_contents($filename);
         return json_decode($file_content);
         // print_r($result);
@@ -125,7 +125,7 @@ class CalendarController extends Controller
             ->join('module_activity_tasks', 'module_activity_tasks.id', '=', 'assigned_tasks.module_activity_task_id')
             ->join(getDatabaseName('mysql') . 'users as users', 'users.id', 'assigned_tasks.assignee_id')
             ->where(['task_logs.client_id' => $client->id, 'assigned_tasks.assignee_id' => $user->id])
-            ->select('task_logs.*', 'task_logs.id as id', 'users.name as assignee', 'module_activity_tasks.name as task_name')
+            ->select('task_logs.*', 'task_logs.id as id', 'users.name as assignee', 'module_activity_tasks.id as task_id', 'module_activity_tasks.name as task_name')
             ->get();
 
         return response()->json(compact('my_tasks'), 200);
@@ -172,7 +172,7 @@ class CalendarController extends Controller
     public function storeClauseActivities(Request $request)
     {
         $request->validate([
-            'clause_id' => 'required|integer|exists:BCMS.clauses,id',
+            'clause_id' => 'required|integer|exists:bcms.clauses,id',
             'details' => 'required|array',
         ]);
         $clause_id = $request->clause_id;
@@ -201,7 +201,7 @@ class CalendarController extends Controller
     public function storeClauseActivityTasks(Request $request)
     {
         $request->validate([
-            'clause_id' => 'required|integer|exists:BCMS.clauses,id',
+            'clause_id' => 'required|integer|exists:bcms.clauses,id',
             'details' => 'required|array',
         ]);
         $clause_id = $request->clause_id;
@@ -242,7 +242,7 @@ class CalendarController extends Controller
     {
         $year = date('Y', strtotime('now'));
         $request->validate([
-            'module_activity_task_id' => 'required|integer|exists:BCMS.module_activity_tasks,id',
+            'module_activity_task_id' => 'required|integer|exists:bcms.module_activity_tasks,id',
             'assignee_id' => 'required|integer|exists:users,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
@@ -303,7 +303,7 @@ class CalendarController extends Controller
             case 'Weekly':
                 for ($i = 1; $i <= 52; $i++) {
                     $recurrence_tag = "Week $i";
-                    TaskLog::firstOrCreate([
+                    TaskLog::updateOrCreate([
                         'client_id' => $client_id,
                         'assigned_task_id' => $assignedTaskId,
                         'start_date' => $start_date,
@@ -319,7 +319,7 @@ class CalendarController extends Controller
             case 'Monthly':
                 for ($i = 1; $i <= 12; $i++) {
                     $recurrence_tag = "Month $i";
-                    TaskLog::firstOrCreate([
+                    TaskLog::updateOrCreate([
                         'client_id' => $client_id,
                         'assigned_task_id' => $assignedTaskId,
                         'start_date' => $start_date,
@@ -336,7 +336,7 @@ class CalendarController extends Controller
             case 'Quarterly':
                 for ($i = 1; $i <= 4; $i++) {
                     $recurrence_tag = "Q $i";
-                    TaskLog::firstOrCreate([
+                    TaskLog::updateOrCreate([
                         'client_id' => $client_id,
                         'assigned_task_id' => $assignedTaskId,
                         'start_date' => $start_date,
@@ -353,7 +353,7 @@ class CalendarController extends Controller
                 $start_date = $project->start_date;
                 for ($i = 1; $i <= 2; $i++) {
                     $recurrence_tag = "H $i";
-                    TaskLog::firstOrCreate([
+                    TaskLog::updateOrCreate([
                         'client_id' => $client_id,
                         'assigned_task_id' => $assignedTaskId,
                         'start_date' => $start_date,
@@ -369,7 +369,7 @@ class CalendarController extends Controller
             case 'Annually':
                 $start_date = $project->start_date;
                 $recurrence_tag = "Annual";
-                TaskLog::firstOrCreate([
+                TaskLog::updateOrCreate([
                     'client_id' => $client_id,
                     'assigned_task_id' => $assignedTaskId,
                     'start_date' => $start_date,
@@ -383,7 +383,7 @@ class CalendarController extends Controller
             default:
                 $start_date = $project->start_date;
                 $recurrence_tag = $recurrence;
-                TaskLog::firstOrCreate([
+                TaskLog::updateOrCreate([
                     'client_id' => $client_id,
                     'assigned_task_id' => $assignedTaskId,
                     'start_date' => $start_date,
@@ -395,11 +395,32 @@ class CalendarController extends Controller
                 break;
         }
     }
+    public function undoTaskAssignment(Request $request, AssignedTask $assignedTask)
+    {
+        $client_id = $this->getClient()->id;
+        $user = $this->getUser();
+        if (!$user->hasRole('admin') && $assignedTask->client_id != $client_id) {
+            abort(409, 'You cannot delete what you did not create');
+        }
+        // $assignee_id = $assignedTask->assignee_id;
 
+        // $assignedTask->assignee_id = NULL;
+        // $assignedTask->start_date = NULL;
+        // $assignedTask->end_date = NULL;
+        // $assignedTask->delete();
+
+        // $title = "Assigned Task Revoked";
+        // $description = "$user->name assigned you a task on the BCMS module.";
+        // $this->sendNotification($title, $description, [$assignee_id]);
+
+        TaskLog::where('assigned_task_id', $assignedTask->id)->delete();
+        $assignedTask->delete();
+        return response()->json([], 204);
+    }
     public function assignTaskToUserOld(Request $request)
     {
         $request->validate([
-            'module_activity_task_id' => 'required|integer|exists:BCMS.module_activity_tasks,id',
+            'module_activity_task_id' => 'required|integer|exists:bcms.module_activity_tasks,id',
             'assignee_id' => 'required|integer|exists:users,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date'
@@ -592,7 +613,7 @@ class CalendarController extends Controller
         $validate = $request->validate([
             'notes' => 'required|string',
         ]);
-        $taskLog->update(['notes' => $validate['notes']]);
+        $taskLog->update(['notes' => $validate['notes'], 'status' => 'submitted']);
         // Optionally, you can return the updated task or a success message
         return response()->json(['message' => 'Action successfull'], 200);
     }

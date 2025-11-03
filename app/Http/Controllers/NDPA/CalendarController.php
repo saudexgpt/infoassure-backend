@@ -33,17 +33,17 @@ class CalendarController extends Controller
         foreach ($activities as $activity) {
             $clause = Clause::where('name', $activity->clause)->first();
             $process = $activity->process;
-            $activity_no = $activity->activity_no;
+            // $activity_no = $activity->activity_no;
             $description = $activity->description;
             $implementation_guide = $activity->implementation_guide;
-            $tasks = $activity->tasks;
+            $tasks = $activity->implementation_guide;
             $evidences = $activity->evidences;
             // $document_template_ids = $this->createDocumentTemplate($evidences);
-            ModuleActivityTask::firstOrCreate([
+            ModuleActivityTask::updateOrCreate([
                 'clause_id' => $clause->id,
                 'name' => $process,
             ], [
-                'activity_no' => $activity_no,
+                // 'activity_no' => $activity_no,
                 'description' => $description,
                 'implementation_guide' => $implementation_guide,
                 // 'document_template_ids' => $document_template_ids,
@@ -58,7 +58,7 @@ class CalendarController extends Controller
         $template_ids = [];
         foreach ($titles as $title) {
             $title = ucwords(trim($title));
-            $template = DocumentTemplate::firstOrCreate(['title' => $title, 'first_letter' => substr($title, 0, 1)]);
+            $template = DocumentTemplate::updateOrCreate(['title' => $title, 'first_letter' => substr($title, 0, 1)]);
             $template_ids[] = $template->id;
         }
         return $template_ids;
@@ -73,7 +73,7 @@ class CalendarController extends Controller
         // $content = $message . $instruction;
         //return $this->callOpenAISearch($content);
 
-        $filename = portalPulicPath('NDPA_activities.json');
+        $filename = portalPulicPath('ndpa_activities.json');
         $file_content = file_get_contents($filename);
         return json_decode($file_content);
         // print_r($result);
@@ -113,7 +113,7 @@ class CalendarController extends Controller
         // This could involve querying the database for tasks, activities, etc.
         // and returning them in a format suitable for the calendar view.
         // Example:
-        $clause_tasks = Clause::with('tasks')->get();
+        $clause_tasks = Clause::with('sections.tasks')->get();
         return response()->json(compact('clause_tasks'), 200);
     }
     public function fetchUserAssignedTasks(Request $request)
@@ -125,54 +125,82 @@ class CalendarController extends Controller
             ->join('module_activity_tasks', 'module_activity_tasks.id', '=', 'assigned_tasks.module_activity_task_id')
             ->join(getDatabaseName('mysql') . 'users as users', 'users.id', 'assigned_tasks.assignee_id')
             ->where(['task_logs.client_id' => $client->id, 'assigned_tasks.assignee_id' => $user->id])
-            ->select('task_logs.*', 'task_logs.id as id', 'users.name as assignee', 'module_activity_tasks.name as task_name')
+            ->select('task_logs.*', 'task_logs.id as id', 'users.name as assignee', 'module_activity_tasks.id as task_id', 'module_activity_tasks.name as task_name')
             ->get();
 
         return response()->json(compact('my_tasks'), 200);
+    }
+    public function fetchClientAssignedTasksNew(Request $request)
+    {
+        $client = $this->getClient();
+        $user = $this->getUser();
+        if ($user->login_as === 'user') {
+            $clause_tasks = ModuleActivityTask::join('assigned_tasks', 'module_activity_tasks.id', 'assigned_tasks.module_activity_task_id')
+                ->with([
+                    'clause',
+                    'section',
+                    'assignedTask' => function ($q) use ($client, $user) {
+                        $q->where('client_id', $client->id);
+                        $q->where('assignee_id', $user->id);
+                    },
+                    'assignedTask.assignee'
+                ])
+                ->where('assigned_tasks.client_id', $client->id)
+                ->where('assigned_tasks.assignee_id', $user->id)
+
+                ->orderBy('module_activity_tasks.clause_id')
+                ->select('module_activity_tasks.*')
+                ->get()
+                ->groupBy('occurence');
+        } else {
+            $clause_tasks = ModuleActivityTask::with([
+                'clause',
+                'section',
+                'assignedTask' => function ($q) use ($client) {
+                    $q->where('client_id', $client->id);
+                },
+                'assignedTask.assignee'
+            ])
+                ->orderBy('clause_id')
+                ->get()
+                ->groupBy('occurence');
+        }
+        return response()->json(compact('clause_tasks'), 200);
     }
     public function fetchClientAssignedTasks(Request $request)
     {
         $client = $this->getClient();
         $user = $this->getUser();
-        if ($user->haRole('client')) {
+        if ($user->login_as === 'user') {
             $clause_tasks = Clause::join('assigned_tasks', 'clauses.id', 'assigned_tasks.clause_id')
                 ->join('module_activity_tasks', 'module_activity_tasks.id', 'assigned_tasks.module_activity_task_id')
                 ->with([
-                    'tasks',
-                    'tasks.assignedTask' => function ($q) use ($client, $user) {
+                    'sections.tasks',
+                    'sections.tasks.assignedTask' => function ($q) use ($client, $user) {
                         $q->where('client_id', $client->id);
                         $q->where('assignee_id', $user->id);
                     },
-                    'tasks.assignedTask.assignee'
+                    'sections.tasks.assignedTask.assignee'
                 ])
                 ->where('assigned_tasks.client_id', $client->id)
                 ->where('assigned_tasks.assignee_id', $user->id)
                 ->select('clauses.*')
-                ->get()
-                ->groupBy('category');
+                ->get();
         } else {
             $clause_tasks = Clause::with([
-                'tasks',
-                'tasks.assignedTask' => function ($q) use ($client) {
+                'sections.tasks',
+                'sections.tasks.assignedTask' => function ($q) use ($client) {
                     $q->where('client_id', $client->id);
                 },
-                'tasks.assignedTask.assignee'
-            ])->get()
-                ->groupBy('category');
+                'sections.tasks.assignedTask.assignee'
+            ])->get();
         }
-        // Logic to fetch module calendar data
-        // This could involve querying the database for tasks, activities, etc.
-        // and returning them in a format suitable for the calendar view.
-        // Example:
-
-
-
         return response()->json(compact('clause_tasks'), 200);
     }
     public function storeClauseActivities(Request $request)
     {
         $request->validate([
-            'clause_id' => 'required|integer|exists:NDPA.clauses,id',
+            'clause_id' => 'required|integer|exists:ndpa.clauses,id',
             'details' => 'required|array',
         ]);
         $clause_id = $request->clause_id;
@@ -201,7 +229,7 @@ class CalendarController extends Controller
     public function storeClauseActivityTasks(Request $request)
     {
         $request->validate([
-            'clause_id' => 'required|integer|exists:NDPA.clauses,id',
+            'clause_id' => 'required|integer|exists:ndpa.clauses,id',
             'details' => 'required|array',
         ]);
         $clause_id = $request->clause_id;
@@ -242,14 +270,21 @@ class CalendarController extends Controller
     {
         $year = date('Y', strtotime('now'));
         $request->validate([
-            'module_activity_task_id' => 'required|integer|exists:NDPA.module_activity_tasks,id',
+            'module_activity_task_id' => 'required|integer|exists:ndpa.module_activity_tasks,id',
             'assignee_id' => 'required|integer|exists:users,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
             'recurrence' => 'required|string'
         ]);
-        $module_activity_task_id = $request->module_activity_task_id;
+
         $assignee_id = $request->assignee_id;
+        $client = $this->getClient();
+        $user_exist_for_client = $client->users()->find($assignee_id);
+
+        if (!$user_exist_for_client) {
+            return response()->json(['message' => 'Unknown Personnel'], 404);
+        }
+        $module_activity_task_id = $request->module_activity_task_id;
         $start_date = $request->start_date;
         $end_date = $request->end_date;
         $recurrence = $request->recurrence;
@@ -303,7 +338,7 @@ class CalendarController extends Controller
             case 'Weekly':
                 for ($i = 1; $i <= 52; $i++) {
                     $recurrence_tag = "Week $i";
-                    TaskLog::firstOrCreate([
+                    TaskLog::updateOrCreate([
                         'client_id' => $client_id,
                         'assigned_task_id' => $assignedTaskId,
                         'start_date' => $start_date,
@@ -319,7 +354,7 @@ class CalendarController extends Controller
             case 'Monthly':
                 for ($i = 1; $i <= 12; $i++) {
                     $recurrence_tag = "Month $i";
-                    TaskLog::firstOrCreate([
+                    TaskLog::updateOrCreate([
                         'client_id' => $client_id,
                         'assigned_task_id' => $assignedTaskId,
                         'start_date' => $start_date,
@@ -336,7 +371,7 @@ class CalendarController extends Controller
             case 'Quarterly':
                 for ($i = 1; $i <= 4; $i++) {
                     $recurrence_tag = "Q $i";
-                    TaskLog::firstOrCreate([
+                    TaskLog::updateOrCreate([
                         'client_id' => $client_id,
                         'assigned_task_id' => $assignedTaskId,
                         'start_date' => $start_date,
@@ -353,7 +388,7 @@ class CalendarController extends Controller
                 $start_date = $project->start_date;
                 for ($i = 1; $i <= 2; $i++) {
                     $recurrence_tag = "H $i";
-                    TaskLog::firstOrCreate([
+                    TaskLog::updateOrCreate([
                         'client_id' => $client_id,
                         'assigned_task_id' => $assignedTaskId,
                         'start_date' => $start_date,
@@ -369,7 +404,7 @@ class CalendarController extends Controller
             case 'Annually':
                 $start_date = $project->start_date;
                 $recurrence_tag = "Annual";
-                TaskLog::firstOrCreate([
+                TaskLog::updateOrCreate([
                     'client_id' => $client_id,
                     'assigned_task_id' => $assignedTaskId,
                     'start_date' => $start_date,
@@ -383,7 +418,7 @@ class CalendarController extends Controller
             default:
                 $start_date = $project->start_date;
                 $recurrence_tag = $recurrence;
-                TaskLog::firstOrCreate([
+                TaskLog::updateOrCreate([
                     'client_id' => $client_id,
                     'assigned_task_id' => $assignedTaskId,
                     'start_date' => $start_date,
@@ -395,11 +430,32 @@ class CalendarController extends Controller
                 break;
         }
     }
+    public function undoTaskAssignment(Request $request, AssignedTask $assignedTask)
+    {
+        $client_id = $this->getClient()->id;
+        $user = $this->getUser();
+        if (!$user->hasRole('admin') && $assignedTask->client_id != $client_id) {
+            abort(409, 'You cannot delete what you did not create');
+        }
+        // $assignee_id = $assignedTask->assignee_id;
 
+        // $assignedTask->assignee_id = NULL;
+        // $assignedTask->start_date = NULL;
+        // $assignedTask->end_date = NULL;
+        // $assignedTask->delete();
+
+        // $title = "Assigned Task Revoked";
+        // $description = "$user->name assigned you a task on the NDPA module.";
+        // $this->sendNotification($title, $description, [$assignee_id]);
+
+        TaskLog::where('assigned_task_id', $assignedTask->id)->delete();
+        $assignedTask->delete();
+        return response()->json([], 204);
+    }
     public function assignTaskToUserOld(Request $request)
     {
         $request->validate([
-            'module_activity_task_id' => 'required|integer|exists:NDPA.module_activity_tasks,id',
+            'module_activity_task_id' => 'required|integer|exists:ndpa.module_activity_tasks,id',
             'assignee_id' => 'required|integer|exists:users,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date'
@@ -592,7 +648,7 @@ class CalendarController extends Controller
         $validate = $request->validate([
             'notes' => 'required|string',
         ]);
-        $taskLog->update(['notes' => $validate['notes']]);
+        $taskLog->update(['notes' => $validate['notes'], 'status' => 'submitted']);
         // Optionally, you can return the updated task or a success message
         return response()->json(['message' => 'Action successfull'], 200);
     }

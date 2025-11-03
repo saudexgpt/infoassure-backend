@@ -6,7 +6,7 @@ use App\Models\Answer;
 use App\Models\Asset;
 use App\Models\AssetType;
 use App\Models\AvailableModule;
-use App\Models\BusinessImpactAnalysis;
+use App\Models\BCMS\BusinessImpactAnalysis;
 use App\Models\BusinessProcess;
 use App\Models\BusinessUnit;
 use App\Models\Client;
@@ -510,10 +510,7 @@ class ReportsController extends Controller
 
     public function soaSummary(Request $request)
     {
-        $data = $this->validateClientScope($request, [
-            'client_id' => 'required|integer|exists:clients,id',
-        ]);
-        $client_id = $data['client_id'];
+        $client_id = $this->getClient()->id;
 
         $reports = SOAArea::with('controls')->orderBy('name')->get();
         $controls = [];
@@ -1004,10 +1001,9 @@ class ReportsController extends Controller
     public function dataAnalysisBIA(Request $request)
     {
         $data = $this->validateClientScope($request, [
-            'client_id' => 'required|integer|exists:clients,id',
             'business_unit_id' => 'required|integer|exists:business_units,id',
         ]);
-        $client_id = $data['client_id'];
+        $client_id = $this->getClient()->id;
         $business_unit_id = $data['business_unit_id'];
 
         $categories = [];

@@ -16,26 +16,40 @@ class BusinessUnitsController extends Controller
     //
     public function fetchBusinessUnits(Request $request)
     {
-        $data = $request->validate([
-            'client_id' => 'required|integer|exists:clients,id',
-        ]);
+        $client_id = $this->getClient()->id;
+        // $data = $request->validate([
+        //     'client_id' => 'required|integer|exists:clients,id',
+        // ]);
 
-        $this->saveDefaultBiaTimeRecoveryRequirement($data['client_id']);
+        $this->saveDefaultBiaTimeRecoveryRequirement($client_id);
 
-        $business_units = BusinessUnit::with('teamMembers')->where('client_id', $data['client_id'])->get();
+        $business_units = BusinessUnit::with('teamMembers')
+            ->withCount('businessProcesses')
+            ->where('client_id', $client_id)
+            ->get();
         return response()->json(compact('business_units'), 200);
     }
 
     public function fetchBusinessProcesses(Request $request)
     {
-        $business_unit_id = $request->business_unit_id;
-        $business_processes = BusinessProcess::where('business_unit_id', $business_unit_id)->get();
+        $client = $this->getClient();
+        // $business_unit_id = $request->business_unit_id;
+        $data = $request->validate([
+            'business_unit_id' => 'required|integer|exists:business_units,id'
+        ]);
+        $business_unit = BusinessUnit::findOrFail($data['business_unit_id']);
+
+        // Optional ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($business_unit->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized business unit'], 403);
+        }
+        $business_processes = BusinessProcess::where('business_unit_id', $business_unit->id)->get();
         return response()->json(compact('business_processes'), 200);
     }
     public function saveBusinessUnits(Request $request)
     {
+        $client_id = $this->getClient()->id;
         $data = $request->validate([
-            'client_id' => 'required|integer|exists:clients,id',
             'business_units' => 'required|array|min:1',
             'business_units.*.group_name' => 'required|string|max:255',
             'business_units.*.unit_name' => 'required|string|max:255',
@@ -43,12 +57,12 @@ class BusinessUnitsController extends Controller
             'business_units.*.contact_phone' => 'nullable|string|max:50',
         ]);
 
-        $this->saveDefaultBiaTimeRecoveryRequirement($data['client_id']);
+        $this->saveDefaultBiaTimeRecoveryRequirement($client_id);
 
         $business_units = $data['business_units'];
         foreach ($business_units as $bu) {
             BusinessUnit::firstOrCreate([
-                'client_id' => $data['client_id'],
+                'client_id' => $client_id,
                 'group_name' => $bu['group_name'],
                 'unit_name' => $bu['unit_name'],
             ], [
@@ -63,6 +77,7 @@ class BusinessUnitsController extends Controller
     }
     public function saveBusinessProcesses(Request $request)
     {
+        $client = $this->getClient();
         $data = $request->validate([
             'business_unit_id' => 'required|integer|exists:business_units,id',
             'name' => 'required|string|max:1000',
@@ -89,7 +104,7 @@ class BusinessUnitsController extends Controller
         $business_unit = BusinessUnit::findOrFail($data['business_unit_id']);
 
         // Optional ownership check: ensure business_unit belongs to provided client if client_id provided in request
-        if ($request->filled('client_id') && $business_unit->client_id != $request->client_id) {
+        if ($business_unit->client_id != $client->id) {
             return response()->json(['message' => 'Unauthorized business unit'], 403);
         }
 
@@ -125,6 +140,11 @@ class BusinessUnitsController extends Controller
 
     public function updateBusinessUnit(Request $request, BusinessUnit $unit)
     {
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($unit->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized action on business unit'], 403);
+        }
         $unit->group_name = $request->group_name;
         $unit->unit_name = $request->unit_name;
         $unit->function_performed = $request->function_performed;
@@ -133,8 +153,33 @@ class BusinessUnitsController extends Controller
         $unit->save();
         return response()->json(compact('unit'), 200);
     }
+    public function deleteBusinessUnit(Request $request, BusinessUnit $unit)
+    {
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($unit->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized action on business unit'], 403);
+        }
+        // prevent deletion if there are assets referencing this type
+        $dependentCount = BusinessProcess::where('business_unit_id', $unit->id)->count();
+        if ($dependentCount > 0) {
+            abort(409, 'Business unit has dependent processes; remove or reassign them first');
+        }
+        $actor = $this->getUser();
+        $title = "Business Unit Deletion";
+        $description = "$actor->name deleted $unit->unit_name from the list of business units.";
+        $this->auditTrailEvent($title, $description);
+        $unit->delete();
+        return response()->json([], 204);
+    }
+
     public function updateBusinessProcess(Request $request, BusinessProcess $process)
     {
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($process->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized action on business process'], 403);
+        }
         $process->update([
             'name' => $request->name,
             'process_owner' => $request->process_owner,
@@ -176,6 +221,11 @@ class BusinessUnitsController extends Controller
     }
     public function refreshAccessCode(Request $request, BusinessUnit $business_unit)
     {
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($business_unit->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized action on business unit'], 403);
+        }
         $business_unit->access_code = randomcode();
         $business_unit->save();
         return response()->json(compact('business_unit'), 200);
@@ -224,7 +274,7 @@ class BusinessUnitsController extends Controller
 
     public function getBiaTimeRecoveryRequirement(Request $request)
     {
-        $client_id = $request->client_id;
+        $client_id = $this->getClient()->id;
         $this->saveDefaultBiaTimeRecoveryRequirement($client_id);
         $time_recovery_requirements = BiaTimeRecoveryRequirement::where([
             'client_id' => $client_id,
@@ -262,6 +312,11 @@ class BusinessUnitsController extends Controller
 
     public function updateBiaTimeRecoveryRequirement(Request $request, BiaTimeRecoveryRequirement $criteria)
     {
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($criteria->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized action on resource'], 403);
+        }
         $field = $request->field;
         $value = $request->value;
         $criteria->$field = $value;
@@ -270,6 +325,11 @@ class BusinessUnitsController extends Controller
     }
     public function deleteBiaTimeRecoveryRequirement(BiaTimeRecoveryRequirement $criteria)
     {
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($criteria->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized action on resource'], 403);
+        }
         $criteria->delete();
         return response()->json([], 204);
     }
@@ -300,6 +360,11 @@ class BusinessUnitsController extends Controller
     }
     public function changeProcessStatus(Request $request, BusinessProcess $process)
     {
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($process->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized action on resource'], 403);
+        }
         $data = $request->validate([
             'status' => 'required|string|in:active,inactive,archived,pending',
         ]);

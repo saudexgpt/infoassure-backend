@@ -121,6 +121,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::post('upload-process-flow', [BusinessUnitsController::class, 'uploadProcessFlow']);
         Route::put('change-process-status/{process}', [BusinessUnitsController::class, 'changeProcessStatus']);
+        Route::delete('destroy/{business_unit}', [BusinessUnitsController::class, 'deleteBusinessUnit']);
 
 
     });

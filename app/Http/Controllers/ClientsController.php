@@ -346,6 +346,11 @@ class ClientsController extends Controller
     }
     public function deleteClientUser(Request $request, User $user)
     {
+        $client = $this->getClient();
+        $checkIfClientUser = $client->users()->find($user->id);
+        if (!$checkIfClientUser) {
+            return response()->json(['message' => 'You cannot delete this user'], 403);
+        }
         $actor = $this->getUser();
         if (!$actor->hasPermission('delete-client-user')) {
             return response()->json(['message' => 'You need permission for this critical action'], 403);

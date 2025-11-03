@@ -60,27 +60,31 @@ class SOAController extends Controller
 
     public function fetchSOA(Request $request)
     {
+        $client_id = $this->getClient()->id;
 
-        if (isset($request->client_id)) {
-            $client_id = $request->client_id;
-        } else {
+        // if (isset($request->client_id)) {
+        //     $client_id = $request->client_id;
+        // } else {
 
-            $client_id = $this->getClient()->id;
-        }
-        $standard_id = $request->standard_id;
-        $this->setupSOAForClient($client_id, $standard_id);
+        //     $client_id = $this->getClient()->id;
+        // }
+        $this->setupSOAForClient($client_id);
         $soas = SOAArea::with([
-            'controls.soa' => function ($q) use ($client_id, $standard_id) {
-                $q->where(['client_id' => $client_id, 'standard_id' => $standard_id]);
+            'controls.soa' => function ($q) use ($client_id, ) {
+                $q->where(['client_id' => $client_id]);
             }
         ])->orderBy('name')->get();
         return response()->json(compact('soas'), 200);
     }
     public function show(Request $request, StatementOfApplicability $soa)
     {
+        $client_id = $this->getClient()->id;
+        if ($client_id != $soa->client_id) {
+            return response()->json(['message' => 'Unauthorized action'], 403);
+        }
         return response()->json(compact('soa'), 200);
     }
-    private function setupSOAForClient($client_id, $standard_id)
+    private function setupSOAForClient($client_id)
     {
         // SOAControl::chunkById(50, function (Collection $soa_controls) use ($client_id, $standard_id) {
         //     foreach ($soa_controls as $soa_control) {
@@ -96,7 +100,7 @@ class SOAController extends Controller
         foreach ($soa_controls as $soa_control) {
             StatementOfApplicability::firstOrCreate([
                 'client_id' => $client_id,
-                'standard_id' => $standard_id,
+                // 'standard_id' => $standard_id,
                 's_o_a_area_id' => $soa_control->s_o_a_area_id,
                 's_o_a_control_id' => $soa_control->id,
             ]);

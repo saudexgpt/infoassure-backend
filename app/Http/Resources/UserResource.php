@@ -25,7 +25,11 @@ class UserResource extends JsonResource
     {
         $this_year = (int) date('Y', strtotime('now'));
         $permissions = [];
-        $roles = [$this->login_as];
+        $login_as = $this->login_as;
+        if ($login_as === 'client') {
+            $login_as = 'user';
+        }
+        $roles = [$login_as];
         $all_roles = array_map(
             function ($role) {
                 return $role['name'];
@@ -37,7 +41,7 @@ class UserResource extends JsonResource
             $roles[] = 'vendor';
             $all_roles[] = 'vendor';
         }
-        if ($this->login_as !== NULL) {
+        if ($login_as !== NULL) {
 
             $role = Role::with('permissions')->where('name', $this->login_as)->first();
             $permissions = $role->permissions()->pluck('name');
@@ -98,6 +102,7 @@ class UserResource extends JsonResource
 
             $all_roles[] = 'admin';
         }
+        sort($modules);
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -105,7 +110,7 @@ class UserResource extends JsonResource
             'phone' => $this->phone,
             'password_status' => $this->password_status,
             'notifications' => $this->notifications()->orderBy('created_at', 'DESC')->take(5)->get(),
-            'login_as' => $this->login_as,
+            'login_as' => $login_as,
             'partner_id' => $this->partner_id,
             'client_id' => $this->client_id,
             'vendor_id' => $this->vendor_id,

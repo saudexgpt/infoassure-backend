@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Permission;
+use App\Models\Project;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
@@ -19,9 +20,32 @@ class PermissionsController extends Controller
     public function index()
     {
         $user = $this->getUser();
+        $this_year = (int) date('Y', strtotime('now'));
+        if ($user->login_as == 'admin') {
+            $client = $this->getClient();
+            $projects = Project::with('availableModule')
+                ->where(['client_id' => $client->id, 'year' => $this_year])
+                ->orderBy('id', 'DESC')
+                ->get();
+            $modules = [];
+            foreach ($projects as $project) {
+
+                $modules[] = $project->availableModule->slug;
+            }
+            // $roles = Role::where('client_id', $client->id)->with('permissions')->get();
+            $permissions = Permission::orderBy('name')
+                ->where('module', '!=', 'SYSTEM')
+                ->where(function ($q) use ($modules) {
+                    $q->where('module', 'GENERAL')
+                        ->orWhereIn('module_slug', $modules);
+                })
+                ->get()
+                ->groupBy('module');
+            return $this->render(compact('permissions'));
+        }
         if ($user->login_as !== 'super') {
             $client = $this->getClient();
-            $roles = Role::where('client_id', $client->id)->with('permissions')->get();
+            // $roles = Role::where('client_id', $client->id)->with('permissions')->get();
             $permissions = Permission::orderBy('name')->where('module', '!=', 'SYSTEM')->get()->groupBy('module');
         } else {
 

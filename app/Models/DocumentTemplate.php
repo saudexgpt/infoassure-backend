@@ -10,7 +10,7 @@ class DocumentTemplate extends Model
 {
     use HasFactory;
     protected $connection = 'mysql';
-    protected $fillable = ['title', 'link', 'external_link', 'applicable_modules', 'first_letter'];
+    protected $fillable = ['title', 'link', 'directory_path', 'external_link', 'applicable_modules', 'first_letter', 'module'];
 
     protected function applicableModules(): Attribute
     {
@@ -19,6 +19,7 @@ class DocumentTemplate extends Model
             set: fn($value) => json_encode($value),
         );
     }
+
 
 
     // public function getFullLinkAttribute()

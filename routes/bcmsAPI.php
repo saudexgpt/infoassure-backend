@@ -44,6 +44,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
             Route::get('set-expected-uploads', [CalendarController::class, 'setExpectedUploadsFromAssignedTasks']);
             Route::put('save-assigned-task-note/{taskLog}', [CalendarController::class, 'saveAssignedTaskNote']);
+            Route::delete('undo-task-assignment/{assignedTask}', [CalendarController::class, 'undoTaskAssignment']);
 
 
             Route::group(['prefix' => 'comments'], function () {

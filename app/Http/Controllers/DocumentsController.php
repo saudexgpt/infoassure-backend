@@ -15,39 +15,100 @@ class DocumentsController extends Controller
     public function uploadDefaultTemplates(Request $request)
     {
         $module = strtoupper($request->module);
-        try {
-            $files = Storage::disk('public')->allFiles('document_template/' . $module);
-            foreach ($files as $path) {
-                $title = strtoupper(pathinfo($path)['filename']);
-                $template = DocumentTemplate::where('title', $title)->first();
-                if (!$template) {
-                    $template = new DocumentTemplate();
+        // try {
+        $files = Storage::disk('public')->allFiles('document_template_sample/' . $module);
+        foreach ($files as $file) {
+            $path = $this->saveHashedDocTemplate($file, $module);
+            $directory = strtoupper(pathinfo($path)['dirname']);
+            $title = strtoupper(pathinfo($file)['filename']);
+            $title = str_replace('X ', '', $title);
+            $title = str_replace('Kingsmen ', '', $title);
+            $title = trim($title);
+            $template = DocumentTemplate::where('title', $title)->first();
+            if (!$template) {
+                $template = new DocumentTemplate();
 
-                    $template->title = $title;
-                    $template->first_letter = substr($title, 0, 1);
-                    $template->link = $path;
-                    $template->save();
-                }
+                $template->title = $title;
+                $template->first_letter = substr($title, 0, 1);
+                $template->link = $path;
+                $template->directory_path = $directory;
+                $template->module = $module;
+                $template->save();
             }
-        } catch (\Throwable $th) {
-            //throw $th;
         }
+        // } catch (\Throwable $th) {
+        //     //throw $th;
+        // }
+    }
+    public function saveHashedDocTemplate($path, $module)
+    {
+        $file_name = strtoupper(pathinfo($path)['filename']);
+        $title = hash('sha256', $file_name . $path);
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        $new_link = 'document_template/' . $module . '/' . $title . '.' . $ext;
+        Storage::disk('public')->copy($path, $new_link);
+
+        return $new_link;
     }
     public function fetchDocumentTemplates(Request $request)
     {
         if (isset($request->title) && $request->title != '') {
 
-            $document_templates = DocumentTemplate::where('title', 'LIKE', "%$request->title%")->orderBy('title')->get()->groupBy('first_letter');
+            $document_templates = DocumentTemplate::where('title', 'LIKE', "%$request->title%")->orderBy('title')->get()->groupBy('module');
         } else {
 
-            $document_templates = DocumentTemplate::orderBy('title')->get()->groupBy('first_letter');
+            $document_templates = DocumentTemplate::orderBy('title')->get()->groupBy('module');
         }
+        // $document_templates = $this->buildFileTree($document_templates);
 
         // foreach ($document_templates as $template) {
+        //     $directory_array = $template->directory_array;
+        //     $count = count($directory_array);
+
+        //     for ($i = 1; $i <= $count; $i++) {
+        //         $folder = $directory_array[$i];
+        //         $document_in_trees[$folder][];
+        //     }
         //     $template->first_letter = substr($template->title, 0, 1);
         //     $template->save();
         // }
         return response()->json(compact('document_templates'), 200);
+    }
+    private function buildFileTree($documents): array
+    {
+        $tree = [];
+
+        foreach ($documents as $document) {
+            // $link = $document->link;
+            $currentLevel = &$tree;
+            $path = $document->link;
+            $parts = explode('/', $path); // Split the path into its components
+            unset($parts[array_search('document_template', $parts)]);
+            $parts = array_values($parts);
+            foreach ($parts as $part) {
+                // Check if the current part (directory/file) already exists at this level
+                $found = false;
+                foreach ($currentLevel as &$node) {
+                    if (isset($node['label']) && $node['label'] === $part) {
+                        $currentLevel = &$node['children']; // Move to the children of the existing node
+                        $found = true;
+                        break;
+                    }
+                }
+
+                // If the part doesn't exist, create a new node
+                if (!$found) {
+                    $newNode = ['label' => $part, 'details' => $document, 'children' => []];
+                    $currentLevel[] = $newNode;
+                    $currentLevel = &$currentLevel[count($currentLevel) - 1]['children']; // Move to the children of the new node
+                }
+            }
+        }
+        return $tree;
+    }
+    private function formatDocumentTree($path)
+    {
+
     }
 
     public function uploadDocumentTemplate(Request $request)
@@ -77,8 +138,6 @@ class DocumentsController extends Controller
         $id = $request->id;
         $title = strtoupper($request->title);
         $template = DocumentTemplate::find($id);
-        $old_title = $template->title;
-        $old_link = $template->link;
         $template->title = $title;
         $template->first_letter = substr($title, 0, 1);
 
@@ -86,23 +145,11 @@ class DocumentsController extends Controller
             $file_name = str_replace(' ', '_', strtolower($title)) . '_template' . "." . $request->file('file_uploaded')->guessClientExtension();
             $link = $request->file('file_uploaded')->storeAs('document_template', $file_name, 'public');
             $template->link = $link;
-        } else {
-            $ext = pathinfo($old_link, PATHINFO_EXTENSION);
-            $dirname = pathinfo($old_link)['dirname'];
-            $template->link = $dirname . '/' . $title . '.' . $ext;
-            Storage::disk('public')->move($old_link, $dirname . '/' . $title . '.' . $ext);
         }
         if (isset($request->external_link) && $request->external_link != '') {
             $template->external_link = $request->external_link;
         }
         $template->save();
-
-        if (Storage::disk('public')->exists($old_link)) {
-
-            Storage::disk('public')->delete($old_link);
-
-        }
-
 
     }
 
@@ -257,8 +304,8 @@ class DocumentsController extends Controller
         if ($request->file('file_to_be_saved') != null && $request->file('file_to_be_saved')->isValid()) {
             $upload = Upload::find($request->id);
             // return $request;
-            $formated_name = str_replace(' ', '_', ucwords($request->title));
-            $file_name = 'evidence_for_' . $formated_name . '_template_' . $upload->template_id . "." . $request->file('file_to_be_saved')->guessClientExtension();
+            $formated_name = hash('sha256', $upload->id . $request->title);
+            $file_name = $formated_name . "." . $request->file('file_to_be_saved')->guessClientExtension();
             $link = $request->file('file_to_be_saved')->storeAs('clients/' . $folder_key . '/document', $file_name, 'public');
             $upload->link = $link;
             $upload->last_modified_by = $this->getUser()->id;
@@ -270,10 +317,13 @@ class DocumentsController extends Controller
             $userIds = $userIds->toArray();
 
             $name = $user->name;// . ' (' . $user->email . ')';
-            $title = "Document Updated";
-            //log this event
-            $description = "$name modified a document titled: $request->title";
-            $this->sendNotification($title, $description, $userIds);
+            if (isset($request->notify) && $request->notify == 'true') {
+
+                $title = "Document Updated";
+                //log this event
+                $description = "$name modified a document titled: $request->title";
+                $this->sendNotification($title, $description, $userIds);
+            }
 
             return response()->json(['message' => 'Saved Successfully'], 200);
         }

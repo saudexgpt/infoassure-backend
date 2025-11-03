@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 class StatementOfApplicability extends Model
 {
     use HasFactory;
-    protected $fillable = ['standard_id', 'client_id', 's_o_a_area_id', 's_o_a_control_id'];
+    protected $fillable = ['client_id', 's_o_a_area_id', 's_o_a_control_id'];
     public function client()
     {
         return $this->belongsTo(Client::class, 'client', 'id');
