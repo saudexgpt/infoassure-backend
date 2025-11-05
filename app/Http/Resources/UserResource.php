@@ -96,7 +96,7 @@ class UserResource extends JsonResource
             }
         }
         if ($this->haRole('super')) {
-            $modules = AvailableModule::pluck('slug');
+            $modules = AvailableModule::pluck('slug')->toArray();
         }
         if (in_array('admin', $roles)) {
 

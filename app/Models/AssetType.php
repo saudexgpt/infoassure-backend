@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 class AssetType extends Model
 {
     use HasFactory;
+    protected $connection = 'mysql';
+
     protected $fillable = ['name', 'client_id'];
     protected $hidden = [
         'created_at',

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AnswersController;
 use App\Http\Controllers\AppMailingsController;
 use App\Http\Controllers\AssetsController;
+use App\Http\Controllers\BulkUploadFileController;
 use App\Http\Controllers\DPIAController;
 use App\Http\Controllers\GeneralRiskLibrariesController;
 use App\Http\Controllers\PDAController;
@@ -638,4 +639,16 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
 
     });
+    Route::group(['prefix' => 'files'], function () {
+
+        Route::post('/upload', [BulkUploadFileController::class, 'upload']);
+        Route::get('/', [BulkUploadFileController::class, 'index']);
+        Route::get('show/{file}', [BulkUploadFileController::class, 'show']);
+        Route::put('update/{file}', [BulkUploadFileController::class, 'update']);
+        Route::get('{file}/export', [BulkUploadFileController::class, 'export']);
+
+
+    });
+
+
 });

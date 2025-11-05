@@ -11,6 +11,7 @@ use App\Models\NDPA\ModuleActivity;
 use App\Models\NDPA\ModuleActivityTask;
 use App\Models\NDPA\TaskLog;
 use App\Models\Project;
+use App\Models\Upload;
 use Illuminate\Http\Request;
 
 class CalendarController extends Controller
@@ -39,7 +40,7 @@ class CalendarController extends Controller
             $tasks = $activity->implementation_guide;
             $evidences = $activity->evidences;
             // $document_template_ids = $this->createDocumentTemplate($evidences);
-            ModuleActivityTask::updateOrCreate([
+            $task = ModuleActivityTask::updateOrCreate([
                 'clause_id' => $clause->id,
                 'name' => $process,
             ], [
@@ -49,19 +50,26 @@ class CalendarController extends Controller
                 // 'document_template_ids' => $document_template_ids,
                 'tasks' => $tasks
             ]);
+
+            $year = date('Y', strtotime('now'));
+            $client = $this->getClient();
+            $project = Project::where(['client_id' => $client->id, 'year' => $year])
+                ->where('title', 'LIKE', '%NDPA%')
+                ->first();
+
+            if ($project) {
+                $task->assignedTask()
+                    ->firstOrCreate(
+                        [
+                            'project_id' => $project->id,
+                            'module_activity_task_id' => $task->id,
+                            'client_id' => $client->id,
+                            'clause_id' => $task->clause_id,
+                        ]
+                    );
+            }
         }
 
-
-    }
-    private function createDocumentTemplate($titles)
-    {
-        $template_ids = [];
-        foreach ($titles as $title) {
-            $title = ucwords(trim($title));
-            $template = DocumentTemplate::updateOrCreate(['title' => $title, 'first_letter' => substr($title, 0, 1)]);
-            $template_ids[] = $template->id;
-        }
-        return $template_ids;
 
     }
     private function generateActivities()
@@ -78,6 +86,17 @@ class CalendarController extends Controller
         return json_decode($file_content);
         // print_r($result);
     }
+    private function createDocumentTemplate($titles)
+    {
+        $template_ids = [];
+        foreach ($titles as $title) {
+            $title = ucwords(trim($title));
+            $template = DocumentTemplate::updateOrCreate(['title' => $title, 'first_letter' => substr($title, 0, 1)]);
+            $template_ids[] = $template->id;
+        }
+        return $template_ids;
+
+    }
 
     public function fetchAllTasks(Request $request)
     {
@@ -88,16 +107,16 @@ class CalendarController extends Controller
         $tasks = ModuleActivityTask::orderBy('clause_id')->get();
         return response()->json(compact('tasks'), 200);
     }
-    public function showTask(Request $request, ModuleActivityTask $task)
+    public function showTask(Request $request, AssignedTask $task)
     {
         $client = $this->getClient();
-        $task = $task->with([
-            'assignedTask' => function ($q) use ($client) {
-                $q->where('client_id', $client->id);
-            },
-            'assignedTask.assignee',
-        ])->find($task->id);
-        return response()->json(compact('task'), 200);
+        if ($client->id !== $task->client_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $assigned_task = $task->with('assignee', 'task.clause', 'task.section')
+            ->where('client_id', $client->id)
+            ->find($task->id);
+        return response()->json(compact('assigned_task'), 200);
     }
     public function fetchTaskLogs(Request $request)
     {
@@ -172,30 +191,16 @@ class CalendarController extends Controller
         $client = $this->getClient();
         $user = $this->getUser();
         if ($user->login_as === 'user') {
-            $clause_tasks = Clause::join('assigned_tasks', 'clauses.id', 'assigned_tasks.clause_id')
-                ->join('module_activity_tasks', 'module_activity_tasks.id', 'assigned_tasks.module_activity_task_id')
-                ->with([
-                    'sections.tasks',
-                    'sections.tasks.assignedTask' => function ($q) use ($client, $user) {
-                        $q->where('client_id', $client->id);
-                        $q->where('assignee_id', $user->id);
-                    },
-                    'sections.tasks.assignedTask.assignee'
-                ])
-                ->where('assigned_tasks.client_id', $client->id)
-                ->where('assigned_tasks.assignee_id', $user->id)
-                ->select('clauses.*')
+            $assigned_tasks = AssignedTask::with('assignee', 'task.clause', 'task.section')
+                ->where('client_id', $client->id)
+                ->where('assignee_id', $user->id)
                 ->get();
         } else {
-            $clause_tasks = Clause::with([
-                'sections.tasks',
-                'sections.tasks.assignedTask' => function ($q) use ($client) {
-                    $q->where('client_id', $client->id);
-                },
-                'sections.tasks.assignedTask.assignee'
-            ])->get();
+            $assigned_tasks = AssignedTask::with('assignee', 'task.clause', 'task.section')
+                ->where('client_id', $client->id)
+                ->get();
         }
-        return response()->json(compact('clause_tasks'), 200);
+        return response()->json(compact('assigned_tasks'), 200);
     }
     public function storeClauseActivities(Request $request)
     {
@@ -631,7 +636,32 @@ class CalendarController extends Controller
     public function markTaskAsDone(Request $request, AssignedTask $task)
     {
         // $user = $this->getUser();
-        $task->update(['status' => 'submitted', 'progress' => 1]);
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($task->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $module_task = ModuleActivityTask::find($task->module_activity_task_id);
+        $document_templates = DocumentTemplate::whereIn('id', $module_task->document_template_ids)->get();
+        $no_upload_count = 0;
+        $expected_docs = [];
+        foreach ($document_templates as $document_template) {
+            $upload = Upload::where('template_id', $document_template->id)->where('client_id', $client->id)->first();
+
+            if ($upload) {
+                if ($upload->link == null) {
+                    $no_upload_count++;
+                    $expected_docs[] = $document_template->title;
+                }
+            } else {
+                $no_upload_count++;
+                $expected_docs[] = $document_template->title;
+            }
+        }
+        if ($no_upload_count > 0) {
+            return response()->json(['message' => 'Please ensure all required documents/evidences are uploaded', 'expected_docs' => $expected_docs], 500);
+        }
+        $task->update(['status' => 'completed', 'progress' => 1]);
         // Optionally, you can return the updated task or a success message
         return response()->json(['message' => 'Task marked as done successfully', 'task' => $task], 200);
     }
