@@ -30,43 +30,47 @@ class CalendarController extends Controller
     }
     private function autoGenerateAndSaveActivityTasks()
     {
-        $activities = $this->generateActivities(); // $request->names;
-        foreach ($activities as $activity) {
-            $clause = Clause::where('name', $activity->clause)->first();
-            $process = $activity->process;
-            // $activity_no = $activity->activity_no;
-            $description = $activity->description;
-            $implementation_guide = $activity->implementation_guide;
-            $tasks = $activity->implementation_guide;
-            $evidences = $activity->evidences;
-            // $document_template_ids = $this->createDocumentTemplate($evidences);
-            $task = ModuleActivityTask::updateOrCreate([
-                'clause_id' => $clause->id,
-                'name' => $process,
-            ], [
-                // 'activity_no' => $activity_no,
-                'description' => $description,
-                'implementation_guide' => $implementation_guide,
-                // 'document_template_ids' => $document_template_ids,
-                'tasks' => $tasks
-            ]);
+        $user = $this->getUser();
+        if (!$user->hasRole('super')) {
 
-            $year = date('Y', strtotime('now'));
-            $client = $this->getClient();
-            $project = Project::where(['client_id' => $client->id, 'year' => $year])
-                ->where('title', 'LIKE', '%NDPA%')
-                ->first();
+            $activities = $this->generateActivities(); // $request->names;
+            foreach ($activities as $activity) {
+                $clause = Clause::where('name', $activity->clause)->first();
+                $process = $activity->process;
+                // $activity_no = $activity->activity_no;
+                $description = $activity->description;
+                $implementation_guide = $activity->implementation_guide;
+                $tasks = $activity->implementation_guide;
+                $evidences = $activity->evidences;
+                // $document_template_ids = $this->createDocumentTemplate($evidences);
+                $task = ModuleActivityTask::updateOrCreate([
+                    'clause_id' => $clause->id,
+                    'name' => $process,
+                ], [
+                    // 'activity_no' => $activity_no,
+                    'description' => $description,
+                    'implementation_guide' => $implementation_guide,
+                    // 'document_template_ids' => $document_template_ids,
+                    'tasks' => $tasks
+                ]);
 
-            if ($project) {
-                $task->assignedTask()
-                    ->firstOrCreate(
-                        [
-                            'project_id' => $project->id,
-                            'module_activity_task_id' => $task->id,
-                            'client_id' => $client->id,
-                            'clause_id' => $task->clause_id,
-                        ]
-                    );
+                $year = date('Y', strtotime('now'));
+                $client = $this->getClient();
+                $project = Project::where(['client_id' => $client->id, 'year' => $year])
+                    ->where('title', 'LIKE', '%NDPA%')
+                    ->first();
+
+                if ($project) {
+                    $task->assignedTask()
+                        ->firstOrCreate(
+                            [
+                                'project_id' => $project->id,
+                                'module_activity_task_id' => $task->id,
+                                'client_id' => $client->id,
+                                'clause_id' => $task->clause_id,
+                            ]
+                        );
+                }
             }
         }
 
