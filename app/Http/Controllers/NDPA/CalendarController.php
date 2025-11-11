@@ -7,8 +7,11 @@ use App\Models\DocumentTemplate;
 use App\Models\NDPA\AssignedTask;
 use App\Models\NDPA\AssignedTaskComment;
 use App\Models\NDPA\Clause;
+use App\Models\NDPA\ClauseSection;
+use App\Models\NDPA\ExpectedTaskEvidence;
 use App\Models\NDPA\ModuleActivity;
 use App\Models\NDPA\ModuleActivityTask;
+use App\Models\NDPA\TaskEvidenceUpload;
 use App\Models\NDPA\TaskLog;
 use App\Models\Project;
 use App\Models\Upload;
@@ -28,54 +31,6 @@ class CalendarController extends Controller
 
 
     }
-    private function autoGenerateAndSaveActivityTasks()
-    {
-        $user = $this->getUser();
-        if (!$user->hasRole('super')) {
-
-            $activities = $this->generateActivities(); // $request->names;
-            foreach ($activities as $activity) {
-                $clause = Clause::where('name', $activity->clause)->first();
-                $process = $activity->process;
-                // $activity_no = $activity->activity_no;
-                $description = $activity->description;
-                $implementation_guide = $activity->implementation_guide;
-                $tasks = $activity->implementation_guide;
-                $evidences = $activity->evidences;
-                // $document_template_ids = $this->createDocumentTemplate($evidences);
-                $task = ModuleActivityTask::updateOrCreate([
-                    'clause_id' => $clause->id,
-                    'name' => $process,
-                ], [
-                    // 'activity_no' => $activity_no,
-                    'description' => $description,
-                    'implementation_guide' => $implementation_guide,
-                    // 'document_template_ids' => $document_template_ids,
-                    'tasks' => $tasks
-                ]);
-
-                $year = date('Y', strtotime('now'));
-                $client = $this->getClient();
-                $project = Project::where(['client_id' => $client->id, 'year' => $year])
-                    ->where('title', 'LIKE', '%NDPA%')
-                    ->first();
-
-                if ($project) {
-                    $task->assignedTask()
-                        ->firstOrCreate(
-                            [
-                                'project_id' => $project->id,
-                                'module_activity_task_id' => $task->id,
-                                'client_id' => $client->id,
-                                'clause_id' => $task->clause_id,
-                            ]
-                        );
-                }
-            }
-        }
-
-
-    }
     private function generateActivities()
     {
         //
@@ -90,16 +45,80 @@ class CalendarController extends Controller
         return json_decode($file_content);
         // print_r($result);
     }
+    private function autoGenerateAndSaveActivityTasks()
+    {
+        $user = $this->getUser();
+        if ($user->login_as !== 'super') {
+
+            $activities = $this->generateActivities(); // $request->names;
+            foreach ($activities as $activity) {
+                $clause = Clause::where('name', $activity->clause)->first();
+                $section = ClauseSection::where('name', $activity->section)->first();
+                $process = $activity->process;
+                // $activity_no = $activity->activity_no;
+                $description = $activity->description;
+                $implementation_guide = $activity->implementation_guide;
+                $tasks = $activity->implementation_guide;
+                $evidences = $activity->evidences;
+                $document_template_ids = $this->createDocumentTemplate($evidences);
+                $task = ModuleActivityTask::updateOrCreate([
+                    'clause_id' => $clause->id,
+                    'section_id' => $section->id,
+                    'name' => $process,
+                ], [
+                    // 'activity_no' => $activity_no,
+                    'description' => $description,
+                    'implementation_guide' => $implementation_guide,
+                    'document_template_ids' => $document_template_ids,
+                    'tasks' => $tasks
+                ]);
+                $task->expectedTaskEvidences()->sync($document_template_ids);
+                $year = date('Y', strtotime('now'));
+                $client = $this->getClient();
+                $project = Project::where(['client_id' => $client->id, 'year' => $year])
+                    ->where('title', 'LIKE', '%NDPA%')
+                    ->first();
+
+                if ($project) {
+                    $assigned_task = $task->assignedTask()
+                        ->firstOrCreate(
+                            [
+                                'project_id' => $project->id,
+                                'module_activity_task_id' => $task->id,
+                                'client_id' => $client->id,
+                                'clause_id' => $task->clause_id,
+                            ]
+                        );
+                    $this->setExpectedEvidencesFromTasks($assigned_task, $document_template_ids);
+                }
+            }
+        }
+
+
+    }
     private function createDocumentTemplate($titles)
     {
         $template_ids = [];
         foreach ($titles as $title) {
             $title = ucwords(trim($title));
-            $template = DocumentTemplate::updateOrCreate(['title' => $title, 'first_letter' => substr($title, 0, 1)]);
+            $template = ExpectedTaskEvidence::updateOrCreate(['title' => $title]);
             $template_ids[] = $template->id;
         }
         return $template_ids;
 
+    }
+    private function setExpectedEvidencesFromTasks($task, $document_template_ids)
+    {
+        $evidences = ExpectedTaskEvidence::whereIn('id', $document_template_ids)->get();
+        foreach ($evidences as $task_evidence) {
+            TaskEvidenceUpload::firstOrCreate([
+                'client_id' => $task->client_id,
+                'project_id' => $task->project_id,
+                'expected_task_evidence_id' => $task_evidence->id,
+                'title' => $task_evidence->title
+            ]);
+
+        }
     }
 
     public function fetchAllTasks(Request $request)
@@ -120,7 +139,10 @@ class CalendarController extends Controller
         $assigned_task = $task->with('assignee', 'task.clause', 'task.section')
             ->where('client_id', $client->id)
             ->find($task->id);
-        return response()->json(compact('assigned_task'), 200);
+        $activity_task = ModuleActivityTask::find($task->module_activity_task_id);
+        $document_template_ids = $activity_task->document_template_ids;
+        $evidences = TaskEvidenceUpload::whereIn('expected_task_evidence_id', $document_template_ids)->where('client_id', $client->id)->get();
+        return response()->json(compact('assigned_task', 'evidences'), 200);
     }
     public function fetchTaskLogs(Request $request)
     {
@@ -139,7 +161,7 @@ class CalendarController extends Controller
         $clause_tasks = Clause::with('sections.tasks')->get();
         return response()->json(compact('clause_tasks'), 200);
     }
-    public function fetchUserAssignedTasks(Request $request)
+    public function fetchUserAssignedTasksOld(Request $request)
     {
         $client = $this->getClient();
         $user = $this->getUser();
@@ -152,6 +174,26 @@ class CalendarController extends Controller
             ->get();
 
         return response()->json(compact('my_tasks'), 200);
+    }
+    public function fetchUserAssignedTasks(Request $request)
+    {
+        $client = $this->getClient();
+        $user = $this->getUser();
+
+        $assigned_tasks = AssignedTask::with([
+            'task.expectedTaskEvidences.upload' => function ($q) use ($client) {
+                $q->where('client_id', $client->id);
+            },
+            'assignee',
+            'task.clause',
+            'task.section'
+        ])
+            ->where('client_id', $client->id)
+            ->where('assignee_id', $user->id)
+            ->orderBy('clause_id')
+            ->get();
+
+        return response()->json(compact('assigned_tasks'), 200);
     }
     public function fetchClientAssignedTasksNew(Request $request)
     {
@@ -195,13 +237,29 @@ class CalendarController extends Controller
         $client = $this->getClient();
         $user = $this->getUser();
         if ($user->login_as === 'user') {
-            $assigned_tasks = AssignedTask::with('assignee', 'task.clause', 'task.section')
+            $assigned_tasks = AssignedTask::with([
+                'task.expectedTaskEvidences.upload' => function ($q) use ($client) {
+                    $q->where('client_id', $client->id);
+                },
+                'assignee',
+                'task.clause',
+                'task.section'
+            ])
                 ->where('client_id', $client->id)
                 ->where('assignee_id', $user->id)
+                ->orderBy('clause_id')
                 ->get();
         } else {
-            $assigned_tasks = AssignedTask::with('assignee', 'task.clause', 'task.section')
+            $assigned_tasks = AssignedTask::with([
+                'task.expectedTaskEvidences.upload' => function ($q) use ($client) {
+                    $q->where('client_id', $client->id);
+                },
+                'assignee',
+                'task.clause',
+                'task.section'
+            ])
                 ->where('client_id', $client->id)
+                ->orderBy('clause_id')
                 ->get();
         }
         return response()->json(compact('assigned_tasks'), 200);
@@ -645,25 +703,14 @@ class CalendarController extends Controller
         if ($task->client_id != $client->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-        $module_task = ModuleActivityTask::find($task->module_activity_task_id);
-        $document_templates = DocumentTemplate::whereIn('id', $module_task->document_template_ids)->get();
-        $no_upload_count = 0;
-        $expected_docs = [];
-        foreach ($document_templates as $document_template) {
-            $upload = Upload::where('template_id', $document_template->id)->where('client_id', $client->id)->first();
-
-            if ($upload) {
-                if ($upload->link == null) {
-                    $no_upload_count++;
-                    $expected_docs[] = $document_template->title;
-                }
-            } else {
-                $no_upload_count++;
-                $expected_docs[] = $document_template->title;
-            }
-        }
+        $activity_task = ModuleActivityTask::find($task->module_activity_task_id);
+        $document_template_ids = $activity_task->document_template_ids;
+        $no_upload_count = TaskEvidenceUpload::whereIn('expected_task_evidence_id', $document_template_ids)
+            ->where('client_id', $client->id)
+            ->whereNull('link')
+            ->count();
         if ($no_upload_count > 0) {
-            return response()->json(['message' => 'Please ensure all required documents/evidences are uploaded', 'expected_docs' => $expected_docs], 500);
+            return response()->json(['message' => 'Please ensure all required evidences are uploaded'], 500);
         }
         $task->update(['status' => 'completed', 'progress' => 1]);
         // Optionally, you can return the updated task or a success message

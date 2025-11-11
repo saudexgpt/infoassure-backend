@@ -106,19 +106,24 @@ class Controller extends BaseController
 
             $client_id = $user->client_id;
         }
-        if ($user->haRole('user') || $user->haRole('admin') || $user->haRole('super')) {
-            $this->myProjects = $user->projects()
-                ->with('client', 'availableModule', 'package')
-                ->where(['client_id' => $client_id, 'year' => $this->getYear()])
-                ->orderBy('id', 'DESC')
-                ->get();
-        } else {
 
-            $this->myProjects = Project::with('client', 'availableModule', 'package')
-                ->where(['client_id' => $client_id, 'year' => $this->getYear()])
-                ->orderBy('id', 'DESC')
-                ->get();
-        }
+        $this->myProjects = Project::with('client', 'availableModule', 'package')
+            ->where(['client_id' => $client_id, 'year' => $this->getYear()])
+            ->orderBy('id', 'DESC')
+            ->get();
+        // if ($user->haRole('user') || $user->haRole('admin') || $user->haRole('super')) {
+        //     $this->myProjects = $user->projects()
+        //         ->with('client', 'availableModule', 'package')
+        //         ->where(['client_id' => $client_id, 'year' => $this->getYear()])
+        //         ->orderBy('id', 'DESC')
+        //         ->get();
+        // } else {
+
+        //     $this->myProjects = Project::with('client', 'availableModule', 'package')
+        //         ->where(['client_id' => $client_id, 'year' => $this->getYear()])
+        //         ->orderBy('id', 'DESC')
+        //         ->get();
+        // }
     }
 
     public function getMyProjects($client_id)

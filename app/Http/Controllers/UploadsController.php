@@ -58,14 +58,14 @@ class UploadsController extends Controller
     private function setExpectedUploadsFromISMSAssignedTasks()
     {
         $client = $this->getClient();
-        $template_ids = AssignedTask::join('module_activity_tasks', 'assigned_tasks.module_activity_task_id', '=', 'module_activity_tasks.id')
+        $task = AssignedTask::join('module_activity_tasks', 'assigned_tasks.module_activity_task_id', '=', 'module_activity_tasks.id')
             ->where('assigned_tasks.client_id', $client->id)
-            ->where('document_template_ids', '!=', NULL)
-            ->select(\DB::raw("GROUP_CONCAT(DISTINCT document_template_ids SEPARATOR ', ') as ids"))
+            ->where('evidences', '!=', NULL)
+            ->select(\DB::raw("GROUP_CONCAT(DISTINCT evidences SEPARATOR ', ') as task_evidences"))
             ->first();
-        if ($template_ids) {
+        if ($task) {
             $templated_ids_array = [];
-            $ids_array = explode(', ', $template_ids->ids);
+            $task_evidences_array = explode(', ', $task->task_evidences);
             foreach ($ids_array as $id) {
                 $id_array = json_decode($id);
                 if ($id_array != null && count($id_array) > 0 && is_array($id_array)) {

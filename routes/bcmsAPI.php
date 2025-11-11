@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\BCMS\BIAController;
 use App\Http\Controllers\BCMS\CalendarController;
+use App\Http\Controllers\BCMS\ReportsController;
+use App\Http\Controllers\BCMS\TaskEvidenceUploadController;
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'bcms'], function () {
         Route::group(['prefix' => 'bia'], function () {
@@ -16,6 +18,28 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::post('store-risk-assessment', [BIAController::class, 'storeRiskAssessment']);
             Route::put('update-risk-assessment-field/{assessment}', [BIAController::class, 'updateRiskAssessmentFields']);
             Route::get('risk-assessment-summary', [BIAController::class, 'riskAssessmentSummary']);
+
+
+        });
+        Route::group(['prefix' => 'reports'], function () {
+            Route::get('compliance-status', [ReportsController::class, 'complianceStatus']);
+
+            Route::get('client-dashboard-statistics', [ReportsController::class, 'clientDashboardStatistics']);
+            Route::get('client-data-analysis-dashboard', [ReportsController::class, 'clientDataAnalysisDashbord']);
+            Route::get('client-project-data-analysis', [ReportsController::class, 'clientProjectDataAnalysis']);
+            Route::get('admin-data-analysis-dashboard', [ReportsController::class, 'adminDataAnalysisDashbord']);
+            Route::get('partner-data-analysis-dashboard', [ReportsController::class, 'partnerDataAnalysisDashbord']);
+
+            Route::get('clause-report', [ReportsController::class, 'clientProjectManagementClauseReport']);
+            Route::get('completion-report', [ReportsController::class, 'clientProjectRequirementCompletionReport']);
+            Route::get('summary-report', [ReportsController::class, 'clientProjectAssessmentSummaryReport']);
+            Route::get('soa-summary', [ReportsController::class, 'soaSummary']);
+            Route::get('risk-assessment-summary', [ReportsController::class, 'riskAssessmentSummary']);
+            Route::get('fetch-project-answers', [ReportsController::class, 'fetchProjectAnswers']);
+            Route::get('asset-risk-analysis', [ReportsController::class, 'assetRiskAnalysis']);
+            Route::get('process-risk-analysis', [ReportsController::class, 'processRiskAnalysis']);
+            Route::get('bia-data-analysis', [ReportsController::class, 'dataAnalysisBIA']);
+
 
 
         });
@@ -57,6 +81,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
 
             });
+        });
+        Route::group(['prefix' => 'uploads'], function () {
+            Route::get('fetch-uploads', [TaskEvidenceUploadController::class, 'fetchUploads']);
+            Route::post('fetch-uploaded-document-with-template-ids', [TaskEvidenceUploadController::class, 'fetchUploadedDocumentWithTemplateIds']);
+            Route::post('save', [TaskEvidenceUploadController::class, 'createUploads']);
+            Route::post('upload-file', [TaskEvidenceUploadController::class, 'uploadEvidenceFile']);
+            Route::delete('destroy-template/{template}', [TaskEvidenceUploadController::class, 'destroyTemplate']);
+            Route::put('remark-on-upload/{upload}', [TaskEvidenceUploadController::class, 'remarkOnUpload']);
+
         });
     });
 });

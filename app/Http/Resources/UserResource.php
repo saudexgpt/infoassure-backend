@@ -57,11 +57,15 @@ class UserResource extends JsonResource
             //     ->where(['client_id' => $client_id, 'year' => $this_year])
             //     ->orderBy('id', 'DESC')
             //     ->get();
-            $projects = $this->projects()
-                ->with('availableModule')
+            $projects = Project::with('availableModule')
                 ->where(['client_id' => $client_id, 'year' => $this_year])
                 ->orderBy('id', 'DESC')
                 ->get();
+            // $projects = $this->projects()
+            //     ->with('availableModule')
+            //     ->where(['client_id' => $client_id, 'year' => $this_year])
+            //     ->orderBy('id', 'DESC')
+            //     ->get();
             foreach ($projects as $project) {
 
                 $modules[] = $project->availableModule->slug;

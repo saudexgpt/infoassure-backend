@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\AssetType;
 use App\Models\BusinessImpactAnalysis;
 use App\Models\Client;
+use App\Models\ISMS\AssignedTask;
 use App\Models\ISMS\ComplianceResponse;
+use App\Models\ISMS\TaskEvidenceUpload;
 use App\Models\RiskMatrix;
 use App\Models\RiskRegister;
 use App\Models\Upload;
@@ -20,6 +22,84 @@ use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
+    private function validateClientScope(Request $request, array $rules = [])
+    {
+        // Basic validation first
+        $data = $request->validate($rules);
+
+        // Enforce that if client_id is supplied it matches current client's id
+        if (isset($data['client_id'])) {
+            $currentClient = $this->getClient();
+            if (!$currentClient || (int) $data['client_id'] !== (int) $currentClient->id) {
+                abort(403, 'Forbidden client scope');
+            }
+        }
+
+        // If project_id provided, ensure project exists and belongs to client
+        if (isset($data['project_id'])) {
+            $project = Project::findOrFail($data['project_id']);
+            $clientIdToCheck = $data['client_id'] ?? $this->getClient()->id;
+            if ((int) $project->client_id !== (int) $clientIdToCheck) {
+                abort(403, 'Project does not belong to client');
+            }
+        }
+
+        return $data;
+    }
+    public function complianceStatus(Request $request)
+    {
+        $client = $this->getClient();
+        $project_id = $request->project_id;
+        $project = Project::find($project_id);
+        if ($project->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized action'], 403);
+        }
+        $expected_evidences = TaskEvidenceUpload::where(['client_id' => $client->id, 'project_id' => $project_id])
+            ->count();
+        $uploaded_evidences = TaskEvidenceUpload::where(['client_id' => $client->id, 'project_id' => $project_id])
+            ->whereNotNull('link')
+            ->count();
+        $compliance_status = 0;
+        if ($expected_evidences > 0) {
+            $compliance_status = round(($uploaded_evidences / $expected_evidences) * 100, 1);
+        }
+
+        $total_overdue = AssignedTask::where(['client_id' => $client->id, 'project_id' => $project_id])->where('status', 'overdue')
+            ->count();
+        $total_open = AssignedTask::where(['client_id' => $client->id, 'project_id' => $project_id])->where('status', 'in progress')
+            ->count();
+        $total_closed = AssignedTask::where(['client_id' => $client->id, 'project_id' => $project_id])->where('status', 'completed')
+            ->count();
+
+        $pie_chart_series = [
+            [
+                'name' => 'Task Completion Status',
+                'colorByPoint' => true,
+                'data' => [
+                    [
+                        'name' => 'Overdue',
+                        'y' => $total_overdue,
+                        'color' => '#D14C42',
+                        // 'drilldown' => 'Critical',
+                    ],
+                    [
+                        'name' => 'Open',
+                        'y' => $total_open,
+                        'color' => '#FFFF00',
+                        // 'drilldown' => 'Monitor',
+                    ],
+                    [
+                        'name' => 'Closed',
+                        'y' => $total_closed,
+                        'color' => '#00a65a',
+                        // 'drilldown' => 'Non-Critical',
+                    ]
+                ],
+            ],
+        ];
+
+        return response()->json(compact('compliance_status', 'pie_chart_series'), 200);
+    }
     public function clientDashboardStatistics(Request $request)
     {
         // $year = date('Y', strtotime('now'));

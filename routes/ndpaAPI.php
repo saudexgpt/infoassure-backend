@@ -7,6 +7,7 @@ use App\Http\Controllers\NDPA\QuestionsController;
 use App\Http\Controllers\NDPA\AnswersController;
 use App\Http\Controllers\NDPA\ReportsController;
 use App\Http\Controllers\NDPA\RoPAController;
+use App\Http\Controllers\NDPA\TaskEvidenceUploadController;
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'ndpa'], function () {
         Route::group(['prefix' => 'clauses'], function () {
@@ -54,6 +55,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         });
 
         Route::group(['prefix' => 'reports'], function () {
+            Route::get('compliance-status', [ReportsController::class, 'complianceStatus']);
+
             Route::get('client-dashboard-statistics', [ReportsController::class, 'clientDashboardStatistics']);
             Route::get('client-data-analysis-dashboard', [ReportsController::class, 'clientDataAnalysisDashbord']);
             Route::get('client-project-data-analysis', [ReportsController::class, 'clientProjectDataAnalysis']);
@@ -138,24 +141,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
             Route::put('update/{ropa}', [RoPAController::class, 'update']);
             Route::delete('destroy/{ropa}', [RoPAController::class, 'destroy']);
         });
-        // Route::group(['prefix' => 'calendar'], routes: function () {
-        //     // Incident Types
 
-        //     Route::get('fetch-all-tasks', [CalendarController::class, 'fetchAllTasks']);
-        //     Route::get('fetch-task-by-clause', [CalendarController::class, 'fetchModuleTaskByClause']);
-        //     Route::get('fetch-client-assigned-tasks', [CalendarController::class, 'fetchClientAssignedTasks']);
+        Route::group(['prefix' => 'uploads'], function () {
+            Route::get('fetch-uploads', [TaskEvidenceUploadController::class, 'fetchUploads']);
+            Route::post('fetch-uploaded-document-with-template-ids', [TaskEvidenceUploadController::class, 'fetchUploadedDocumentWithTemplateIds']);
+            Route::post('save', [TaskEvidenceUploadController::class, 'createUploads']);
+            Route::post('upload-file', [TaskEvidenceUploadController::class, 'uploadEvidenceFile']);
+            Route::delete('destroy-template/{template}', [TaskEvidenceUploadController::class, 'destroyTemplate']);
+            Route::put('remark-on-upload/{upload}', [TaskEvidenceUploadController::class, 'remarkOnUpload']);
 
-        //     Route::post('store-clause-activities', [CalendarController::class, 'storeClauseActivities']);
-        //     Route::put('update-clause-activity/{moduleActivity}', [CalendarController::class, 'updateClauseActivity']);
-        //     Route::post('store-clause-activity-tasks', [CalendarController::class, 'storeClauseActivityTasks']);
-        //     Route::put('update-clause-activity-task/{moduleActivityTask}', [CalendarController::class, 'updateClauseActivityTask']);
-        //     Route::post('assign-task-to-user', [CalendarController::class, 'assignTaskToUser']);
-        //     Route::get('fetch-my-calendar-data', [CalendarController::class, 'fetchMyCalendarData']);
-        //     Route::get('fetch-project-calendar-data', [CalendarController::class, 'fetchProjectCalendarData']);
-
-        //     Route::put('mark-task-as-done/{task}', [CalendarController::class, 'markTaskAsDone']);
-        //     Route::put('mark-task-as-completed/{task}', [CalendarController::class, 'markTaskAsCompleted']);
-
-        // });
+        });
     });
 });

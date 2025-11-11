@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\BCMS;
 
 use App\Http\Controllers\Controller;
+use App\Models\BCMS\ExpectedTaskEvidence;
+use App\Models\BCMS\TaskEvidenceUpload;
 use App\Models\DocumentTemplate;
 use App\Models\BCMS\AssignedTask;
 use App\Models\BCMS\AssignedTaskComment;
@@ -29,26 +31,48 @@ class CalendarController extends Controller
     }
     private function autoGenerateAndSaveActivityTasks()
     {
-        $activities = $this->generateActivities(); // $request->names;
-        foreach ($activities as $activity) {
-            $clause = Clause::where('name', $activity->clause)->first();
-            $process = $activity->process;
-            $activity_no = $activity->activity_no;
-            $description = $activity->description;
-            $implementation_guide = $activity->implementation_guide;
-            $tasks = $activity->tasks;
-            $evidences = $activity->evidences;
-            // $document_template_ids = $this->createDocumentTemplate($evidences);
-            ModuleActivityTask::updateOrCreate([
-                'clause_id' => $clause->id,
-                'name' => $process,
-            ], [
-                'activity_no' => $activity_no,
-                'description' => $description,
-                'implementation_guide' => $implementation_guide,
-                // 'document_template_ids' => $document_template_ids,
-                'tasks' => $tasks
-            ]);
+        $user = $this->getUser();
+        if ($user->login_as !== 'super') {
+            $activities = $this->generateActivities(); // $request->names;
+            foreach ($activities as $activity) {
+                $clause = Clause::where('name', $activity->clause)->first();
+                $process = $activity->process;
+                $activity_no = $activity->activity_no;
+                $description = $activity->description;
+                $implementation_guide = $activity->implementation_guide;
+                $tasks = $activity->tasks;
+                $evidences = $activity->evidences;
+                $document_template_ids = $this->createDocumentTemplate($evidences);
+                $task = ModuleActivityTask::updateOrCreate([
+                    'clause_id' => $clause->id,
+                    'name' => $process,
+                ], [
+                    'activity_no' => $activity_no,
+                    'description' => $description,
+                    'implementation_guide' => $implementation_guide,
+                    'document_template_ids' => $document_template_ids,
+                    'tasks' => $tasks
+                ]);
+                $task->expectedTaskEvidences()->sync($document_template_ids);
+                $year = date('Y', strtotime('now'));
+                $client = $this->getClient();
+                $project = Project::where(['client_id' => $client->id, 'year' => $year])
+                    ->where('title', 'LIKE', '%BCMS%')
+                    ->first();
+
+                if ($project) {
+                    $assigned_task = $task->assignedTask()
+                        ->firstOrCreate(
+                            [
+                                'project_id' => $project->id,
+                                'module_activity_task_id' => $task->id,
+                                'client_id' => $client->id,
+                                'clause_id' => $task->clause_id,
+                            ]
+                        );
+                    $this->setExpectedEvidencesFromTasks($assigned_task, $document_template_ids);
+                }
+            }
         }
 
 
@@ -58,11 +82,24 @@ class CalendarController extends Controller
         $template_ids = [];
         foreach ($titles as $title) {
             $title = ucwords(trim($title));
-            $template = DocumentTemplate::updateOrCreate(['title' => $title, 'first_letter' => substr($title, 0, 1)]);
+            $template = ExpectedTaskEvidence::updateOrCreate(['title' => $title]);
             $template_ids[] = $template->id;
         }
         return $template_ids;
 
+    }
+    private function setExpectedEvidencesFromTasks($task, $document_template_ids)
+    {
+        $evidences = ExpectedTaskEvidence::whereIn('id', $document_template_ids)->get();
+        foreach ($evidences as $task_evidence) {
+            TaskEvidenceUpload::firstOrCreate([
+                'client_id' => $task->client_id,
+                'project_id' => $task->project_id,
+                'expected_task_evidence_id' => $task_evidence->id,
+                'title' => $task_evidence->title
+            ]);
+
+        }
     }
     private function generateActivities()
     {
@@ -88,17 +125,31 @@ class CalendarController extends Controller
         $tasks = ModuleActivityTask::orderBy('clause_id')->get();
         return response()->json(compact('tasks'), 200);
     }
-    public function showTask(Request $request, ModuleActivityTask $task)
+    public function showTask(Request $request, AssignedTask $task)
     {
         $client = $this->getClient();
-        $task = $task->with([
-            'assignedTask' => function ($q) use ($client) {
-                $q->where('client_id', $client->id);
-            },
-            'assignedTask.assignee',
-        ])->find($task->id);
-        return response()->json(compact('task'), 200);
+        if ($client->id !== $task->client_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $assigned_task = $task->with('assignee', 'task.clause')
+            ->where('client_id', $client->id)
+            ->find($task->id);
+        $activity_task = ModuleActivityTask::find($task->module_activity_task_id);
+        $document_template_ids = $activity_task->document_template_ids;
+        $evidences = TaskEvidenceUpload::whereIn('expected_task_evidence_id', $document_template_ids)->where('client_id', $client->id)->get();
+        return response()->json(compact('assigned_task', 'evidences'), 200);
     }
+    // public function showTask(Request $request, ModuleActivityTask $task)
+    // {
+    //     $client = $this->getClient();
+    //     $task = $task->with([
+    //         'assignedTask' => function ($q) use ($client) {
+    //             $q->where('client_id', $client->id);
+    //         },
+    //         'assignedTask.assignee',
+    //     ])->find($task->id);
+    //     return response()->json(compact('task'), 200);
+    // }
     public function fetchTaskLogs(Request $request)
     {
         $client = $this->getClient();
@@ -116,7 +167,7 @@ class CalendarController extends Controller
         $clause_tasks = Clause::with('tasks')->get();
         return response()->json(compact('clause_tasks'), 200);
     }
-    public function fetchUserAssignedTasks(Request $request)
+    public function fetchUserAssignedTasksOld(Request $request)
     {
         $client = $this->getClient();
         $user = $this->getUser();
@@ -130,44 +181,54 @@ class CalendarController extends Controller
 
         return response()->json(compact('my_tasks'), 200);
     }
+    public function fetchUserAssignedTasks(Request $request)
+    {
+        $client = $this->getClient();
+        $user = $this->getUser();
+
+        $assigned_tasks = AssignedTask::with([
+            'task.expectedTaskEvidences.upload' => function ($q) use ($client) {
+                $q->where('client_id', $client->id);
+            },
+            'assignee',
+            'task.clause'
+        ])
+            ->where('client_id', $client->id)
+            ->where('assignee_id', $user->id)
+            ->orderBy('clause_id')
+            ->get();
+
+        return response()->json(compact('assigned_tasks'), 200);
+    }
     public function fetchClientAssignedTasks(Request $request)
     {
         $client = $this->getClient();
         $user = $this->getUser();
-        if ($user->haRole('client')) {
-            $clause_tasks = Clause::join('assigned_tasks', 'clauses.id', 'assigned_tasks.clause_id')
-                ->join('module_activity_tasks', 'module_activity_tasks.id', 'assigned_tasks.module_activity_task_id')
-                ->with([
-                    'tasks',
-                    'tasks.assignedTask' => function ($q) use ($client, $user) {
-                        $q->where('client_id', $client->id);
-                        $q->where('assignee_id', $user->id);
-                    },
-                    'tasks.assignedTask.assignee'
-                ])
-                ->where('assigned_tasks.client_id', $client->id)
-                ->where('assigned_tasks.assignee_id', $user->id)
-                ->select('clauses.*')
-                ->get()
-                ->groupBy('category');
-        } else {
-            $clause_tasks = Clause::with([
-                'tasks',
-                'tasks.assignedTask' => function ($q) use ($client) {
+        if ($user->login_as === 'user') {
+            $assigned_tasks = AssignedTask::with([
+                'task.expectedTaskEvidences.upload' => function ($q) use ($client) {
                     $q->where('client_id', $client->id);
                 },
-                'tasks.assignedTask.assignee'
-            ])->get()
-                ->groupBy('category');
+                'assignee',
+                'task.clause'
+            ])
+                ->where('client_id', $client->id)
+                ->where('assignee_id', $user->id)
+                ->orderBy('clause_id')
+                ->get();
+        } else {
+            $assigned_tasks = AssignedTask::with([
+                'task.expectedTaskEvidences.upload' => function ($q) use ($client) {
+                    $q->where('client_id', $client->id);
+                },
+                'assignee',
+                'task.clause'
+            ])
+                ->where('client_id', $client->id)
+                ->orderBy('clause_id')
+                ->get();
         }
-        // Logic to fetch module calendar data
-        // This could involve querying the database for tasks, activities, etc.
-        // and returning them in a format suitable for the calendar view.
-        // Example:
-
-
-
-        return response()->json(compact('clause_tasks'), 200);
+        return response()->json(compact('assigned_tasks'), 200);
     }
     public function storeClauseActivities(Request $request)
     {
@@ -596,7 +657,21 @@ class CalendarController extends Controller
     public function markTaskAsDone(Request $request, AssignedTask $task)
     {
         // $user = $this->getUser();
-        $task->update(['status' => 'submitted', 'progress' => 1]);
+        $client = $this->getClient();
+        // Ownership check: ensure business_unit belongs to provided client if client_id provided in request
+        if ($task->client_id != $client->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $activity_task = ModuleActivityTask::find($task->module_activity_task_id);
+        $document_template_ids = $activity_task->document_template_ids;
+        $no_upload_count = TaskEvidenceUpload::whereIn('expected_task_evidence_id', $document_template_ids)
+            ->where('client_id', $client->id)
+            ->whereNull('link')
+            ->count();
+        if ($no_upload_count > 0) {
+            return response()->json(['message' => 'Please ensure all required evidences are uploaded'], 500);
+        }
+        $task->update(['status' => 'completed', 'progress' => 1]);
         // Optionally, you can return the updated task or a success message
         return response()->json(['message' => 'Task marked as done successfully', 'task' => $task], 200);
     }

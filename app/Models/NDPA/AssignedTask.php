@@ -55,7 +55,10 @@ class AssignedTask extends Model
     {
         return $this->belongsTo(User::class, 'assigned_by', 'id');
     }
-
+    public function evidences()
+    {
+        return $this->hasMany(TaskEvidenceUpload::class, 'assigned_task_id', 'id');
+    }
     public function comments()
     {
         return $this->hasMany(AssignedTaskComment::class, 'module_activity_task_id', 'id');

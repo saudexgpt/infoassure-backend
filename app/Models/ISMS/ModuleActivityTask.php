@@ -12,6 +12,7 @@ class ModuleActivityTask extends Model
         'clause_id',
         'activity_no',
         'name',
+        'evidences',
         'document_template_ids',
         'tasks',
         'dependency',
@@ -48,6 +49,11 @@ class ModuleActivityTask extends Model
             get: fn($value) => json_decode($value, true),
             set: fn($value) => json_encode($value),
         );
+    }
+
+    public function expectedTaskEvidences()
+    {
+        return $this->belongsToMany(ExpectedTaskEvidence::class);
     }
 
 

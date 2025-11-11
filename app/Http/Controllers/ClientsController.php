@@ -211,15 +211,21 @@ class ClientsController extends Controller
         if (!$user->hasPermission('update-clients')) {
             return response()->json(['message' => 'You need permission for this action'], 403);
         }
-        $client = Client::find($request->id);
-        $client->name = $request->name;
-        $client->contact_email = $request->contact_email;
-        $client->contact_phone = $request->contact_phone;
-        $client->contact_address = $request->contact_address;
-        $client->navbar_bg = $request->navbar_bg;
-        $client->sidebar_bg = $request->sidebar_bg;
-        $client->save();
-        $this->changeClientLogo($request, $client);
+        try {
+            $client = Client::find($request->id);
+            $client->name = $request->name;
+            $client->contact_email = $request->contact_email;
+            $client->contact_phone = $request->contact_phone;
+            $client->contact_address = $request->contact_address;
+            $client->navbar_bg = $request->navbar_bg;
+            $client->sidebar_bg = $request->sidebar_bg;
+            $client->save();
+            $this->changeClientLogo($request, $client);
+        } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
+            return response()->json(['message' => $errorMessage], 500);
+        }
+
     }
 
     public function becomeAClient(Request $request)

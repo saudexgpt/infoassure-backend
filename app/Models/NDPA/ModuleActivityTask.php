@@ -13,6 +13,7 @@ class ModuleActivityTask extends Model
         'section_id',
         'activity_no',
         'name',
+        'evidences',
         'document_template_ids',
         'dependency',
         'description',
@@ -37,7 +38,13 @@ class ModuleActivityTask extends Model
     {
         return $this->hasOne(AssignedTask::class, 'module_activity_task_id', 'id');
     }
-
+    protected function evidences(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => json_decode($value, true),
+            set: fn($value) => json_encode($value),
+        );
+    }
     protected function implementationGuide(): Attribute
     {
         return Attribute::make(
@@ -53,6 +60,9 @@ class ModuleActivityTask extends Model
             set: fn($value) => json_encode($value),
         );
     }
-
+    public function expectedTaskEvidences()
+    {
+        return $this->belongsToMany(ExpectedTaskEvidence::class);
+    }
 
 }

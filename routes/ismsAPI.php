@@ -5,6 +5,7 @@ use App\Http\Controllers\ISMS\ComplianceController;
 use App\Http\Controllers\ISMS\IncidentController;
 use App\Http\Controllers\ISMS\IncidentTypeController;
 use App\Http\Controllers\ISMS\ReportsController;
+use App\Http\Controllers\ISMS\TaskEvidenceUploadController;
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'isms'], function () {
 
@@ -19,6 +20,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         });
 
         Route::group(['prefix' => 'reports'], function () {
+            Route::get('compliance-status', [ReportsController::class, 'complianceStatus']);
+
             Route::get('client-dashboard-statistics', [ReportsController::class, 'clientDashboardStatistics']);
             Route::get('client-data-analysis-dashboard', [ReportsController::class, 'clientDataAnalysisDashbord']);
             Route::get('client-project-data-analysis', [ReportsController::class, 'clientProjectDataAnalysis']);
@@ -114,7 +117,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
             });
         });
+        Route::group(['prefix' => 'uploads'], function () {
+            Route::get('fetch-uploads', [TaskEvidenceUploadController::class, 'fetchUploads']);
+            Route::post('fetch-uploaded-document-with-template-ids', [TaskEvidenceUploadController::class, 'fetchUploadedDocumentWithTemplateIds']);
+            Route::post('save', [TaskEvidenceUploadController::class, 'createUploads']);
+            Route::post('upload-file', [TaskEvidenceUploadController::class, 'uploadEvidenceFile']);
+            Route::delete('destroy-template/{template}', [TaskEvidenceUploadController::class, 'destroyTemplate']);
+            Route::put('remark-on-upload/{upload}', [TaskEvidenceUploadController::class, 'remarkOnUpload']);
 
+        });
 
         // Route::post('incidents/{incident}/comments', [CommentController::class, 'storeForIncident']);
         // Route::post('incidents/{incident}/attachments', [AttachmentController::class, 'storeForIncident']);

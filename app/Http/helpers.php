@@ -73,9 +73,9 @@ function riskLikelihoodMatrix()
             ['value' => 3, 'name' => 'Likely', 'summary' => 'The risk is more likely to happen than not'],
         ],
         '5x5' => [
-            ['value' => 1, 'name' => 'Improbable', 'summary' => 'Has never happened before and there is no reason to think it is any more likely now'],
+            ['value' => 1, 'name' => 'Rare', 'summary' => 'Has never happened before and there is no reason to think it is any more likely now'],
             ['value' => 2, 'name' => 'Unlikely', 'summary' => "There is a possibility that it could happen, but it probably won't"],
-            ['value' => 3, 'name' => 'Moderate', 'summary' => 'On balance, the risk is more likely to happen than not'],
+            ['value' => 3, 'name' => 'Possible', 'summary' => 'On balance, the risk is more likely to happen than not'],
             ['value' => 4, 'name' => 'Very Likely', 'summary' => 'It would be a surprise if the risk did not occur either based on past frequency or current circumstances'],
             ['value' => 5, 'name' => 'Almost  Certain', 'summary' => 'Either already happens regularly or there are some reasons to believe it is virtually imminent'],
         ]
